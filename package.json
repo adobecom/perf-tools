@@ -1,0 +1,20 @@
+{
+  "name": "perf-tools",
+  "version": "0.1.0",
+  "description": "Page-load performance tools: A/B trace runner (mobile, 4x CPU, Slow 4G) with DevTools-loadable traces and median summary",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adobecom/perf-tools.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "perf-ab": "./bin/perf-ab.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.44.1"
+  }
+}
