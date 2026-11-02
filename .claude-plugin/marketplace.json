@@ -8,7 +8,7 @@
     {
       "name": "perf-tools",
       "source": "./",
-      "description": "perf-ab A/B page-load trace runner and DevTools trace analysis"
+      "description": "perf-preload LCP preload generator and perf-ab A/B page-load trace runner"
     }
   ]
 }

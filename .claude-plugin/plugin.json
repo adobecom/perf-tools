@@ -1,11 +1,11 @@
 {
   "name": "perf-tools",
-  "version": "0.1.0",
-  "description": "Page-load performance skills: perf-ab A/B trace runner for production URLs (Milo / MAS PRs, local checkouts, head.html snippets) and DevTools trace analysis",
+  "version": "0.2.0",
+  "description": "Page-load performance skills: perf-preload generates static LCP preload links from traces; perf-ab runs A/B trace comparisons on production URLs (Milo / MAS PRs, local checkouts, head.html snippets) and analyzes DevTools traces",
   "author": {
     "name": "Adobe"
   },
   "repository": "https://github.com/adobecom/perf-tools",
   "license": "Apache-2.0",
-  "keywords": ["performance", "lcp", "traces", "milo", "mas"]
+  "keywords": ["performance", "lcp", "preload", "traces", "milo", "mas"]
 }

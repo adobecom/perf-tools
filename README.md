@@ -1,6 +1,9 @@
 # perf-tools
 
-Page-load performance tools, consumed mainly as an **agent skill**. The first tool, `perf-ab`, is an A/B page-load trace runner built for **production URLs**: it loads a live page (for example `www.adobe.com`) twice, once as-is and once with selected resources proxied from a Milo / MAS PR, branch or local checkout, or with an injected `head.html` snippet such as preload links. Runs alternate, a median summary is printed, and DevTools-loadable traces are saved.
+Page-load performance tools, consumed mainly as **agent skills**:
+
+- `perf-preload` loads a page several times, finds the LCP in each trace and the resources that finished before it, and writes static `<link rel="modulepreload|preload">` tags for `head.html`.
+- `perf-ab` is an A/B page-load trace runner built for **production URLs**: it loads a live page (for example `www.adobe.com`) twice, once as-is and once with selected resources proxied from a Milo / MAS PR, branch or local checkout, or with an injected `head.html` snippet such as preload links. Runs alternate, a median summary is printed, and DevTools-loadable traces are saved.
 
 Fixed conditions, matching Chrome DevTools: mobile emulation (iPhone 16 Pro Max, 440x956, 3x DPR, touch, iOS UA), 4x CPU throttle, "Slow 4G" (180 KB/s down, 84 KB/s up, 562.5 ms latency), cache disabled.
 
@@ -8,17 +11,23 @@ Fixed conditions, matching Chrome DevTools: mobile emulation (iPhone 16 Pro Max,
 
 Requires Node.js 18+ and Google Chrome.
 
-Install the `perf-tools` plugin, which contains the `perf-ab` skill, in the GitHub Copilot app:
+Install the `perf-tools` plugin, which contains both skills, in the GitHub Copilot app:
 
 1. [Add the marketplace](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Fmarketplace%2Fadd%3Fsource%3Dadobecom%252Fperf-tools): in **Customize**, open the marketplace settings next to the marketplace dropdown and add `adobecom/perf-tools`.
 2. [Install the plugin](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Finstall%3Fsource%3Dperf-tools%2540perf-tools): search **Customize** for `perf-tools` and click **Install**.
-3. Start a new session and ask for a comparison. The skill runs the CLI through `npx`, so there is nothing else to install. A Chrome window opens during runs, so keep it visible; a comparison takes several minutes.
+3. Start a new session and ask for preloads or a comparison. The skill runs the CLI through `npx`, so there is nothing else to install. A Chrome window opens during runs, so keep it visible; a comparison takes several minutes.
 
 The repository is private: you need read access to `adobecom/perf-tools` and must be signed in to GitHub in the app.
 
 When releasing, bump `version` in `package.json`, `plugin.json` and `.claude-plugin/plugin.json` together.
 
 ## Sample prompts
+
+Preload generation (`perf-preload`):
+
+- "Generate preloads for https://www.adobe.com/products/photoshop.html, 3 runs, then validate them with perf-ab."
+- "What does the LCP of the acrobat plans page depend on, and what should we preload?"
+- "Build a preload list from these traces (Trace-1.json, Trace-2.json)."
 
 Milo / MAS PRs on a production page:
 
@@ -32,7 +41,7 @@ Local checkouts:
 
 Preload links / `head.html` experiments:
 
-- "Test the preload snippet in `snippet.html` on https://www.adobe.com/products/photoshop.html with the manifests in `./manifests`, 5 runs."
+- "Test the preload snippet in `snippet.html` on https://www.adobe.com/products/photoshop.html, 5 runs."
 - "Inject this head snippet before the first script on the acrobat plans page and compare LCP and TBT."
 
 Branch hosts (pages that honor `?milolibs=`):
@@ -44,11 +53,21 @@ Analyzing traces you already have:
 - "Compare these two DevTools traces (before.json, after.json): FCP, LCP, TBT and which preloads differ."
 - "Check whether Trace-1.json actually loaded `/libs/` from the branch host."
 
-The skill picks the right mode, verifies that the proxied files were really served, and reports medians with a noise warning for deltas under about 100 ms. See [`skills/perf-ab/SKILL.md`](skills/perf-ab/SKILL.md) for the full instructions the agent follows.
+The skill picks the right mode, verifies that the proxied files were really served, and reports medians with a noise warning for deltas under about 100 ms. See [`skills/perf-preload/SKILL.md`](skills/perf-preload/SKILL.md) and [`skills/perf-ab/SKILL.md`](skills/perf-ab/SKILL.md) for the full instructions the agent follows.
 
 ## CLI reference
 
-Production pages ignore `?milolibs=` / `?maslibs=`, so `perf-ab` proxies the resources instead. Run `perf-ab --help` for all options.
+Run `perf-preload --help` and `perf-ab --help` for all options.
+
+```sh
+# LCP preloads: 3 recorded runs, writes ./preloads/products--photoshop.html and ./preloads/traces
+perf-preload "https://www.adobe.com/products/photoshop.html" -n 3 -o ./preloads
+
+# The same from existing DevTools traces
+perf-preload --from Trace-1.json --from Trace-2.json -o ./preloads
+```
+
+Production pages ignore `?milolibs=` / `?maslibs=`, so `perf-ab` proxies the resources instead.
 
 ```sh
 # Milo / MAS PR delta: only the files changed by the PR are proxied
@@ -59,10 +78,8 @@ perf-ab "https://www.adobe.com/" \
   --override /libs=~/git/milo/libs \
   --override /libs/deps/mas=~/git/mas/web-components/dist
 
-# Injected head snippet plus locally served files
-perf-ab "https://www.adobe.com/products/photoshop.html" \
-  --head-inject snippet.html \
-  --override /lcp-manifests=./manifests -n 5
+# Injected head snippet (for example from perf-preload)
+perf-ab "https://www.adobe.com/products/photoshop.html" --head-inject ./preloads/products--photoshop.html -n 5
 
 # Branch hosts
 perf-ab "https://www.stage.adobe.com/products/photoshop.html" -b my-feature-stage -a my-feature -n 5
@@ -72,40 +89,21 @@ perf-ab "https://www.stage.adobe.com/products/photoshop.html" -b my-feature-stag
 
 The snippet is inserted into the change variant's document before the first `<script>` in `<head>`; the baseline is the unmodified live page. Both documents go through the same simulated Slow 4G delay, and the preloaded files are fetched live through Chrome's throttling.
 
-Example `snippet.html`, a classic inline script that fetches a per-page manifest and injects the links:
+`perf-preload` writes the snippet as static tags, sorted by start time in the recorded traces. For example:
 
 ```html
-<script>
-  (() => {
-    const key = location.pathname.replace(/\.html$/, '').replace(/^\/|\/$/g, '').replace(/\//g, '--') || 'index';
-    fetch(`/lcp-manifests/${key}.json`).then((r) => (r.ok ? r.json() : [])).then((links) => {
-      links.forEach(([rel, href, as, crossorigin]) => {
-        const link = document.createElement('link');
-        link.rel = rel;
-        link.href = href;
-        if (as) link.as = as;
-        if (crossorigin) link.crossOrigin = crossorigin;
-        document.head.append(link);
-      });
-    }).catch(() => {});
-  })();
-</script>
+<link rel="modulepreload" href="/creativecloud/scripts/utils.js">
+<link rel="modulepreload" href="/libs/blocks/hero-marquee/hero-marquee.js">
+<link rel="preload" href="/libs/blocks/hero-marquee/hero-marquee.css" as="style">
+<link rel="modulepreload" href="/libs/features/placeholders.js">
 ```
 
-A manifest per page, named after the path without query string (`/products/photoshop.html` becomes `manifests/products--photoshop.json`):
-
-```json
-[
-  ["modulepreload", "/libs/blocks/marquee/marquee.js"],
-  ["preload", "/libs/blocks/marquee/marquee.css", "style"],
-  ["preload", "/libs/features/placeholders.json", "fetch", "anonymous"]
-]
-```
+Static tags need no script in `<head>`: the preload scanner finds them as soon as the HTML arrives. `head.html` is shared by all pages, so only resources common to every page belong there; page-specific tags need per-page injection (an edge worker or server-side). The LCP image URL is viewport-specific; use `perf-preload --no-lcp-image` when the tags are not mobile-only.
 
 What to check afterwards:
 - The first run prints where the snippet was injected.
-- In the saved `after<n>.json` traces, the manifest request starts before any script request, and the preloaded resources start earlier than in `before<n>.json`.
-- With `PERF_AB_DEBUG=1`, "preloaded but not used" console warnings mean the manifest lists resources the page doesn't need.
+- In the saved `after<n>.json` traces, the preloaded resources start right after the document, earlier than in `before<n>.json`.
+- With `PERF_AB_DEBUG=1`, "preloaded but not used" console warnings mean the snippet lists resources the page doesn't need.
 - Do not add `?mep=off` to the page URL: it disables the existing `preloadLcpCodeFiles`, which is part of the baseline.
 
 ### Notes

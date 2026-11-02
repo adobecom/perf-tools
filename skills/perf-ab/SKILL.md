@@ -5,7 +5,7 @@ description: Run before/after page-load performance trace comparisons with the `
 
 # Before/after trace comparison (`perf-ab`)
 
-CLI from `adobecom/perf-tools` (needs Node 18+ and Google Chrome). Check it is installed with `perf-ab --help`. If it is missing, replace `perf-ab` with `npx -y github:adobecom/perf-tools` in every command below, or install it with `npm install -g github:adobecom/perf-tools`.
+CLI from `adobecom/perf-tools` (needs Node 18+ and Google Chrome). Check it is installed with `perf-ab --help`. If it is missing, replace `perf-ab` with `npx -y -p github:adobecom/perf-tools perf-ab` in every command below.
 
 It runs **headed Chrome** (many Adobe hosts reject headless). Keep the Chrome window visible and run the command async; it takes several minutes (about 25 s per run, plus one warm-up per variant).
 
@@ -43,13 +43,12 @@ perf-ab "https://www.adobe.com/" \
 ### c. Preload links / head.html snippet
 
 ```sh
-perf-ab "https://www.adobe.com/products/photoshop.html" \
-  --head-inject snippet.html \
-  --override /lcp-manifests=./manifests -n 5
+perf-ab "https://www.adobe.com/products/photoshop.html" --head-inject ./preloads/products--photoshop.html -n 5
 ```
 
 - `--head-inject <file>` inserts the HTML into the change variant's document before the first `<script>` in `<head>` (falls back to before `</head>`). The baseline is the unmodified live page. Both documents go through the same simulated Slow 4G delay.
-- Use it with `--override` to serve any file the snippet requests (for example a per-page preload manifest) without publishing it.
+- To build the snippet, use the `perf-preload` skill: it writes static `<link>` tags for the resources loaded before LCP. Static tags need no script in `<head>`.
+- Combine with `--override` to serve any file the snippet requests without publishing it.
 - Do not use `?mep=off` on the page URL: it disables the existing `preloadLcpCodeFiles`, which is part of the baseline behavior.
 - Check: the first run prints where the snippet was injected; in the traces the snippet's fetch starts before other script requests and the preloaded resources start earlier than in `before<i>.json`; with `PERF_AB_DEBUG=1`, look for "preloaded but not used" console warnings.
 
