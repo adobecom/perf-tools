@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const CLI = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'perf-preload.mjs');
@@ -82,5 +82,34 @@ test('same-site only by default; stylesheet preloads never match a relative link
   for (const l of lines.filter((x) => x.includes('as="style"'))) {
     assert.doesNotMatch(l, /href="\//);
     assert.doesNotMatch(l, /crossorigin/);
+  }
+});
+
+test('--from <dir> never counts warm-up loads (legacy before0/after0.json or metadata.perfAb.warmup)', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-preload-test-'));
+  const withExtra = (url) => {
+    const t = trace();
+    const ts = 3000;
+    t.traceEvents.push({ name: 'ResourceSendRequest', ts, args: { data: { requestId: url, frame: FRAME, url, resourceType: 'Script', initiator: { type: 'script', url: RESOURCES[0][0] } } } });
+    t.traceEvents.push({ name: 'ResourceFinish', ts: ts + 100, args: { data: { requestId: url } } });
+    return t;
+  };
+  try {
+    const tr = path.join(dir, 'traces');
+    fs.mkdirSync(tr);
+    fs.writeFileSync(path.join(tr, 'after0.json'), JSON.stringify(withExtra('https://www.adobe.com/legacy-warmup.js')));
+    fs.writeFileSync(path.join(tr, 'before0.json'), JSON.stringify(withExtra('https://www.adobe.com/legacy-warmup-before.js')));
+    fs.writeFileSync(path.join(tr, 'after1.json'), JSON.stringify({ ...trace(), metadata: { perfAb: { variant: 'after', run: 1, warmup: false } } }));
+    fs.writeFileSync(path.join(tr, 'after2.json'), JSON.stringify({ ...withExtra('https://www.adobe.com/flagged-warmup.js'), metadata: { perfAb: { warmup: true } } }));
+    const r = spawnSync(process.execPath, [CLI, DOC, '--from', tr, '-o', dir, '--min-runs', '1'], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stderr, /skipped legacy perf-ab warm-up traces after0\.json, before0\.json/);
+    assert.match(r.stderr, /after2\.json: perf-ab warm-up load, skipped/);
+    assert.match(r.stdout, /: 1 traces,/);
+    const snippet = fs.readFileSync(path.join(dir, 'acrobat--plans.html'), 'utf8');
+    assert.doesNotMatch(snippet, /warmup/);
+    assert.match(snippet, /scripts\/scripts\.js/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });

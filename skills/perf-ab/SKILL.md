@@ -7,11 +7,13 @@ description: Run before/after page-load performance trace comparisons with the `
 
 CLI from `adobecom/perf-tools` (needs Node 18+ and Google Chrome). Check it is installed with `perf-ab --help`. If it is missing, replace `perf-ab` with `npx -y -p github:adobecom/perf-tools perf-ab` in every command below.
 
-It runs **headed Chrome** (many Adobe hosts reject headless). Keep the Chrome window visible and run the command async; it takes several minutes (about 25 s per run, plus one warm-up per variant).
+It runs **headed Chrome** (many Adobe hosts reject headless). Keep the Chrome window visible and run the command async; it takes several minutes (about 25 s per run; every run starts a new browser, with no warm-up).
 
-Fixed conditions, the same as manual DevTools runs: iPhone 16 Pro Max (440x956, 3x DPR, touch), 4x CPU, Slow 4G (180 KB/s down, 84 KB/s up, 562.5 ms latency), cache disabled, a fresh isolated context per run. Do not substitute other throttling numbers.
+Fixed conditions, the same as manual DevTools runs: iPhone 16 Pro Max (440x956, 3x DPR, touch), 4x CPU, Slow 4G (180 KB/s down, 84 KB/s up, 562.5 ms latency), cache disabled, a new browser process with an empty profile for every run and retry. Do not substitute other throttling numbers.
 
-Output: per-run JSON lines, then a median table (before / after / delta). Traces are saved to `-o <dir>` (default `./traces`) as `before<i>.json` / `after<i>.json` and open in the DevTools Performance panel. `perf-ab <url>` alone (no variants) just measures one URL and saves `after<i>.json` traces.
+Cold-run policy: every measured run starts cold. Each run, and each retry of it, launches a new browser process with an empty temporary profile, so no HTTP cache, V8 code cache, cookies, storage, service workers, open connections or Chrome DNS cache carry over from an earlier run. There are no warm-up loads; every load is measured and counted. Within a run the cache is also disabled. The OS DNS cache and shared CDN / edge caches are outside the browser and are left alone: do not purge them and do not add cache-busting query parameters. Requests that one page load makes for the same resource are part of that load, not prewarming.
+
+Output: per-run JSON lines, then a median table (before / after / delta). Traces are saved to `-o <dir>` (default `./traces`) as `before<i>.json` / `after<i>.json` and open in the DevTools Performance panel. Each trace records `metadata.perfAb` (`variant`, `run`, `attempt`, `browserPid`, `coldBrowser: true`, `warmup: false`). In folders from older perf-ab versions, `before0.json` / `after0.json` are warm-up loads, not measurements: never count them. `perf-ab <url>` alone (no variants) just measures one URL and saves `after<i>.json` traces.
 
 ## 1. Choose the mode
 
@@ -63,7 +65,7 @@ perf-ab "https://www.stage.adobe.com/products/photoshop.html?mep=off&mas.preview
 - Each branch is served via `?milolibs=<branch>--milo--adobecom`.
 - `www.stage.adobe.com/creativecloud/plans.html` ignores `milolibs` (the cc site only honors it on `aem.page` / `aem.live` / `localhost` hosts). Use `https://stage--cc--adobecom.aem.live/creativecloud/plans` instead (no `.html`).
 
-Other flags: `--param`, `--suffix` (use `--suffix ""` to pass raw values), `--before-query` / `--after-query`, `--device`, `--cpu`, `--channel`, `--settle`, `--lcp-wait`. See `perf-ab --help`. Failed runs retry up to 3 times.
+Other flags: `--param`, `--suffix` (use `--suffix ""` to pass raw values), `--before-query` / `--after-query`, `--device`, `--cpu`, `--channel`, `--settle`, `--lcp-wait`. See `perf-ab --help`. Failed runs retry up to 3 times, each retry in a new browser; if a browser cannot be closed the measurement stops.
 
 ## 2. Read the results
 
@@ -79,7 +81,7 @@ Parse with Python (`json.load(...)['traceEvents']`):
 - The navigation start is `navigationStart` with a `documentLoaderURL` starting with `http`; `t0` is its `ts`. Take FCP / LCP / DCL / Load from `firstContentfulPaint`, `largestContentfulPaint::Candidate`, `domContentLoadedEventEnd` and `loadEventEnd`, filtered to the same `frame`.
 - The renderer main thread is the `thread_name` event named `CrRendererMain`. TBT is the sum of (`RunTask` dur minus 50 ms) for tasks over 50 ms after FCP. Main-thread compile is the sum of `v8.compileModule` durations.
 - Network: `ResourceSendRequest` / `ResourceReceiveResponse` / `ResourceFinish` joined on `requestId`. Preload vs modulepreload: `args.data.initiator.fetchType` is `link` for preload and `script` for modulepreload, with `stackTrace[0].functionName === 'loadLink'` (older traces use `initiator.stack.callFrames[0]`).
-- Check the trace `metadata` (throttling, device) and the `documentLoaderURL` first. Confirm both traces used the same host and conditions before attributing differences to the change.
+- Check the trace `metadata` (throttling, device) and the `documentLoaderURL` first. Confirm both traces used the same host and conditions before attributing differences to the change. Compare cold loads only: a DevTools trace recorded after an earlier load of the page in the same browser profile is warm (check `fromCache` / transfer sizes), and old perf-ab `*0.json` traces are warm-ups.
 
 ## Gotchas
 

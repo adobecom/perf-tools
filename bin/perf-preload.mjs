@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { isLegacyWarmup } from '../lib/cold-runs.mjs';
 
 const { values: o, positionals } = parseArgs({
   allowPositionals: true,
@@ -28,15 +29,17 @@ if (o.help || (!positionals[0] && !o.from.length)) {
   console.log(`perf-preload <pageUrl> [options]
 perf-preload --from <trace.json|dir> [--from ...] [options]
 
-  Loads <pageUrl> -n times through perf-ab (iPhone 16 Pro Max, 4x CPU, Slow 4G, cache disabled), finds the LCP
-  in each trace and keeps the scripts, stylesheets, fonts, fetches and the LCP image that finished before it.
+  Loads <pageUrl> -n times through perf-ab (iPhone 16 Pro Max, 4x CPU, Slow 4G, cache disabled; every load cold in
+  a fresh browser process and profile, no warm-up), finds the LCP in each trace and keeps the scripts,
+  stylesheets, fonts, fetches and the LCP image that finished before it.
   Resources the HTML parser already requests from the document itself are skipped. A resource must appear in
   --min-runs traces to be kept. Writes <out>/<page-key>.html with static <link> tags, ready for
   perf-ab --head-inject.
 
-  -n, --runs <n>       page loads to record (default 3, after one warm-up)
+  -n, --runs <n>       cold page loads to record (default 3, all counted)
   -o, --out <dir>      output dir for the snippet and traces (default ./preloads)
-  --from <path>        analyze existing DevTools traces (file or dir of *.json) instead of recording (repeatable)
+  --from <path>        analyze existing DevTools traces (file or dir of *.json) instead of recording (repeatable).
+                       In a dir, legacy perf-ab warm-ups (before0.json / after0.json) are skipped.
   --min-runs <k>       traces a resource must appear in (default: majority, e.g. 2 of 3)
   --all-origins        keep cross-site resources too (default: same site as the page only)
   --no-lcp-image       do not preload the LCP image (its URL is viewport specific)
@@ -50,8 +53,15 @@ const traceFiles = [];
 if (o.from.length) {
   for (const p of o.from) {
     const abs = path.resolve(p);
-    if (fs.statSync(abs).isDirectory()) fs.readdirSync(abs).filter((f) => f.endsWith('.json')).sort().forEach((f) => traceFiles.push(path.join(abs, f)));
-    else traceFiles.push(abs);
+    if (fs.statSync(abs).isDirectory()) {
+      const files = fs.readdirSync(abs).filter((f) => f.endsWith('.json')).sort();
+      const warmups = files.filter(isLegacyWarmup);
+      if (warmups.length) console.warn(`${p}: skipped legacy perf-ab warm-up traces ${warmups.join(', ')} (not measurements)`);
+      files.filter((f) => !isLegacyWarmup(f)).forEach((f) => traceFiles.push(path.join(abs, f)));
+    } else {
+      if (isLegacyWarmup(abs)) console.warn(`WARNING: ${p} looks like a legacy perf-ab warm-up load (warm, not a measurement); analyzing it because it was named explicitly`);
+      traceFiles.push(abs);
+    }
   }
 } else {
   const traceDir = path.join(OUT, 'traces');
@@ -60,7 +70,7 @@ if (o.from.length) {
   for (const k of ['device', 'cpu', 'channel']) if (o[k] !== undefined) args.push(`--${k}`, o[k]);
   if (o.headless) args.push('--headless');
   execFileSync(process.execPath, args, { stdio: 'inherit' });
-  // after0.json is perf-ab's warm-up load.
+  // perf-ab saves one cold load per run as after1..n.json; it records no warm-up.
   fs.readdirSync(traceDir).filter((f) => /^after[1-9]\d*\.json$/.test(f)).sort().forEach((f) => traceFiles.push(path.join(traceDir, f)));
 }
 if (!traceFiles.length) { console.error('No traces to analyze'); process.exit(1); }
@@ -71,6 +81,7 @@ const KEEP = new Set(['Script', 'Stylesheet', 'Font', 'Fetch', 'XHR']);
 function analyze(file) {
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
   const events = Array.isArray(raw) ? raw : raw.traceEvents;
+  if (raw.metadata?.perfAb?.warmup) { console.warn(`${path.basename(file)}: perf-ab warm-up load, skipped`); return null; }
   const nav = events.find((e) => e.name === 'navigationStart' && e.args?.data?.documentLoaderURL?.startsWith('http') && e.args?.data?.isOutermostMainFrame !== false);
   if (!nav) { console.warn(`${path.basename(file)}: no navigation, skipped`); return null; }
   const { ts: t0, args: { frame } } = nav;

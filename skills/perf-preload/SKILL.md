@@ -7,7 +7,7 @@ description: Generate static preload `<link>` tags for a page's LCP with the `pe
 
 CLI from `adobecom/perf-tools` (needs Node 18+ and Google Chrome). Check it is installed with `perf-preload --help`. If it is missing, replace `perf-preload` with `npx -y -p github:adobecom/perf-tools perf-preload` (and `perf-ab` with `npx -y -p github:adobecom/perf-tools perf-ab`) in every command below.
 
-It records through `perf-ab`, so it runs **headed Chrome** under the same fixed conditions. Keep the Chrome window visible and run the command async; 3 runs take about 2 minutes.
+It records through `perf-ab`, so it runs **headed Chrome** under the same fixed conditions, and every recorded load is cold: a new browser process with an empty profile per run and retry, no warm-up (OS DNS and CDN caches are not purged, and no cache-busting is added). Keep the Chrome window visible and run the command async; 3 runs take about 2 minutes.
 
 ## 1. Generate
 
@@ -20,9 +20,9 @@ For each trace it finds the final LCP candidate (for an image LCP, its URL), the
 Output:
 - A table: median start / end (ms from navigation), resource type, URL. `*` marks resources that a script already preloads (for example Milo `preloadLcpCodeFiles`); a static tag still starts them earlier, because no script has to run first.
 - `<out>/<page-key>.html` (`/products/photoshop.html` becomes `products--photoshop.html`) with tags sorted by start time: `modulepreload` for module scripts, `preload as=script|style|font|fetch|image`, `crossorigin` where the consumer's fetch mode needs it (fonts, fetches, cross-origin scripts; never stylesheets, which load without CORS), absolute URLs for stylesheets (a relative one can be mistaken for the stylesheet by site loaders that match `link[href]` without `rel`, leaving it unapplied), `fetchpriority="high"` for the LCP image.
-- Traces in `<out>/traces` (`after1..n.json`; `after0.json` is the warm-up) and a ready-made validate command.
+- Traces in `<out>/traces` (`after1..n.json`, one cold load each; all are counted) and a ready-made validate command.
 
-Existing traces (DevTools exports, perf-ab output, user attachments): `perf-preload --from Trace-1.json --from ./traces -o ./preloads`. Only traces taken under the same conditions are comparable.
+Existing traces (DevTools exports, perf-ab output, user attachments): `perf-preload --from Trace-1.json --from ./traces -o ./preloads`. Only cold traces taken under the same conditions are comparable. In a `--from` directory, legacy perf-ab warm-up traces (`before0.json` / `after0.json`) and traces with `metadata.perfAb.warmup: true` are skipped with a warning.
 
 Other flags: `--no-lcp-image`, `--min-runs <k>`, `--all-origins`, `--device`, `--cpu`, `--channel`, `--headless`. See `perf-preload --help`.
 

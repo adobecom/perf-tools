@@ -7,6 +7,8 @@ Page-load performance tools, consumed mainly as **agent skills**:
 
 Fixed conditions, matching Chrome DevTools: mobile emulation (iPhone 16 Pro Max, 440x956, 3x DPR, touch, iOS UA), 4x CPU throttle, "Slow 4G" (180 KB/s down, 84 KB/s up, 562.5 ms latency), cache disabled.
 
+Cold-run policy: every measured run starts cold. Each run, and each retry of it, launches a new browser process with an empty temporary profile, so no HTTP cache, V8 code cache, cookies, storage, service workers, open connections or Chrome DNS cache carry over from an earlier run. There are no warm-up loads; every load is measured and counted. Within a run the cache is also disabled. The OS DNS cache and shared CDN / edge caches are outside the browser and are left alone: do not purge them and do not add cache-busting query parameters. Requests that one page load makes for the same resource are part of that load, not prewarming.
+
 ## Quick start
 
 Needs Node.js 18+ and Google Chrome.
@@ -88,7 +90,7 @@ What to check afterwards:
 - Tests: `npm test`.
 - When releasing, bump `version` in `package.json`, `plugin.json` and `.claude-plugin/plugin.json` together.
 - Runs headed by default: some hosts (for example `www.stage.adobe.com`) reject headless browsers.
-- One warm-up load per variant is done first and not counted.
+- No warm-up loads: each run and retry gets a new browser process and profile (see the cold-run policy above). Traces carry `metadata.perfAb`; `before0.json` / `after0.json` in folders from older versions are warm-ups, and `perf-preload --from <dir>` skips them.
 - Reported metrics: FCP, LCP, DCL, Load, TBT (from FCP), CLS, main-thread `v8.compileModule`, request count, `loadLink` script fetches as module (modulepreload) vs link (preload), duplicate script fetches.
 
 ## License

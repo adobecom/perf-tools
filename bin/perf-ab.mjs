@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // A/B page-load trace runner: mobile emulation, 4x CPU throttle, Slow 4G, cache disabled.
-// Alternates baseline/change runs, saves DevTools-loadable traces and prints a median summary.
+// Alternates baseline/change runs, each in a fresh browser process and profile with no warm-up,
+// saves DevTools-loadable traces and prints a median summary.
 import { chromium, devices } from 'playwright';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,6 +9,7 @@ import os from 'node:os';
 import zlib from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
+import { measureCold } from '../lib/cold-runs.mjs';
 
 const { values: o, positionals } = parseArgs({
   allowPositionals: true,
@@ -48,7 +50,8 @@ perf-ab <pageUrl> --before <value> --after <value> [options]
     perf-ab "https://www.stage.adobe.com/products/photoshop.html?mep=off&mas.preview=off" \\
       -b my-feature-stage -a my-feature -n 5
 
-  -n, --runs <n>       runs per variant (default 5, after one warm-up each)
+  -n, --runs <n>       runs per variant (default 5). Every run and retry is cold: a new browser process with an
+                       empty temporary profile (no cache, cookies, storage or service workers). No warm-up loads.
   -o, --out <dir>      trace output dir (default ./traces)
   --param <name>       query param carrying the variant (default milolibs)
   --suffix <str>       appended to each variant value (default --milo--adobecom, use "" for raw values)
@@ -248,7 +251,7 @@ function analyze(events) {
   };
 }
 
-async function run(browser, name, i) {
+async function run(browser, name, i, attempt) {
   const ctx = await browser.newContext({ ...device, bypassCSP: true });
   const maps = MAPS[name];
   const rewrites = REWRITES[name];
@@ -272,7 +275,7 @@ async function run(browser, name, i) {
           const injected = injectIntoHead(body);
           if (injected) {
             body = injected.html;
-            if (i === 0) console.log(`head snippet injected at char ${injected.at} (${injected.beforeScript ? 'before first <script>' : 'before </head>, no <script> in head'})`);
+            if (i === 1) console.log(`head snippet injected at char ${injected.at} (${injected.beforeScript ? 'before first <script>' : 'before </head>, no <script> in head'})`);
           } else console.warn('WARNING: no <head>...</head> found, snippet not injected');
         }
         await simulate(started, zlib.brotliCompressSync(body).length);
@@ -330,7 +333,7 @@ async function run(browser, name, i) {
   await page.waitForFunction((wait) => {
     return window.__lcpSeenAt !== undefined && performance.now() - window.__lcpSeenAt >= wait;
   }, Number(o['lcp-wait']), { timeout: Number(o.settle), polling: 100 }).catch(() => {});
-  if (i === 0) {
+  if (i === 1) {
     const emu = await page.evaluate(() => ({
       innerWidth, dpr: devicePixelRatio, touch: navigator.maxTouchPoints, coarse: matchMedia('(pointer: coarse)').matches, ua: navigator.userAgent.slice(0, 60),
     }));
@@ -342,37 +345,44 @@ async function run(browser, name, i) {
   await done;
   await ctx.close();
   fs.mkdirSync(OUT, { recursive: true });
-  fs.writeFileSync(path.join(OUT, `${name}${i}.json`), JSON.stringify({ traceEvents: chunks }));
+  const perfAb = { variant: name, run: i, attempt, browserPid: browserPids.get(browser) ?? null, coldBrowser: true, warmup: false };
+  fs.writeFileSync(path.join(OUT, `${name}${i}.json`), JSON.stringify({ traceEvents: chunks, metadata: { perfAb } }));
   if (err) throw new Error(`${name} run ${i}: ${err}`);
   return { ...analyze(chunks), lcpEl };
 }
 
-const browser = await chromium.launch({
-  headless: o.headless,
-  ...(o.channel ? { channel: o.channel } : {}),
-  args: ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling'],
-});
+const browserPids = new WeakMap();
+async function launch() {
+  const browser = await chromium.launch({
+    headless: o.headless,
+    ...(o.channel ? { channel: o.channel } : {}),
+    args: ['--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling'],
+  });
+  try {
+    const cdp = await browser.newBrowserCDPSession();
+    const { processInfo } = await cdp.send('SystemInfo.getProcessInfo');
+    browserPids.set(browser, processInfo.find((p) => p.type === 'browser')?.id ?? null);
+    await cdp.detach();
+  } catch { /* the PID is informational only */ }
+  return browser;
+}
 const NAMES = single ? ['after'] : ['before', 'after'];
-const results = { before: [], after: [] };
+let results;
 try {
-  for (const n of NAMES) await run(browser, n, 0); // warm-up, not counted
-  for (let i = 1; i <= RUNS; i += 1) {
-    for (const n of NAMES) {
-      let r;
-      for (let t = 0; t < 3 && !r; t += 1) {
-        try { r = await run(browser, n, i); } catch (e) { console.warn(`retry ${n} ${i}: ${e.message}`); if (t === 2) throw e; }
-      }
-      results[n].push(r);
-      console.log(n, i, JSON.stringify(r));
-    }
-  }
+  results = await measureCold({
+    names: NAMES,
+    runs: RUNS,
+    launch,
+    measure: run,
+    onRetry: (n, i, t, e) => console.warn(`retry ${n} ${i} (attempt ${t + 1}, fresh browser): ${e.message}`),
+    onResult: (n, i, r) => console.log(n, i, JSON.stringify(r)),
+  });
 } finally {
-  await browser.close();
   fs.rmSync(prRoot, { recursive: true, force: true });
 }
 
 const keys = ['FCP', 'LCP', 'DCL', 'Load', 'TBT', 'CLS', 'compileModule', 'requests', 'loadLinkModule', 'loadLinkPreload', 'dupScripts', 'fromCache'];
-console.log(`\nMedians over ${RUNS} runs (${o.device}, ${o.cpu}x CPU, Slow 4G)`);
+console.log(`\nMedians over ${RUNS} cold runs (${o.device}, ${o.cpu}x CPU, Slow 4G, fresh browser per run, no warm-up)`);
 if (single) {
   console.log('metric'.padEnd(16), 'median'.padStart(8));
   for (const k of keys) console.log(k.padEnd(16), String(median(results.after.map((r) => r?.[k]).filter((v) => v != null))).padStart(8));
