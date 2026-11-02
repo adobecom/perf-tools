@@ -9,12 +9,13 @@ Fixed conditions, matching Chrome DevTools: mobile emulation (iPhone 16 Pro Max,
 
 ## Quick start
 
-In the GitHub Copilot app:
+Needs Node.js 18+ and Google Chrome.
 
-1. [Add the `adobecom/perf-tools` marketplace](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Fmarketplace%2Fadd%3Fsource%3Dadobecom%252Fperf-tools).
-2. [Install the `perf-tools` plugin](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Finstall%3Fsource%3Dperf-tools%2540perf-tools).
+```sh
+copilot plugin install adobecom/perf-tools
+```
 
-Then ask for preloads or a comparison in a new session. Needs Node.js 18+ and Google Chrome.
+Then ask for preloads or a comparison in a new session.
 
 ## Sample prompts
 
