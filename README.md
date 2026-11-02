@@ -18,37 +18,11 @@ Then ask for preloads or a comparison in a new session. Needs Node.js 18+ and Go
 
 ## Sample prompts
 
-Preload generation (`perf-preload`):
-
-- "Generate preloads for https://www.adobe.com/products/photoshop.html, 3 runs, then validate them with perf-ab."
-- "What does the LCP of the acrobat plans page depend on, and what should we preload?"
-- "Build a preload list from these traces (Trace-1.json, Trace-2.json)."
-
-Milo / MAS PRs on a production page:
-
-- "perf-ab Milo PR 7062 on https://www.adobe.com/acrobat/plans.html, 3 runs."
-- "Compare Milo PR 7062 and MAS PR 1487 on https://www.adobe.com/acrobat/plans.html and tell me if LCP or TBT regress."
-- "Measure the impact of my open Milo PR on the photoshop product page, 5 runs, and summarize the medians."
-
-Local checkouts:
-
-- "Run perf-ab on https://www.adobe.com/ with my local Milo checkout `~/git/milo/libs` overriding `/libs`, against stage as the baseline."
-
-Preload links / `head.html` experiments:
-
-- "Test the preload snippet in `snippet.html` on https://www.adobe.com/products/photoshop.html, 5 runs."
-- "Inject this head snippet before the first script on the acrobat plans page and compare LCP and TBT."
-
-Branch hosts (pages that honor `?milolibs=`):
-
-- "A/B `my-feature` against `my-feature-stage` on https://www.stage.adobe.com/products/photoshop.html."
-
-Analyzing traces you already have:
-
-- "Compare these two DevTools traces (before.json, after.json): FCP, LCP, TBT and which preloads differ."
-- "Check whether Trace-1.json actually loaded `/libs/` from the branch host."
-
-The skill picks the right mode, verifies that the proxied files were really served, and reports medians with a noise warning for deltas under about 100 ms. See [`skills/perf-preload/SKILL.md`](skills/perf-preload/SKILL.md) and [`skills/perf-ab/SKILL.md`](skills/perf-ab/SKILL.md) for the full instructions the agent follows.
+- "Generate preloads for https://www.adobe.com/products/photoshop.html"
+- "Test Milo PR 7062 on https://www.adobe.com/acrobat/plans.html"
+- "Test my local Milo checkout on https://www.adobe.com/"
+- "Test `snippet.html` in the head of https://www.adobe.com/products/photoshop.html"
+- "Compare before.json and after.json"
 
 ## CLI reference
 
