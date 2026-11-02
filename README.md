@@ -69,9 +69,11 @@ The snippet is inserted into the change variant's document before the first `<sc
 ```html
 <link rel="modulepreload" href="/creativecloud/scripts/utils.js">
 <link rel="modulepreload" href="/libs/blocks/hero-marquee/hero-marquee.js">
-<link rel="preload" href="/libs/blocks/hero-marquee/hero-marquee.css" as="style">
+<link rel="preload" href="https://www.adobe.com/libs/blocks/hero-marquee/hero-marquee.css" as="style">
 <link rel="modulepreload" href="/libs/features/placeholders.js">
 ```
+
+Stylesheet preloads use absolute URLs, even same-origin ones: some site loaders look up `link[href="<path>"]` without checking `rel`, treat a relative preload as the stylesheet and never apply it. They never get `crossorigin`, because `<link rel="stylesheet">` and `@import` fetch without CORS; fonts, fetches and cross-origin scripts do.
 
 Static tags need no script in `<head>`: the preload scanner finds them as soon as the HTML arrives. `head.html` is shared by all pages, so only resources common to every page belong there; page-specific tags need per-page injection (an edge worker or server-side). The LCP image URL is viewport-specific; use `perf-preload --no-lcp-image` when the tags are not mobile-only.
 
@@ -83,6 +85,7 @@ What to check afterwards:
 
 ### Notes
 
+- Tests: `npm test`.
 - When releasing, bump `version` in `package.json`, `plugin.json` and `.claude-plugin/plugin.json` together.
 - Runs headed by default: some hosts (for example `www.stage.adobe.com`) reject headless browsers.
 - One warm-up load per variant is done first and not counted.

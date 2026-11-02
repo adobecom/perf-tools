@@ -11,6 +11,9 @@
   "engines": {
     "node": ">=18"
   },
+  "scripts": {
+    "test": "node --test"
+  },
   "bin": {
     "perf-ab": "./bin/perf-ab.mjs",
     "perf-preload": "./bin/perf-preload.mjs"

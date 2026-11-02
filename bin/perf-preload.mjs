@@ -128,11 +128,14 @@ const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 function tag(x) {
   const u = new URL(x.url);
   const cross = u.origin !== page.origin;
-  const href = esc(cross ? x.url : `${u.pathname}${u.search}`);
+  // Stylesheets are always absolute: some site loaders (e.g. Acrobat's loadLink) look for an existing
+  // link[href="<relative path>"] without checking rel, find the preload and never add the stylesheet.
+  const href = esc(cross || x.type === 'Stylesheet' ? x.url : `${u.pathname}${u.search}`);
   const co = (always) => (always || cross ? ' crossorigin' : '');
   switch (x.type) {
     case 'Script': return x.module ? `<link rel="modulepreload" href="${href}"${co()}>` : `<link rel="preload" href="${href}" as="script"${co()}>`;
-    case 'Stylesheet': return `<link rel="preload" href="${href}" as="style"${co()}>`;
+    // <link rel="stylesheet"> and @import fetch in no-cors mode; a crossorigin preload would not be reused.
+    case 'Stylesheet': return `<link rel="preload" href="${href}" as="style">`;
     case 'Font': return `<link rel="preload" href="${href}" as="font"${co(true)}>`;
     case 'LCP image': return `<link rel="preload" href="${href}" as="image" fetchpriority="high">`;
     default: return `<link rel="preload" href="${href}" as="fetch"${co(true)}>`;
