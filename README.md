@@ -19,6 +19,7 @@ Then ask for preloads or a comparison in a new session. Needs Node.js 18+ and Go
 ## Sample prompts
 
 - "Generate preloads for https://www.adobe.com/products/photoshop.html"
+- "Test the generated preloads on https://www.adobe.com/products/photoshop.html"
 - "Test Milo PR 7062 on https://www.adobe.com/acrobat/plans.html"
 
 ## CLI reference
