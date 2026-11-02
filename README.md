@@ -8,33 +8,15 @@ Fixed conditions, matching Chrome DevTools: mobile emulation (iPhone 16 Pro Max,
 
 Requires Node.js 18+ and Google Chrome.
 
-1. Install the plugin, which contains the `perf-ab` skill.
+Install the `perf-tools` plugin, which contains the `perf-ab` skill, in the GitHub Copilot app:
 
-   GitHub Copilot CLI:
+1. [Add the marketplace](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Fmarketplace%2Fadd%3Fsource%3Dadobecom%252Fperf-tools): in **Customize**, open the marketplace settings next to the marketplace dropdown and add `adobecom/perf-tools`.
+2. [Install the plugin](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Finstall%3Fsource%3Dperf-tools%2540perf-tools): search **Customize** for `perf-tools` and click **Install**.
+3. Start a new session and ask for a comparison. The skill runs the CLI through `npx`, so there is nothing else to install. A Chrome window opens during runs, so keep it visible; a comparison takes several minutes.
 
-   ```sh
-   copilot plugin marketplace add adobecom/perf-tools
-   copilot plugin install perf-tools@perf-tools
-   ```
+The repository is private: you need read access to `adobecom/perf-tools` and must be signed in to GitHub in the app.
 
-   Claude Code:
-
-   ```sh
-   claude plugin marketplace add adobecom/perf-tools
-   claude plugin install perf-tools@perf-tools
-   ```
-
-   Update later with `copilot plugin update perf-tools` or `claude plugin update perf-tools@perf-tools`.
-
-2. Optionally install the CLI globally. Without it, the skill runs `npx -y github:adobecom/perf-tools`, which is slower on first use.
-
-   ```sh
-   npm install -g github:adobecom/perf-tools
-   ```
-
-3. Ask your agent. A Chrome window opens during runs, so keep it visible; a comparison takes several minutes.
-
-To develop the skill from a local clone, add the clone as a marketplace instead (`copilot plugin marketplace add <clone>`); Copilot CLI loads it live, so edits take effect in the next session. When releasing, bump `version` in `package.json`, `plugin.json` and `.claude-plugin/plugin.json` together; Claude Code keeps users on the installed version until it changes.
+When releasing, bump `version` in `package.json`, `plugin.json` and `.claude-plugin/plugin.json` together.
 
 ## Sample prompts
 
