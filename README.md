@@ -9,17 +9,12 @@ Fixed conditions, matching Chrome DevTools: mobile emulation (iPhone 16 Pro Max,
 
 ## Quick start
 
-Requires Node.js 18+ and Google Chrome.
+In the GitHub Copilot app:
 
-Install the `perf-tools` plugin, which contains both skills, in the GitHub Copilot app:
+1. [Add the `adobecom/perf-tools` marketplace](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Fmarketplace%2Fadd%3Fsource%3Dadobecom%252Fperf-tools).
+2. [Install the `perf-tools` plugin](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Finstall%3Fsource%3Dperf-tools%2540perf-tools).
 
-1. [Add the marketplace](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Fmarketplace%2Fadd%3Fsource%3Dadobecom%252Fperf-tools): in **Customize**, open the marketplace settings next to the marketplace dropdown and add `adobecom/perf-tools`.
-2. [Install the plugin](https://github.com/copilot/app/launch?open=ghapp%3A%2F%2Fplugins%2Finstall%3Fsource%3Dperf-tools%2540perf-tools): search **Customize** for `perf-tools` and click **Install**.
-3. Start a new session and ask for preloads or a comparison. The skill runs the CLI through `npx`, so there is nothing else to install. A Chrome window opens during runs, so keep it visible; a comparison takes several minutes.
-
-The repository is private: you need read access to `adobecom/perf-tools` and must be signed in to GitHub in the app.
-
-When releasing, bump `version` in `package.json`, `plugin.json` and `.claude-plugin/plugin.json` together.
+Then ask for preloads or a comparison in a new session. Needs Node.js 18+ and Google Chrome.
 
 ## Sample prompts
 
@@ -108,6 +103,7 @@ What to check afterwards:
 
 ### Notes
 
+- When releasing, bump `version` in `package.json`, `plugin.json` and `.claude-plugin/plugin.json` together.
 - Runs headed by default: some hosts (for example `www.stage.adobe.com`) reject headless browsers.
 - One warm-up load per variant is done first and not counted.
 - Reported metrics: FCP, LCP, DCL, Load, TBT (from FCP), CLS, main-thread `v8.compileModule`, request count, `loadLink` script fetches as module (modulepreload) vs link (preload), duplicate script fetches.
