@@ -20,7 +20,6 @@ Then ask for preloads or a comparison in a new session. Needs Node.js 18+ and Go
 
 - "Generate preloads for https://www.adobe.com/products/photoshop.html"
 - "Test Milo PR 7062 on https://www.adobe.com/acrobat/plans.html"
-- "Test `snippet.html` in the head of https://www.adobe.com/products/photoshop.html"
 - "Compare before.json and after.json"
 
 ## CLI reference
