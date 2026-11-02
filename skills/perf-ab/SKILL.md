@@ -5,7 +5,7 @@ description: Run before/after page-load performance trace comparisons with the `
 
 # Before/after trace comparison (`perf-ab`)
 
-CLI from `adobecom/perf-tools`. Check it is installed with `perf-ab --help`. If missing: `npm install -g github:adobecom/perf-tools` (needs Node 18+ and Google Chrome).
+CLI from `adobecom/perf-tools` (needs Node 18+ and Google Chrome). Check it is installed with `perf-ab --help`. If it is missing, replace `perf-ab` with `npx -y github:adobecom/perf-tools` in every command below, or install it with `npm install -g github:adobecom/perf-tools`.
 
 It runs **headed Chrome** (many Adobe hosts reject headless). Keep the Chrome window visible and run the command async; it takes several minutes (about 25 s per run, plus one warm-up per variant).
 
