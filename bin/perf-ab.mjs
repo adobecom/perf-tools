@@ -363,7 +363,9 @@ async function launch() {
     const { processInfo } = await cdp.send('SystemInfo.getProcessInfo');
     browserPids.set(browser, processInfo.find((p) => p.type === 'browser')?.id ?? null);
     await cdp.detach();
-  } catch { /* the PID is informational only */ }
+  } catch (e) {
+    console.warn(`WARNING: browser PID unavailable (${e.message}); traces record browserPid: null`);
+  }
   return browser;
 }
 const NAMES = single ? ['after'] : ['before', 'after'];

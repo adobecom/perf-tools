@@ -98,12 +98,16 @@ test('perf-ab A/B: runs x 2 cold loads, one fresh browser each, no warm-up, brow
   }
 });
 
-test('perf-preload records through perf-ab: -n cold loads, no warm-up trace', { skip, timeout: 180000 }, async () => {
+test('perf-preload records through perf-ab: -n cold loads, no warm-up trace, stale traces never mixed in', { skip, timeout: 180000 }, async () => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-preload-cold-'));
   try {
+    // Leftovers from an earlier, longer (or warm) capture in the same output folder.
+    fs.mkdirSync(path.join(out, 'traces'));
+    for (const f of ['after0.json', 'after3.json', 'after99.json']) fs.writeFileSync(path.join(out, 'traces', f), '{"traceEvents":[]}');
     await withServer(async (origin, hits) => {
-      await run(process.execPath, [path.join(BIN, 'perf-preload.mjs'), `${origin}/page`, '-n', '2', '-o', out, '--headless', '--channel', '']);
+      const { stdout } = await run(process.execPath, [path.join(BIN, 'perf-preload.mjs'), `${origin}/page`, '-n', '2', '-o', out, '--headless', '--channel', '']);
       assertCold(hits, 2);
+      assert.match(stdout, /: 2 traces,/, 'only the two new cold runs are analyzed');
     });
     const dir = path.join(out, 'traces');
     assert.deepEqual(traces(dir), ['after1.json', 'after2.json']);

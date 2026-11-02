@@ -70,8 +70,13 @@ if (o.from.length) {
   for (const k of ['device', 'cpu', 'channel']) if (o[k] !== undefined) args.push(`--${k}`, o[k]);
   if (o.headless) args.push('--headless');
   execFileSync(process.execPath, args, { stdio: 'inherit' });
-  // perf-ab saves one cold load per run as after1..n.json; it records no warm-up.
-  fs.readdirSync(traceDir).filter((f) => /^after[1-9]\d*\.json$/.test(f)).sort().forEach((f) => traceFiles.push(path.join(traceDir, f)));
+  // perf-ab saves one cold load per run as after1..n.json and no warm-up. Read exactly the requested runs, never
+  // whatever else happens to be in the folder.
+  for (let i = 1; i <= Number(o.runs); i += 1) {
+    const f = path.join(traceDir, `after${i}.json`);
+    if (!fs.existsSync(f)) { console.error(`Missing trace ${f}: perf-ab did not record run ${i}`); process.exit(1); }
+    traceFiles.push(f);
+  }
 }
 if (!traceFiles.length) { console.error('No traces to analyze'); process.exit(1); }
 
