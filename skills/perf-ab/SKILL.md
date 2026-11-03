@@ -22,12 +22,13 @@ Accepted runs only: Lighthouse must finish without a runtime error, every metric
 
 Run it async; a job takes several minutes (queueing plus about 2 to 4 minutes per pair, pairs run in parallel). **Start with a smoke test of one pair (`-n 1`)** and check the reports and the render before a full campaign (`-n 3` or more).
 
-Reviewed optimizations live as versioned configs under `experiments/` (schema `perf-ab/experiment-v1`; see the README). Run them with `perf-ab --config experiments/acrobat-plans.json -n 1 -o ./ab-smoke`, then `-n 3`. The workflow reads the committed copy on `--ref` (default `main`): commit and push config changes first (the CLI refuses a config that differs from `origin/<ref>`). `--config` cannot be combined with a URL or change options. The same config can be started from the Actions "Run workflow" form (`config`, `runs`).
+Reviewed optimizations live as versioned configs under `experiments/` (schema `perf-ab/experiment-v1`; see the README). Run them with `perf-ab --config experiments/acrobat-plans.json -n 1 -o ./ab-smoke`, then `-n 3`. The workflow reads the committed copy on `--ref` (default `main`): commit and push config changes first (the CLI refuses a config that differs from `origin/<ref>`). `--config` cannot be combined with a URL or change options. The same config can be started from the Actions "Run workflow" form (`config`, `runs`, and optional `milo_pr` / `mas_pr` fields).
 
 Output (`-o <dir>`, default `./traces`; earlier results in that folder are removed first):
 - `results.json` (aggregate): `status` (`ok` / `partial` / `failed`), `errorKind`, `samples` (`requested`, `pairs`, `before`, `after`, `rejected`), `medians` (`before`, `after`, `delta` = median per-pair delta), `pairs[]` (per-pair metrics, delta, `job` metadata), `profile`, `profileKey`, `egress`, `experiment`, `github`, `hints` (requested / used / contextual / dropped).
 - `pair<i>/results.json`: the job's own result (`egress` checks, resolved `profile`, `lighthouseVersion`, `chromeVersion`, `cold` flags, `runs` with first document response and render check, `rejected`).
 - `pair<i>/<variant><i>/`: `report.html` and `report.json` (the official Lighthouse reports; share these, never a hand-made summary), `trace.json` and `devtoolslog.json` (raw), `run.json` (render check, proxy request log with original and served encoded sizes, document geo).
+- For PR-backed overrides, `run.json` records `sourcePrs[]` (resolved `baseSha`, `headSha`, `mergeBaseSha`, and mapped file paths/blob SHAs) and `servedSources[]` (only after sources that were actually served, with those commits plus the exact checkout blob and SHA-256). `results.json` also carries the pinned PR refs and production-vs-merge-base source hashes. A `production-source-drift` warning means the unchanged production control differs from the PR's pinned merge-base file; interpret the measurement as production versus the full pinned PR file, not just the intended code change.
 - `pair<i>/rejected/<variant><i>-attempt<k>/`: the same for rejected attempts.
 - The console prints each pair, the medians per variant, the median delta, the hint usage and the workflow run URL.
 - Only compare results with the same `profileKey` (Lighthouse version, form factor, throttling, RTT, throughput, CPU multiplier, viewport, DPR, mobile).
@@ -63,8 +64,11 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" --patch ./market-config.json 
 perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 --mas-pr 1487 -n 3
 ```
 
-- Mapping: Milo `libs/**` becomes `/libs/**`; MAS `web-components/dist/**` becomes `/mas/libs/**`. Only same-repository PR branches work.
-- "after" serves the PR head version of each changed file and "before" the same files from Milo `stage` / MAS `main`, both from `aem.live`; everything else comes live from production. Production libs may lag `stage` / `main`, so check the reports for a broken render.
+- Mapping: Milo `libs/**` becomes `/libs/**`; MAS `web-components/dist/**` becomes `/mas/libs/**`. Only PRs whose base and head repositories are respectively `adobecom/milo` and `adobecom/mas` are accepted.
+- The workflow resolves the PR diff and pins its base, head, and merge-base commits before matrix workers start. Each runner fetches the exact commit into an isolated local checkout and serves only changed mapped files through the existing measuring proxy. No branch code is executed and the measured page never fetches a PR branch or `aem.live` URL.
+- "Before" remains the unchanged production page; "after" uses the pinned PR version only for changed mapped files. All other responses remain production. Added, removed, and renamed files are represented explicitly. The source branch moving after resolution cannot change the run.
+- In the Actions **Run workflow** form, select `config` or provide `url`, then optionally enter `milo_pr` and/or `mas_pr` with positive PR numbers. With a config, a nonempty form field overrides that repository's `after.pullRequests` entry for this run; an empty field leaves the config value unchanged. With a URL and any PR number, the workflow creates the production-before / PR-after pair. Do not combine PR number fields with the encoded CLI `spec` input.
+- Inspect `run.json` `sourcePrs` and `servedSources` to confirm exact PR commits and source-file hashes. The `production-source-drift` warning identifies when production differs from the pinned merge base; the after side still uses the exact PR head, so do not describe that result as a market-fix-only comparison when unrelated source drift exists.
 
 ### d. Branch values (pages that honor `?milolibs=`)
 
@@ -103,4 +107,5 @@ Parse with Python (`json.load(...)['traceEvents']`):
 - Only `https://*.adobe.com` pages can be benchmarked (no apex, credentials, ports, lookalike domains or hosts resolving to private addresses); redirects and the final URL are checked too, and a violation fails the run without retries. Third-party subresources load normally.
 - Never compare a `milolibs` (`*.aem.live`) run with a plain-stage run: it is a separate origin with a cold CDN edge.
 - **Verify `?milolibs=` is honored** before trusting a branch-value result: in the "after" report, `/libs/` requests must go to `<branch>--milo--adobecom.aem.live` and the document status must be 200. Otherwise you are measuring A vs A.
+- This `aem.live` check applies only to the separate branch-value mode above. `--milo-pr` / `--mas-pr` use pinned runner-local source checkouts and keep production as the before control.
 - Results from the default (US Lighthouse) mode and the legacy local DevTools mode are not comparable.

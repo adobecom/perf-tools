@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import http2 from 'node:http2';
 import { brotliCompressSync, constants } from 'node:zlib';
+import { createHash } from 'node:crypto';
 import { runJob, makeCert, scanForKeys } from '../lib/pagespeed/job.mjs';
 
 const CHROME = [process.env.CHROME_PATH, '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable']
@@ -21,12 +22,14 @@ const page = (cards) => `<!doctype html><html><head><meta charset="utf-8"><meta 
 <title>Fixture plans</title><script type="module" src="/app.js"></script></head>
 <body><main><h1>Plans</h1><p>${'Plan details. '.repeat(40)}</p></main><div id="cards" data-n="${cards}"></div></body></html>`;
 const APP = `const version = "v1";
+const { revision } = await import('/libs/utils/utils.js');
 const { count } = await (await fetch('/data.json')).json();
 const n = Math.min(count, Number(document.getElementById('cards').dataset.n));
 for (let i = 0; i < n; i += 1) {
   const c = document.createElement('div');
   c.className = 'card';
   c.dataset.version = version;
+  c.dataset.revision = revision;
   c.textContent = 'Card ' + i + ' ' + 'x'.repeat(200);
   document.getElementById('cards').append(c);
 }
@@ -55,6 +58,7 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
       return send(200, 'text/html; charset=utf-8', page(documents === 2 && h['sec-fetch-dest'] === 'document' ? 1 : 3), { link: '</app.js>; rel=modulepreload', 'server-timing': 'cdn-cache; desc=MISS, geo; desc=US' });
     }
     if (p === '/app.js') return send(200, 'text/javascript', APP);
+    if (p === '/libs/utils/utils.js') return send(200, 'text/javascript', 'export const revision = "production";\n');
     if (p === '/data.json') return send(200, 'application/json', JSON.stringify({ count: 3, pad: 'y'.repeat(500) }));
     stream.respond({ ':status': 404 });
     return stream.end();
@@ -68,6 +72,24 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
   const certsBefore = snapshot('perf-ab-cert-');
   const profilesBefore = snapshot('perf-ab-profile-');
   const url = `https://${HOST}/page`;
+  const productionSource = Buffer.from('export const revision = "production";\n');
+  const prSource = Buffer.from('export const revision = "pinned-pr";\n');
+  const prHead = 'a'.repeat(40);
+  const prBase = 'b'.repeat(40);
+  const prMergeBase = 'c'.repeat(40);
+  const prBlob = 'd'.repeat(40);
+  const sourcePath = '/libs/utils/utils.js';
+  const localSources = {
+    [sourcePath]: {
+      repo: 'adobecom/milo', number: 7095, headSha: prHead, mergeBaseSha: prMergeBase,
+      filePath: 'libs/utils/utils.js', baseFilePath: 'libs/utils/utils.js', blobSha: prBlob, deleted: false,
+    },
+  };
+  const sourcePrs = [{
+    repo: 'adobecom/milo', number: 7095, baseRef: 'stage', headRef: 'MWPW-213916',
+    baseSha: prBase, headSha: prHead, mergeBaseSha: prMergeBase,
+    files: [{ status: 'modified', path: sourcePath, blobSha: prBlob }],
+  }];
   const logs = [];
   try {
     const results = await runJob({
@@ -80,6 +102,8 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
             headInject: '<link rel="preload" href="/data.json" as="fetch" crossorigin>',
             priorities: [{ path: '/app.js', priority: 'high' }],
             patches: [{ path: '/app.js', find: 'const version = "v1";', replace: 'const version = "v2";' }],
+            localSources,
+            sourcePrs,
           },
         },
         expect: { title: '^Fixture plans$', counts: [{ selector: '.card', count: 3 }] },
@@ -93,6 +117,11 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
       upstreamOptions: { rejectUnauthorized: false },
       dnsLookup: fakeDns,
       chromePath: CHROME,
+      checkoutSources: () => ({
+        contents: new Map([[sourcePath, { body: prSource, deleted: false }]]),
+        baselineContentHashes: new Map([[sourcePath, createHash('sha256').update(productionSource).digest('hex')]]),
+        cleanup: () => {},
+      }),
       log: (m) => logs.push(m),
       warn: (m) => logs.push(`WARN ${m}`),
     });
@@ -144,8 +173,21 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
     }
     assert.equal(before.requests.find((r) => r.path === '/page').originalEncodedBytes, br(page(3)).length);
     assert.equal(before.documentGeo.status, 'US');
+    assert.deepEqual(results.sourceDrift, [{
+      path: sourcePath, repo: 'adobecom/milo', number: 7095,
+      expectedMergeBaseSha256: createHash('sha256').update(productionSource).digest('hex'),
+      productionSha256: createHash('sha256').update(productionSource).digest('hex'),
+      productionStatus: 200, status: 'matches-merge-base',
+    }]);
     // Change: document + patched module edited and recompressed as Brotli; hints and Link header priority applied.
-    assert.deepEqual([...after.editedResponses].sort(), ['/app.js', '/page']);
+    assert.deepEqual([...after.editedResponses].sort(), ['/app.js', '/libs/utils/utils.js', '/page']);
+    assert.deepEqual(after.sourcePrs, sourcePrs);
+    assert.deepEqual(after.servedSources, [{
+      path: sourcePath, repo: 'adobecom/milo', number: 7095, baseSha: prBase, headSha: prHead,
+      mergeBaseSha: prMergeBase, status: 'served', blobSha: prBlob,
+      sha256: createHash('sha256').update(prSource).digest('hex'),
+    }]);
+    assert.equal(after.requests.find((r) => r.path === sourcePath).edited, true);
     assert.ok(after.requests.filter((r) => r.edited).every((r) => r.encoding === 'br' && r.servedEncodedBytes > 0));
     const dlog = JSON.parse(fs.readFileSync(path.join(out, 'after2', 'devtoolslog.json'), 'utf8'));
     const doc = dlog.find((e) => e.method === 'Network.responseReceived' && e.params.type === 'Document').params.response;
