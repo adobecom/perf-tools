@@ -127,6 +127,10 @@ test('published run artifact repair changes only the link metadata and remains i
   });
   assert.deepEqual(repaired.medians, original.medians);
   assert.deepEqual(repaired.pairs, original.pairs);
+  const { artifact: repairedArtifact, ...repairedValues } = repaired;
+  const { artifact: previousArtifact, ...previousValues } = original;
+  assert.deepEqual(repairedValues, previousValues, 'metadata repair must preserve every other published detail field');
+  assert.equal(previousArtifact.name, oldArtifact.name);
 
   await publishRuns({
     root,
