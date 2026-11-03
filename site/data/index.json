@@ -1,0 +1,140 @@
+{
+  "schema": "perf-ab/history-v1",
+  "updatedAt": "2026-11-03T12:53:34.755Z",
+  "runs": [
+    {
+      "id": "41633898462-1",
+      "name": "acrobat-plans-latest",
+      "config": "experiments/acrobat-plans.json",
+      "createdAt": "2026-11-03T12:13:26.000Z",
+      "finishedAt": "2026-11-03T12:16:27.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/acrobat/plans.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 3,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 58,
+          "FCP": 824.7504,
+          "LCP": 4378.750399999999,
+          "SI": 5418.040004560693,
+          "TBT": 1067,
+          "CLS": 0.014893654301697644
+        },
+        "after": {
+          "performance": 68,
+          "FCP": 1443.8772000000001,
+          "LCP": 4423.1320000000005,
+          "SI": 4768.545128454522,
+          "TBT": 461,
+          "CLS": 0.01369827256367519
+        },
+        "delta": {
+          "performance": 10,
+          "FCP": 594.6271999999996,
+          "LCP": -17.86189999999897,
+          "SI": -730.4869470986378,
+          "TBT": -610.9999999999964,
+          "CLS": -0.0011953817380224527
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41633898462/attempts/1",
+        "sha": "faa725932a9d91d2955bb760641d5d4c841f2506"
+      },
+      "detailPath": "data/runs/41633898462-1.json"
+    },
+    {
+      "id": "41631057972-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-03T11:52:43.000Z",
+      "finishedAt": "2026-11-03T11:54:30.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/acrobat/plans.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": 1,
+        "before": 1,
+        "after": 1,
+        "pairs": 1,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 50,
+          "FCP": 1942.0149999999999,
+          "LCP": 4412.014999999999,
+          "SI": 6240.867847372157,
+          "TBT": 1835.5,
+          "CLS": 0.014893654301697644
+        },
+        "after": {
+          "performance": 82,
+          "FCP": 843.3177999999998,
+          "LCP": 4306.781599999999,
+          "SI": 4793.54862368453,
+          "TBT": 24.49999999999909,
+          "CLS": 0.01369827256367519
+        },
+        "delta": {
+          "performance": 32,
+          "FCP": -1098.6972,
+          "LCP": -105.23340000000007,
+          "SI": -1447.3192236876266,
+          "TBT": -1811.000000000001,
+          "CLS": -0.0011953817380224527
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41631057972/attempts/1",
+        "sha": "0c925d8166a095f964ae4253182daa136037174f"
+      },
+      "detailPath": "data/runs/41631057972-1.json"
+    }
+  ]
+}
