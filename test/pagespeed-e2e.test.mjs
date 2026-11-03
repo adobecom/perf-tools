@@ -1,0 +1,165 @@
+// End-to-end: the real runner job (lib/pagespeed/job.mjs) with real Chrome and real Lighthouse 13.6.0 against a
+// local HTTP/2 + Brotli fixture reached through the per-run proxy. Only the egress lookup is stubbed (as US).
+// Skipped when no local Chrome is installed.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http2 from 'node:http2';
+import { brotliCompressSync, constants } from 'node:zlib';
+import { runJob, makeCert, scanForKeys } from '../lib/pagespeed/job.mjs';
+
+const CHROME = [process.env.CHROME_PATH, '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable']
+  .find((p) => p && fs.existsSync(p));
+// A *.adobe.com name that never reaches real DNS: the proxy terminates it and forwards to the local fixture, and the
+// public-address check is answered by a fake resolver (documentation-free public address).
+const HOST = 'perf-ab-e2e.adobe.com';
+const fakeDns = (hostname, opts, cb) => cb(null, [{ address: '23.192.0.10', family: 4 }]);
+const br = (s) => brotliCompressSync(Buffer.from(s), { params: { [constants.BROTLI_PARAM_QUALITY]: 11 } });
+const page = (cards) => `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Fixture plans</title><script type="module" src="/app.js"></script></head>
+<body><main><h1>Plans</h1><p>${'Plan details. '.repeat(40)}</p></main><div id="cards" data-n="${cards}"></div></body></html>`;
+const APP = `const version = "v1";
+const { count } = await (await fetch('/data.json')).json();
+const n = Math.min(count, Number(document.getElementById('cards').dataset.n));
+for (let i = 0; i < n; i += 1) {
+  const c = document.createElement('div');
+  c.className = 'card';
+  c.dataset.version = version;
+  c.textContent = 'Card ' + i + ' ' + 'x'.repeat(200);
+  document.getElementById('cards').append(c);
+}
+`;
+
+function snapshot(prefix) {
+  return new Set(fs.readdirSync(os.tmpdir()).filter((f) => f.startsWith(prefix)));
+}
+
+test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, cold retries, unchanged baseline bytes', { skip: !CHROME && 'no local Chrome', timeout: 240000 }, async () => {
+  const cert = makeCert(HOST);
+  let documents = 0;
+  const wire = {};
+  const server = http2.createSecureServer({ key: cert.key, cert: cert.cert, allowHTTP1: false });
+  server.on('stream', (stream, h) => {
+    const p = h[':path'];
+    const send = (status, type, body, extra = {}) => {
+      wire[p] = br(body);
+      stream.respond({ ':status': status, 'content-type': type, 'content-encoding': 'br', 'cache-control': 'max-age=3600', ...extra });
+      stream.end(wire[p]);
+    };
+    if (p === '/page') {
+      // Lighthouse also fetches the page itself (sec-fetch-dest: empty) for its own audits; count navigations only.
+      if (h['sec-fetch-dest'] === 'document') documents += 1;
+      // The 2nd page document (change run 1, attempt 1) renders 1 card instead of 3: an incorrect render.
+      return send(200, 'text/html; charset=utf-8', page(documents === 2 && h['sec-fetch-dest'] === 'document' ? 1 : 3), { link: '</app.js>; rel=modulepreload', 'server-timing': 'cdn-cache; desc=MISS, geo; desc=US' });
+    }
+    if (p === '/app.js') return send(200, 'text/javascript', APP);
+    if (p === '/data.json') return send(200, 'application/json', JSON.stringify({ count: 3, pad: 'y'.repeat(500) }));
+    stream.respond({ ':status': 404 });
+    return stream.end();
+  });
+  await new Promise((r) => { server.listen(0, '127.0.0.1', r); });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-e2e-'));
+  // A private temp dir for the job, so certs/profiles created by test files running in parallel don't interfere.
+  const jobTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-e2e-tmp-'));
+  const prevTmp = process.env.TMPDIR;
+  process.env.TMPDIR = jobTmp;
+  const certsBefore = snapshot('perf-ab-cert-');
+  const profilesBefore = snapshot('perf-ab-profile-');
+  const url = `https://${HOST}/page`;
+  const logs = [];
+  try {
+    const results = await runJob({
+      spec: {
+        version: 1, runs: 1, names: ['before', 'after'],
+        variants: {
+          before: { url },
+          after: {
+            url,
+            headInject: '<link rel="preload" href="/data.json" as="fetch" crossorigin>',
+            priorities: [{ path: '/app.js', priority: 'high' }],
+            patches: [{ path: '/app.js', find: 'const version = "v1";', replace: 'const version = "v2";' }],
+          },
+        },
+        expect: { title: '^Fixture plans$', counts: [{ selector: '.card', count: 3 }] },
+      },
+      requestId: 'e2e-fixture-1',
+      out,
+      fetchJson: async () => ({ country: 'US', country_iso: 'US', country_code: 'US' }),
+      upstreamOrigin: `https://127.0.0.1:${server.address().port}`,
+      upstreamOptions: { rejectUnauthorized: false },
+      dnsLookup: fakeDns,
+      chromePath: CHROME,
+      log: (m) => logs.push(m),
+      warn: (m) => logs.push(`WARN ${m}`),
+    });
+    assert.equal(results.status, 'ok', `${results.error}\n${logs.join('\n')}`);
+    assert.equal(results.lighthouseVersion, '13.6.0');
+    assert.match(results.chromeVersion, /Chrome\/\d+/);
+    assert.equal(results.egress.country, 'US');
+    assert.equal(results.profile.cpuSlowdownMultiplier, 1.2);
+    assert.equal(results.profile.rttMs, 150);
+    assert.equal(results.profile.throughputKbps, 1638.4);
+    assert.equal(results.profile.throttlingMethod, 'simulate');
+    assert.deepEqual(results.cold, { freshBrowserPerAttempt: true, emptyProfilePerAttempt: true, warmups: 0, lighthouseStorageReset: true });
+
+    // Exactly one accepted run per variant; the incorrect render was kept as a rejected diagnostic and retried fresh.
+    assert.deepEqual(results.runs.map((r) => `${r.variant}${r.run}#${r.attempt}`), ['before1#1', 'after1#2']);
+    assert.equal(results.rejected.length, 1);
+    assert.equal(results.rejected[0].variant, 'after');
+    assert.match(results.rejected[0].reason, /render check failed/);
+    assert.ok(fs.existsSync(path.join(out, results.rejected[0].dir, 'report.html')));
+    assert.equal(documents, 3, 'three cold navigations: before1, after1 (rejected), after1 retry; no warm-ups');
+
+    for (const r of results.runs) {
+      // Full rendered DOM checked in the measured page itself.
+      assert.deepEqual(r.render, { title: 'Fixture plans', titleOk: true, bodyVisible: true, counts: { '.card': 3 }, countsOk: true });
+      for (const f of ['report.html', 'report.json', 'trace.json', 'devtoolslog.json', 'run.json']) assert.ok(fs.existsSync(path.join(out, r.dir, f)), `${r.dir}/${f}`);
+      assert.equal(r.firstResponse.protocol, 'h2');
+      assert.equal(r.firstResponse.fromDiskCache, false);
+      for (const k of ['performance', 'FCP', 'LCP', 'SI', 'TBT', 'CLS']) assert.ok(Number.isFinite(r.metrics[k]), `${r.dir} ${k}`);
+      const lhr = JSON.parse(fs.readFileSync(path.join(out, r.dir, 'report.json'), 'utf8'));
+      assert.equal(lhr.lighthouseVersion, '13.6.0');
+      assert.match(fs.readFileSync(path.join(out, r.dir, 'report.html'), 'utf8'), /Lighthouse Report/i);
+    }
+    assert.ok(Object.values(results.medians.before).every(Number.isFinite));
+    assert.ok(Object.values(results.medians.delta).every(Number.isFinite));
+
+    const runJson = (d) => JSON.parse(fs.readFileSync(path.join(out, d, 'run.json'), 'utf8'));
+    const before = runJson('before1');
+    const after = runJson('after1');
+    // Baseline: served exactly as the origin sent it (same compressed bytes, nothing edited), over HTTP/2.
+    assert.deepEqual(before.editedResponses, []);
+    for (const r of before.requests.filter((x) => x.kind)) {
+      assert.equal(r.edited, false, r.path);
+      assert.equal(r.servedEncodedBytes, r.originalEncodedBytes, r.path);
+      assert.equal(r.alpn, 'h2');
+    }
+    assert.equal(before.requests.find((r) => r.path === '/page').originalEncodedBytes, br(page(3)).length);
+    assert.equal(before.documentGeo.status, 'US');
+    // Change: document + patched module edited and recompressed as Brotli; hints and Link header priority applied.
+    assert.deepEqual([...after.editedResponses].sort(), ['/app.js', '/page']);
+    assert.ok(after.requests.filter((r) => r.edited).every((r) => r.encoding === 'br' && r.servedEncodedBytes > 0));
+    const dlog = JSON.parse(fs.readFileSync(path.join(out, 'after1', 'devtoolslog.json'), 'utf8'));
+    const doc = dlog.find((e) => e.method === 'Network.responseReceived' && e.params.type === 'Document').params.response;
+    assert.match(Object.entries(doc.headers).find(([k]) => k.toLowerCase() === 'link')[1], /<\/app\.js>; rel=modulepreload; fetchpriority=high/);
+    const lhrAfter = JSON.parse(fs.readFileSync(path.join(out, 'after1', 'report.json'), 'utf8'));
+    const reqs = lhrAfter.audits['network-requests'].details.items.map((x) => new URL(x.url).pathname);
+    assert.equal(reqs.filter((p) => p === '/data.json').length, 1, 'injected fetch preload was consumed (no second download)');
+    assert.equal(results.hints.requestedLinks, 1);
+    assert.equal(results.hints.usedLinks, 1);
+
+    // No keys or certificates in the artifact directory; per-run certs and profiles are removed.
+    assert.deepEqual(scanForKeys(out), []);
+    assert.deepEqual([...snapshot('perf-ab-cert-')].filter((f) => !certsBefore.has(f)), []);
+    assert.deepEqual([...snapshot('perf-ab-profile-')].filter((f) => !profilesBefore.has(f)), []);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(out, 'results.json'), 'utf8')).status, 'ok');
+  } finally {
+    if (prevTmp === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = prevTmp;
+    fs.rmSync(jobTmp, { recursive: true, force: true });
+    server.close();
+    cert.cleanup();
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});

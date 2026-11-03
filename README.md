@@ -2,16 +2,20 @@
 
 Page-load performance tools, consumed mainly as **agent skills**:
 
+- `perf-ab` compares a live production page (for example `www.adobe.com`) as-is ("before") with the same page plus changes ("after"): an injected `head.html` snippet such as preload links, `fetchpriority` on hints and on the document's `Link` response header, guarded source patches, Milo / MAS PR files, or branch values. With no changes it measures one URL.
 - `perf-preload` loads a page several times, finds the LCP in each trace and the resources that finished before it, and writes static `<link rel="modulepreload|preload">` tags for `head.html`.
-- `perf-ab` is an A/B page-load trace runner built for **production URLs**: it loads a live page (for example `www.adobe.com`) twice, once as-is and once with selected resources proxied from a Milo / MAS PR, branch or local checkout, or with an injected `head.html` snippet such as preload links. Runs alternate, a median summary is printed, and DevTools-loadable traces are saved.
 
-Fixed conditions, matching Chrome DevTools: mobile emulation (iPhone 16 Pro Max, 440x956, 3x DPR, touch, iOS UA), 4x CPU throttle, "Slow 4G" (180 KB/s down, 84 KB/s up, 562.5 ms latency), cache disabled.
+**Default measurement: PageSpeed Insights mobile, from the US.** `perf-ab` (and `perf-preload`, which records through it) runs real **Lighthouse 13.6.0** with the PageSpeed mobile preset (`lr-mobile`: emulated Moto G Power, 412x823 at 1.75 DPR, **simulated** throttling with 150 ms TCP RTT and 1638.4 kb/s throughput, CPU slowdown 1.2) on the `perf-ab` GitHub Actions workflow of `adobecom/perf-tools`. The CLI dispatches the workflow with `gh`, waits and downloads the artifact. Before anything touches the measured site, the job checks its egress with neutral geolocation services and **fails closed** unless every answer is US; the page's own `Server-Timing: geo;desc=XX` is checked as well and a non-US value fails the job. There is **no local fallback**: missing `gh` access, non-US or unknown egress, render failures that outlast the retries, or infrastructure errors end with a non-zero exit and `results.json` `status: "failed"`. Metrics are Lighthouse's own audits and score (performance, FCP, LCP, SI, TBT, CLS), never DevTools timings converted into scores.
 
-Cold-run policy: every measured run starts cold. Each run, and each retry of it, launches a new browser process with an empty temporary profile, so no HTTP cache, V8 code cache, cookies, storage, service workers, open connections or Chrome DNS cache carry over from an earlier run. There are no warm-up loads; every load is measured and counted. Within a run the cache is also disabled. The OS DNS cache and shared CDN / edge caches are outside the browser and are left alone: do not purge them and do not add cache-busting query parameters. Requests that one page load makes for the same resource are part of that load, not prewarming.
+The "after" changes are applied by a per-run measuring proxy on the runner. It terminates TLS only for the measured host, with a throwaway certificate trusted by that one Chrome process (SPKI exception, no system trust), keeps HTTP/2, and tunnels every other origin untouched. Unchanged responses are forwarded byte-for-byte with their original compression; edited ones are re-compressed with Brotli quality 6, close to production's, so Lighthouse's simulation sees realistic transfer sizes. The temporary key never enters the artifact directory and is deleted afterwards; the job also scans the artifact for key material before upload.
+
+Cold-run policy: every measured run starts cold. Runs alternate before/after; each run, and each retry of it, launches a new Chrome process with an empty temporary profile (and a fresh proxy), so no HTTP cache, V8 code cache, cookies, storage, service workers, open connections or Chrome DNS cache carry over. There are no warm-up loads; every load is measured and counted. Lighthouse's normal storage reset stays on, and the job rejects a run whose first document response came from a cache. The OS DNS cache and shared CDN / edge caches are outside the browser and are left alone: do not purge them and do not add cache-busting query parameters. Requests that one page load makes for the same resource are part of that load, not prewarming.
+
+A run is accepted only when Lighthouse finished without a runtime error, every metric is a finite number, and the render guard passed (non-hidden body, plus `--expect-title` / `--expect-count` when given). Rejected attempts are kept under `rejected/` as diagnostics and retried with a fresh browser (3 attempts per run); they never count as results.
 
 ## Quick start
 
-Needs Node.js 18+ and Google Chrome.
+Needs Node.js 22.19+ (Lighthouse 13.6.0) and the GitHub CLI `gh`, authenticated with Actions write access to `adobecom/perf-tools` (or `--repo`). Google Chrome is only needed locally for the legacy `--local-devtools` mode.
 
 In the GitHub Copilot app:
 
@@ -37,34 +41,49 @@ Then ask for preloads or a comparison in a new session.
 Run `perf-preload --help` and `perf-ab --help` for all options.
 
 ```sh
-# LCP preloads: 3 recorded runs, writes ./preloads/products--photoshop.html and ./preloads/traces
+# LCP preloads: 3 cold US Lighthouse loads, writes ./preloads/products--photoshop.html and ./preloads/traces
 perf-preload "https://www.adobe.com/products/photoshop.html" -n 3 -o ./preloads
 
 # The same from existing DevTools traces
 perf-preload --from Trace-1.json --from Trace-2.json -o ./preloads
 ```
 
-Production pages ignore `?milolibs=` / `?maslibs=`, so `perf-ab` proxies the resources instead.
-
 ```sh
-# Milo / MAS PR delta: only the files changed by the PR are proxied
+# One URL as-is
+perf-ab "https://www.adobe.com/acrobat/plans.html" -n 3
+
+# Smoke test first: one cold before/after pair
+perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html -n 1 \
+  --expect-title "Acrobat plans" --expect-count merch-card=19 -o ./ab-smoke
+
+# Injected head snippet with priorities (applied to the hints and to the document's Link response header)
+perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html \
+  --fetchpriority /libs/utils/utils.js=high --fetchpriority /libs/deps/mas/commerce.js=auto -n 3
+
+# Guarded source patch of live files (each "find" must match exactly once, or the job fails)
+perf-ab "https://www.adobe.com/acrobat/plans.html" --patch ./market-config.json -n 3
+
+# Milo / MAS PR delta: only the files changed by the PR are served (production pages ignore ?milolibs=)
 perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 --mas-pr 1487 -n 3
 
-# Local checkouts (--override-before does the same for the baseline)
-perf-ab "https://www.adobe.com/" \
-  --override /libs=~/git/milo/libs \
-  --override /libs/deps/mas=~/git/mas/web-components/dist
-
-# Injected head snippet (for example from perf-preload)
-perf-ab "https://www.adobe.com/products/photoshop.html" --head-inject ./preloads/products--photoshop.html -n 5
-
-# Branch hosts
-perf-ab "https://www.stage.adobe.com/products/photoshop.html" -b my-feature-stage -a my-feature -n 5
+# Branch values (pages that honor ?milolibs=)
+perf-ab "https://www.stage.adobe.com/products/photoshop.html" -b my-feature-stage -a my-feature -n 3
 ```
+
+Output (`-o`, default `./traces`), downloaded from the workflow artifact `perf-ab-<request id>`:
+- `results.json`: status, egress checks, resolved Lighthouse profile, Lighthouse and Chrome versions, cold-run flags, per-run metrics, medians and delta, hint report, rejected attempts.
+- `<variant><i>/`: `report.html` and `report.json` (the official Lighthouse reports), `trace.json`, `devtoolslog.json`, `run.json` (render check, first document response, proxy request log with original and served compressed sizes, document geo).
+- `rejected/<variant><i>-attempt<k>/`: the same for rejected attempts.
+
+Any earlier results, run folders and `rejected/` in `-o` are removed before the download, so nothing stale is mixed in.
+
+The workflow is `.github/workflows/perf-ab.yml` (manual `workflow_dispatch` only, `contents: read`, inputs `request_id` and `spec`, the base64 JSON built by the CLI). It is meant to be started by the CLI, not by hand.
+
+Legacy local mode, only on explicit request: `perf-ab --local-devtools <url> ...` runs the old local DevTools trace runner on this machine (headed Chrome, iPhone 16 Pro Max, 4x CPU, DevTools "Slow 4G", cache disabled; not PageSpeed and not US). It keeps its old options (`--override`, `--override-before`, `--pr-local`, `--device`, `--cpu`, `--headless`, ...), saves `before<i>.json` / `after<i>.json` traces and prints DevTools timings. Its numbers are not comparable with the default mode. `perf-preload --local-devtools` records with it.
 
 ### Testing preload links (`--head-inject`)
 
-The snippet is inserted into the change variant's document before the first `<script>` in `<head>`; the baseline is the unmodified live page. Both documents go through the same simulated Slow 4G delay, and the preloaded files are fetched live through Chrome's throttling.
+The snippet is inserted into the "after" document before the first `<script>` in `<head>`; "before" is the unmodified live page. Hints whose URL carries country/locale parameters (for example MAS `/mas/io/fragment?...&country=CH`) are re-resolved against the requests of the first US baseline run of the same job; hints with no matching US request are dropped and reported, and `/experienceedge` hints are always dropped. `--fetchpriority` also rewrites matching entries of the document's `Link` response header, because hints in the HTML cannot change requests the header already started.
 
 `perf-preload` writes the snippet as static tags, sorted by start time in the recorded traces. For example:
 
@@ -82,18 +101,19 @@ Besides scripts, stylesheets, fonts and the LCP image, `perf-preload` keeps GET 
 Static tags need no script in `<head>`: the preload scanner finds them as soon as the HTML arrives. `head.html` is shared by all pages, so only resources common to every page belong there; page-specific tags need per-page injection (an edge worker or server-side). The LCP image URL is viewport-specific; use `perf-preload --no-lcp-image` when the tags are not mobile-only.
 
 What to check afterwards:
-- The first run prints where the snippet was injected.
-- In the saved `after<n>.json` traces, the preloaded resources start right after the document, earlier than in `before<n>.json`.
-- With `PERF_AB_DEBUG=1`, "preloaded but not used" console warnings mean the snippet lists resources the page doesn't need.
+- `results.json` `hints`: requested vs used links, contextual re-resolutions and dropped hints.
+- In the "after" Lighthouse report (`network-requests`), each preloaded file is downloaded once and starts right after the document.
 - Do not add `?mep=off` to the page URL: it disables the existing `preloadLcpCodeFiles`, which is part of the baseline.
+
+### Benchmark targets
+
+Benchmark targets are restricted (`lib/target.mjs`, enforced by the CLIs, the workflow job and the legacy runner): the page URL (before and after) must be `https://` on a subdomain of `adobe.com` (for example `www.adobe.com`; the bare apex and lookalikes such as `www.adobe.com.evil.example` are refused), with no credentials and no explicit port. The page host must resolve only to public addresses (private, loopback, link-local and other reserved ranges are refused, at the up-front check and again at connect time). Every main-frame document of a run (redirect hops and the final URL) must pass the same check, or the run fails with no retry. Third-party subresources (fonts, analytics, CDNs) are loaded normally; only tunnels to non-public addresses are refused.
 
 ### Notes
 
-- Tests: `npm test`.
+- Tests: `npm test` (the Lighthouse end-to-end test runs against a local HTTP/2 fixture and is skipped without a local Chrome). The legacy runner accepts a loopback fixture page only with `PERF_TOOLS_LOOPBACK_FIXTURE=1`, which is for tests only.
 - When releasing, bump `version` in `package.json`, `plugin.json` and `.claude-plugin/plugin.json` together.
-- Runs headed by default: some hosts (for example `www.stage.adobe.com`) reject headless browsers.
-- No warm-up loads: each run and retry gets a new browser process and profile (see the cold-run policy above). Traces carry `metadata.perfAb`; `before0.json` / `after0.json` in folders from older versions are warm-ups, and `perf-preload --from <dir>` skips them.
-- Reported metrics: FCP, LCP, DCL, Load, TBT (from FCP), CLS, main-thread `v8.compileModule`, request count, `loadLink` script fetches as module (modulepreload) vs link (preload), duplicate script fetches.
+- No warm-up loads (see the cold-run policy above). Legacy traces carry `metadata.perfAb`; `before0.json` / `after0.json` in folders from older versions are warm-ups, and `perf-preload --from <dir>` skips them.
 
 ## License
 

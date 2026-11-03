@@ -114,6 +114,36 @@ test('--from <dir> never counts warm-up loads (legacy before0/after0.json or met
   }
 });
 
+test('--from <default perf-ab output dir> reads only accepted runs from results.json, never rejected/ attempts', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-preload-test-'));
+  const extra = (url) => {
+    const t = trace();
+    t.traceEvents.push({ name: 'ResourceSendRequest', ts: 3000, args: { data: { requestId: url, frame: FRAME, url, resourceType: 'Script', initiator: { type: 'script', url: RESOURCES[0][0] } } } });
+    t.traceEvents.push({ name: 'ResourceFinish', ts: 3100, args: { data: { requestId: url } } });
+    return t;
+  };
+  const put = (rel, t) => { fs.mkdirSync(path.join(dir, 'traces', rel), { recursive: true }); fs.writeFileSync(path.join(dir, 'traces', rel, 'trace.json'), JSON.stringify(t)); };
+  try {
+    put('after1', trace());
+    put('after2', extra('https://www.adobe.com/stale-run.js'));
+    put('rejected/after1-attempt1', extra('https://www.adobe.com/rejected-attempt.js'));
+    const results = { status: 'ok', lighthouseVersion: '13.6.0', runs: [{ variant: 'after', run: 1, attempt: 2, dir: 'after1' }], rejected: [{ variant: 'after', run: 1, attempt: 1, dir: 'rejected/after1-attempt1' }] };
+    fs.writeFileSync(path.join(dir, 'traces', 'results.json'), JSON.stringify(results));
+    const r = spawnSync(process.execPath, [CLI, DOC, '--from', path.join(dir, 'traces'), '-o', dir, '--min-runs', '1'], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /: 1 traces,/);
+    const snippet = fs.readFileSync(path.join(dir, 'acrobat--plans.html'), 'utf8');
+    assert.doesNotMatch(snippet, /stale-run|rejected-attempt/);
+    assert.match(snippet, /scripts\/scripts\.js/);
+    fs.writeFileSync(path.join(dir, 'traces', 'results.json'), JSON.stringify({ ...results, status: 'failed' }));
+    const f = spawnSync(process.execPath, [CLI, DOC, '--from', path.join(dir, 'traces'), '-o', dir], { encoding: 'utf8' });
+    assert.equal(f.status, 1);
+    assert.match(f.stderr, /status is failed/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // Real Chrome shape: fetch(), XHR and script-inserted as="fetch" preloads are resourceType "Other".
 function dataTrace(reqs) {
   const events = [{ name: 'navigationStart', ts: 1000, args: { frame: FRAME, data: { documentLoaderURL: DOC, isOutermostMainFrame: true } } }];

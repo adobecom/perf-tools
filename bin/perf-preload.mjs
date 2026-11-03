@@ -1,12 +1,14 @@
 #!/usr/bin/env node
-// Preload generator: records page-load traces with perf-ab (same mobile, 4x CPU, Slow 4G conditions), finds the
-// LCP and the resources that finished loading before it, and writes a static <link> snippet for head.html.
+// Preload generator: records cold page-load traces with perf-ab (default: the traces of real Lighthouse 13.6.0
+// PageSpeed-mobile runs on the verified-US GitHub runner), finds the LCP and the resources that finished loading
+// before it, and writes a static <link> snippet for head.html.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { isLegacyWarmup } from '../lib/cold-runs.mjs';
+import { assertTargetUrl } from '../lib/target.mjs';
 
 const { values: o, positionals } = parseArgs({
   allowPositionals: true,
@@ -21,6 +23,7 @@ const { values: o, positionals } = parseArgs({
     cpu: { type: 'string' },
     channel: { type: 'string' },
     headless: { type: 'boolean', default: false },
+    'local-devtools': { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h' },
   },
 });
@@ -29,8 +32,11 @@ if (o.help || (!positionals[0] && !o.from.length)) {
   console.log(`perf-preload <pageUrl> [options]
 perf-preload --from <trace.json|dir> [--from ...] [options]
 
-  Loads <pageUrl> -n times through perf-ab (iPhone 16 Pro Max, 4x CPU, Slow 4G, cache disabled; every load cold in
-  a fresh browser process and profile, no warm-up), finds the LCP in each trace and keeps the scripts,
+  Loads <pageUrl> -n times through perf-ab's default mode (real Lighthouse 13.6.0, PageSpeed mobile profile, on the
+  verified-US perf-ab GitHub Actions runner; every load cold in a fresh Chrome process and empty profile, no
+  warm-up) and reads exactly the n accepted Lighthouse traces (traces/after<i>/trace.json). Lighthouse throttling
+  is SIMULATED, so these traces carry observed (unthrottled runner) timings: they are used only to find the LCP
+  and what finished before it, never mixed with Lighthouse's modeled metrics. It finds the LCP in each trace and keeps the scripts,
   stylesheets, fonts, GET JSON/HTML data fetches (fetch(), XHR or script as="fetch" preloads, also when Chrome
   records them as type Other) and the LCP image that finished before it. POST, beacons, other requests and any
   /experienceedge or /experienceedge/* path never become preloads. Each URL counts once per trace.
@@ -43,12 +49,15 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
   -n, --runs <n>       cold page loads to record (default 3, all counted)
   -o, --out <dir>      output dir for the snippet and traces (default ./preloads)
   --from <path>        analyze existing DevTools traces (file or dir of *.json) instead of recording (repeatable).
-                       In a dir, legacy perf-ab warm-ups (before0.json / after0.json) are skipped.
+                       In a dir, legacy perf-ab warm-ups (before0.json / after0.json) are skipped; a default perf-ab
+                       output dir (results.json) contributes only its accepted runs' trace.json, never rejected/.
   --min-runs <k>       traces a resource must appear in (default: majority, e.g. 2 of 3)
   --all-origins        keep cross-site resources too (default: same site as the page only)
   --no-lcp-image       do not preload the LCP image (its URL is viewport specific)
+  --local-devtools     LEGACY: record with the old local perf-ab DevTools runner on this machine instead (iPhone 16
+                       Pro Max, 4x CPU, DevTools Slow 4G; not PageSpeed, not US). Explicit opt-in only.
   --device, --cpu, --channel, --headless
-                       passed to perf-ab`);
+                       passed to perf-ab, only together with --local-devtools`);
   process.exit(positionals[0] || o.from.length ? 0 : 1);
 }
 
@@ -57,7 +66,17 @@ const traceFiles = [];
 if (o.from.length) {
   for (const p of o.from) {
     const abs = path.resolve(p);
-    if (fs.statSync(abs).isDirectory()) {
+    if (fs.statSync(abs).isDirectory() && fs.existsSync(path.join(abs, 'results.json'))) {
+      // Default perf-ab output: only the accepted runs listed in results.json, never rejected/ attempts.
+      const results = JSON.parse(fs.readFileSync(path.join(abs, 'results.json'), 'utf8'));
+      if (results.status !== 'ok') { console.error(`${p}: perf-ab results status is ${results.status}; not analyzing`); process.exit(1); }
+      console.warn(`${p}: Lighthouse ${results.lighthouseVersion} traces (observed runner timings, not Lighthouse's modeled metrics)`);
+      for (const r of results.runs) {
+        const f = path.join(abs, r.dir, 'trace.json');
+        if (!fs.existsSync(f)) { console.error(`Missing trace ${f}`); process.exit(1); }
+        traceFiles.push(f);
+      }
+    } else if (fs.statSync(abs).isDirectory()) {
       const files = fs.readdirSync(abs).filter((f) => f.endsWith('.json')).sort();
       const warmups = files.filter(isLegacyWarmup);
       if (warmups.length) console.warn(`${p}: skipped legacy perf-ab warm-up traces ${warmups.join(', ')} (not measurements)`);
@@ -68,16 +87,36 @@ if (o.from.length) {
     }
   }
 } else {
+  const legacy = o['local-devtools'];
+  try {
+    assertTargetUrl(positionals[0], { allowLoopbackFixture: legacy && process.env.PERF_TOOLS_LOOPBACK_FIXTURE === '1' });
+  } catch (e) { console.error(e.message); process.exit(1); }
   const traceDir = path.join(OUT, 'traces');
   fs.rmSync(traceDir, { recursive: true, force: true });
+  const legacyOpts = ['device', 'cpu', 'channel'].filter((k) => o[k] !== undefined).concat(o.headless ? ['headless'] : []);
+  if (!legacy && legacyOpts.length) { console.error(`${legacyOpts.map((k) => `--${k}`).join(', ')} only apply to the legacy local runner; add --local-devtools to use it explicitly`); process.exit(1); }
   const args = [path.join(path.dirname(fileURLToPath(import.meta.url)), 'perf-ab.mjs'), positionals[0], '-n', o.runs, '-o', traceDir];
-  for (const k of ['device', 'cpu', 'channel']) if (o[k] !== undefined) args.push(`--${k}`, o[k]);
-  if (o.headless) args.push('--headless');
-  execFileSync(process.execPath, args, { stdio: 'inherit' });
-  // perf-ab saves one cold load per run as after1..n.json and no warm-up. Read exactly the requested runs, never
-  // whatever else happens to be in the folder.
+  if (legacy) {
+    args.push('--local-devtools');
+    for (const k of ['device', 'cpu', 'channel']) if (o[k] !== undefined) args.push(`--${k}`, o[k]);
+    if (o.headless) args.push('--headless');
+  }
+  try {
+    execFileSync(process.execPath, args, { stdio: 'inherit' });
+  } catch (e) {
+    console.error(`perf-ab failed (exit ${e.status ?? e.message}); no preloads generated`);
+    process.exit(1);
+  }
+  if (!legacy) {
+    let results;
+    try { results = JSON.parse(fs.readFileSync(path.join(traceDir, 'results.json'), 'utf8')); } catch (e) { console.error(`perf-ab produced no readable results.json: ${e.message}`); process.exit(1); }
+    if (results.status !== 'ok' || results.egress?.country !== 'US' || !results.profile) { console.error(`perf-ab results are not a verified US Lighthouse run (status ${results.status}); no preloads generated`); process.exit(1); }
+    console.log(`traces: Lighthouse ${results.lighthouseVersion} ${results.profile.name}, US egress, ${results.runsPerVariant} cold run(s); using observed trace timings only`);
+  }
+  // perf-ab saves one cold load per run (default: after<i>/trace.json; legacy: after<i>.json) and no warm-up. Read
+  // exactly the requested runs, never whatever else happens to be in the folder.
   for (let i = 1; i <= Number(o.runs); i += 1) {
-    const f = path.join(traceDir, `after${i}.json`);
+    const f = legacy ? path.join(traceDir, `after${i}.json`) : path.join(traceDir, `after${i}`, 'trace.json');
     if (!fs.existsSync(f)) { console.error(`Missing trace ${f}: perf-ab did not record run ${i}`); process.exit(1); }
     traceFiles.push(f);
   }

@@ -13,7 +13,9 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const BIN = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin');
-const run = promisify(execFile);
+const execFileAsync = promisify(execFile);
+// Local http fixtures are only accepted by the legacy runner with this explicit loopback-fixture switch.
+const run = (cmd, args, opts = {}) => execFileAsync(cmd, args, { ...opts, env: { ...process.env, PERF_TOOLS_LOOPBACK_FIXTURE: '1', ...opts.env } });
 const skip = fs.existsSync(chromium.executablePath()) ? false : 'Playwright Chromium is not installed (npx playwright install chromium)';
 
 const PAGE = `<!doctype html><html><head>
@@ -81,7 +83,7 @@ test('perf-ab A/B: runs x 2 cold loads, one fresh browser each, no warm-up, brow
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-cold-'));
   try {
     await withServer(async (origin, hits) => {
-      const { stdout } = await run(process.execPath, [path.join(BIN, 'perf-ab.mjs'), `${origin}/page`, '--before-query', 'v=b', '--after-query', 'v=a', '-n', '2', '-o', out, ...FAST]);
+      const { stdout } = await run(process.execPath, [path.join(BIN, 'perf-ab.mjs'), '--local-devtools', `${origin}/page`, '--before-query', 'v=b', '--after-query', 'v=a', '-n', '2', '-o', out, ...FAST]);
       assertCold(hits, 4);
       assert.deepEqual(hits.docs.map((d) => d.v), ['b', 'a', 'b', 'a'], 'alternating, starting at run 1');
       assert.match(stdout, /Medians over 2 cold runs/);
@@ -105,7 +107,7 @@ test('perf-preload records through perf-ab: -n cold loads, no warm-up trace, sta
     fs.mkdirSync(path.join(out, 'traces'));
     for (const f of ['after0.json', 'after3.json', 'after99.json']) fs.writeFileSync(path.join(out, 'traces', f), '{"traceEvents":[]}');
     await withServer(async (origin, hits) => {
-      const { stdout } = await run(process.execPath, [path.join(BIN, 'perf-preload.mjs'), `${origin}/page`, '-n', '2', '-o', out, '--headless', '--channel', '']);
+      const { stdout } = await run(process.execPath, [path.join(BIN, 'perf-preload.mjs'), `${origin}/page`, '-n', '2', '-o', out, '--local-devtools', '--headless', '--channel', '']);
       assertCold(hits, 2);
       assert.match(stdout, /: 2 traces,/, 'only the two new cold runs are analyzed');
     });
