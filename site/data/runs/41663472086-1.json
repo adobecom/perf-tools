@@ -1,0 +1,172 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "41663472086-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-03T15:23:56.000Z",
+  "finishedAt": "2026-11-03T15:26:10.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+  "profile": {
+    "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "cpuSlowdownMultiplier": 1.2,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 3,
+    "before": 0,
+    "after": 3,
+    "pairs": 3,
+    "rejected": 0
+  },
+  "medians": {
+    "before": null,
+    "after": {
+      "performance": 59,
+      "FCP": 903.1404,
+      "LCP": 4432.360899999999,
+      "SI": 4928.546280870319,
+      "TBT": 1174.5,
+      "CLS": 0.014893654301697644
+    },
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41663472086/attempts/1",
+    "sha": "af405caeb48a976ed305a5aea5aa25db07cefcd2"
+  },
+  "detailPath": "data/runs/41663472086-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": null,
+      "after": {
+        "performance": 51,
+        "FCP": 903.1404,
+        "LCP": 4474.787600000001,
+        "SI": 6413.476230035381,
+        "TBT": 1868.5,
+        "CLS": 0.014893654301697644
+      },
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.47",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": 1801.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": null,
+      "after": {
+        "performance": 59,
+        "FCP": 844.9428,
+        "LCP": 4257.9428,
+        "SI": 4907.350280369425,
+        "TBT": 1174.5,
+        "CLS": 0.014893654301697644
+      },
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.47",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": 2051.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": null,
+      "after": {
+        "performance": 80,
+        "FCP": 1950.6809999999998,
+        "LCP": 4432.360899999999,
+        "SI": 4928.546280870319,
+        "TBT": 60.11765000000014,
+        "CLS": 0.02759423904391904
+      },
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.47",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": 2420.5
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [],
+    "hints": null,
+    "priorityPaths": [],
+    "patchPaths": [],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1801.5,
+        "max": 2420.5,
+        "ratio": 1.344,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": null,
+          "after": 1801.5,
+          "ratio": 1
+        },
+        {
+          "pair": 2,
+          "before": null,
+          "after": 2051.5,
+          "ratio": 1
+        },
+        {
+          "pair": 3,
+          "before": null,
+          "after": 2420.5,
+          "ratio": 1
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mw0u8ke3-pqqigekn",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41663472086/artifacts/13244256268",
+    "expiresAt": "2027-02-01T15:23:57.000Z",
+    "expired": false
+  }
+}

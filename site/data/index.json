@@ -1,7 +1,60 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-03T15:26:09.269Z",
+  "updatedAt": "2026-11-03T15:26:33.123Z",
   "runs": [
+    {
+      "id": "41663472086-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-03T15:23:56.000Z",
+      "finishedAt": "2026-11-03T15:26:10.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/acrobat/plans.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 0,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": {
+          "performance": 59,
+          "FCP": 903.1404,
+          "LCP": 4432.360899999999,
+          "SI": 4928.546280870319,
+          "TBT": 1174.5,
+          "CLS": 0.014893654301697644
+        },
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41663472086/attempts/1",
+        "sha": "af405caeb48a976ed305a5aea5aa25db07cefcd2"
+      },
+      "detailPath": "data/runs/41663472086-1.json"
+    },
     {
       "id": "41663471863-1",
       "name": null,
