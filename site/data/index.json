@@ -1,7 +1,42 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-03T14:01:38.939Z",
+  "updatedAt": "2026-11-03T14:05:44.532Z",
   "runs": [
+    {
+      "id": "41649673570-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-03T14:01:41.000Z",
+      "finishedAt": "2026-11-03T14:03:32.000Z",
+      "status": "failed",
+      "conclusion": "failure",
+      "errorCode": "artifact-invalid",
+      "url": null,
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": 1,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41649673570/attempts/1",
+        "sha": "0c3ee52592e5a1f3a084251ce8a385110d26fcce"
+      },
+      "detailPath": "data/runs/41649673570-1.json"
+    },
     {
       "id": "41633898462-1",
       "name": "acrobat-plans-latest",
