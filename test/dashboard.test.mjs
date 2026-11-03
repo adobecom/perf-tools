@@ -226,7 +226,7 @@ test('comparableRuns never mixes profiles, regions or failed runs', () => {
   assert.equal(excluded, 3);
 });
 
-test('formatting: units, U+2212 minus, display resolution and percentages', () => {
+test('formatting: units, U+2212 minus, display resolution, local timestamps and percentages', () => {
   assert.equal(core.formatMetric('LCP', 2512), `2.51${NBSP}s`);
   assert.equal(core.formatMetric('TBT', 1836), `1,836${NBSP}ms`);
   assert.equal(core.formatMetric('performance', 58), '58');
@@ -247,7 +247,11 @@ test('formatting: units, U+2212 minus, display resolution and percentages', () =
   assert.equal(core.formatNoise('performance'), '3 points');
   assert.equal(core.formatNoise('CLS'), '0.01');
   assert.equal(core.columnUnit('performance'), '0–100');
-  assert.equal(core.formatDateTime(Date.parse('2026-11-02T10:00:00Z')), '2026-11-02 10:00 UTC');
+  const timestamp = Date.parse('2026-11-02T18:00:00Z');
+  assert.equal(core.formatDateTime(timestamp, 'America/Los_Angeles'), '2026-11-02 10:00 PST');
+  assert.equal(core.formatDateTime(timestamp, 'Asia/Tokyo'), '2026-11-03 03:00 GMT+9');
+  assert.equal(core.formatLocalDay(timestamp, 'America/Los_Angeles'), '2026-11-02');
+  assert.equal(core.formatLocalDay(timestamp, 'Asia/Tokyo'), '2026-11-03');
   assert.equal(core.formatRelativeDays(Date.parse('2026-11-05T00:00:00Z'), Date.parse('2026-11-03T00:00:00Z')), 'in 2 days');
   assert.equal(core.formatRelativeDays(Date.parse('2026-11-02T00:00:00Z'), Date.parse('2026-11-03T00:00:00Z')), '1 day ago');
   assert.equal(core.formatDuration(21 * 60000), '21 min');

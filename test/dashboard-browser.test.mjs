@@ -87,7 +87,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     await new Promise((r) => (srv ? srv.server.close(r) : r()));
   });
 
-  async function newPage({ mobile = false, dark = false } = {}) {
+  async function newPage({ mobile = false, dark = false, timezoneId = 'UTC' } = {}) {
     const context = await browser.newContext({
       viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },
       deviceScaleFactor: mobile ? 2 : 1,
@@ -95,6 +95,7 @@ describe('history dashboard in a real browser', { skip }, () => {
       hasTouch: mobile,
       colorScheme: dark ? 'dark' : 'light',
       reducedMotion: 'reduce',
+      timezoneId,
     });
     await context.clock.setFixedTime(NOW);
     await context.addInitScript(() => {
@@ -190,6 +191,17 @@ describe('history dashboard in a real browser', { skip }, () => {
       'https://github.com/adobecom/perf-tools/actions/runs/41631000001/artifacts/1');
     await assertSafe(page);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-smoke.png'), fullPage: true });
+    await page.context().close();
+  });
+
+  test('timestamps and created dates follow the browser timezone', async () => {
+    const page = await newPage({ timezoneId: 'America/Los_Angeles' });
+    await open(page, 'populated', '?run=41631000001-1');
+    assert.match(await text(page, '#data-meta'), /^13 runs · updated 2026-11-02 10:00 PST$/);
+    const smokeRow = page.locator('#history-body tr.run-row').filter({ hasText: '41631000001-1' });
+    assert.equal(await smokeRow.locator('time').textContent(), '2026-11-02 02:00 PST');
+    assert.equal(await page.$eval('#history-body th', (el) => el.textContent), 'Created (local)');
+    assert.equal(await page.$eval('#detail time[datetime]', (el) => el.textContent), '2026-11-02 02:00 PST');
     await page.context().close();
   });
 

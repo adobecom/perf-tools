@@ -385,7 +385,7 @@ function historyTable(runs) {
   const tbody = h('tbody', {});
   for (const r of runs) {
     const link = h('a', { class: 'run-link', 'data-run': r.id, 'aria-current': r.id === current ? 'true' : null },
-      timeEl(r.createdAt, core.formatDateTime(r.createdAt).replace(/ UTC$/, '')));
+      timeEl(r.createdAt, core.formatDateTime(r.createdAt)));
     link.href = runHref(r.id);
     link.addEventListener('click', (e) => {
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -413,7 +413,7 @@ function historyTable(runs) {
   return h('table', { class: 'data runs' },
     h('caption', { class: 'sr-only', text: 'Published perf-ab runs, newest first. Deltas are medians of paired after − before differences.' }),
     h('thead', {}, h('tr', {},
-      h('th', { scope: 'col', text: 'Created (UTC)' }),
+      h('th', { scope: 'col', text: 'Created (local)' }),
       h('th', { scope: 'col', text: 'Page' }),
       h('th', { scope: 'col', text: 'Status' }),
       h('th', { scope: 'col', class: 'num', text: 'Pairs', title: 'Complete pairs / requested pairs' }),
@@ -820,7 +820,7 @@ function comparableSection(run) {
       });
     }
     return h('tr', { class: self ? 'is-self' : null },
-      h('td', {}, timeEl(r.createdAt, core.formatDay(r.createdAt))),
+      h('td', {}, timeEl(r.createdAt, core.formatLocalDay(r.createdAt))),
       h('td', {}, link),
       h('td', {}, statusBadge(r)),
       h('td', { class: ['num', (r.samples.pairs ?? 0) < core.MIN_PAIRS && 'weak'], text: pairsText(r) }),
