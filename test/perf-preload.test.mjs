@@ -144,6 +144,34 @@ test('--from <default perf-ab output dir> reads only accepted runs from results.
   }
 });
 
+test('--from <paired perf-ab output> reads the unchanged "before" runs from pair<i>/ dirs, never the changed "after" page', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-preload-test-'));
+  const extra = (url) => {
+    const t = trace();
+    t.traceEvents.push({ name: 'ResourceSendRequest', ts: 3000, args: { data: { requestId: url, frame: FRAME, url, resourceType: 'Script', initiator: { type: 'script', url: RESOURCES[0][0] } } } });
+    t.traceEvents.push({ name: 'ResourceFinish', ts: 3100, args: { data: { requestId: url } } });
+    return t;
+  };
+  const put = (rel, t) => { fs.mkdirSync(path.join(dir, 'traces', rel), { recursive: true }); fs.writeFileSync(path.join(dir, 'traces', rel, 'trace.json'), JSON.stringify(t)); };
+  try {
+    put('pair1/before1', trace());
+    put('pair2/before2', trace());
+    put('pair1/after1', extra('https://www.adobe.com/injected-after.js'));
+    put('pair2/after2', extra('https://www.adobe.com/injected-after.js'));
+    const runs = [1, 2].flatMap((i) => ['before', 'after'].map((variant) => ({ variant, run: i, pair: i, dir: `pair${i}/${variant}${i}` })));
+    fs.writeFileSync(path.join(dir, 'traces', 'results.json'), JSON.stringify({ status: 'ok', mode: 'pagespeed-us-paired', lighthouseVersion: '13.6.0', runs, rejected: [] }));
+    const r = spawnSync(process.execPath, [CLI, DOC, '--from', path.join(dir, 'traces'), '-o', dir], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stderr, /unchanged "before" variant, 2 run\(s\)/);
+    assert.match(r.stdout, /: 2 traces,/);
+    const snippet = fs.readFileSync(path.join(dir, 'acrobat--plans.html'), 'utf8');
+    assert.doesNotMatch(snippet, /injected-after/);
+    assert.match(snippet, /scripts\/scripts\.js/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // Real Chrome shape: fetch(), XHR and script-inserted as="fetch" preloads are resourceType "Other".
 function dataTrace(reqs) {
   const events = [{ name: 'navigationStart', ts: 1000, args: { frame: FRAME, data: { documentLoaderURL: DOC, isOutermostMainFrame: true } } }];

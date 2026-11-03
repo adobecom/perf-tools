@@ -102,3 +102,14 @@ test('legacy warm-up trace names', () => {
   for (const f of ['after0.json', 'before0.json', '/tmp/traces/after0.json']) assert.ok(isLegacyWarmup(f), f);
   for (const f of ['after1.json', 'after10.json', 'Trace-0.json', 'xafter0.json']) assert.ok(!isLegacyWarmup(f), f);
 });
+
+test('paired matrix job: from=runs measures exactly one before/after pair with that index, fresh browsers', async () => {
+  const { launch, launched } = fakeBrowsers();
+  const navs = [];
+  const results = await measureCold({ names: ['before', 'after'], runs: 2, from: 2, launch, measure: async (b, name, i) => { navs.push(`${name}${i}`); return i; } });
+  assert.deepEqual(navs, ['before2', 'after2']);
+  assert.equal(launched(), 2);
+  assert.deepEqual(results, { before: [2], after: [2] });
+  await assert.rejects(measureCold({ names: ['after'], runs: 2, from: 3, launch, measure: async () => 1 }), /invalid first run index/);
+  await assert.rejects(measureCold({ names: ['after'], runs: 2, from: 0, launch, measure: async () => 1 }), /invalid first run index/);
+});

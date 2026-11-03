@@ -9,6 +9,8 @@ Page-load performance tools, consumed mainly as **agent skills**:
 
 The "after" changes are applied by a per-run measuring proxy on the runner. It terminates TLS only for the measured host, with a throwaway certificate trusted by that one Chrome process (SPKI exception, no system trust), keeps HTTP/2, and tunnels every other origin untouched. Unchanged responses are forwarded byte-for-byte with their original compression; edited ones are re-compressed with Brotli quality 6, close to production's, so Lighthouse's simulation sees realistic transfer sizes. The temporary key never enters the artifact directory and is deleted afterwards; the job also scans the artifact for key material before upload.
 
+Paired matrix: `-n N` dispatches N parallel matrix jobs (`fail-fast: false`). Each job measures **one complete cold pair**, before then after, on the same runner VM, so a pair never mixes two machines. The aggregate job combines the pairs: the medians per variant and the **median of the per-pair deltas** use complete pairs only, never unmatched samples. A missing or failed pair is kept as a diagnostic but makes the result `partial` (or `failed` when no pair completed), and the CLI exits 1. `-n 1` is a single-job smoke test. Each pair records its runner, Chrome version, Lighthouse CPU benchmark index and workflow run attempt; runners are not identical hardware, which is why deltas are computed within a pair.
+
 Cold-run policy: every measured run starts cold. Runs alternate before/after; each run, and each retry of it, launches a new Chrome process with an empty temporary profile (and a fresh proxy), so no HTTP cache, V8 code cache, cookies, storage, service workers, open connections or Chrome DNS cache carry over. There are no warm-up loads; every load is measured and counted. Lighthouse's normal storage reset stays on, and the job rejects a run whose first document response came from a cache. The OS DNS cache and shared CDN / edge caches are outside the browser and are left alone: do not purge them and do not add cache-busting query parameters. Requests that one page load makes for the same resource are part of that load, not prewarming.
 
 A run is accepted only when Lighthouse finished without a runtime error, every metric is a finite number, and the render guard passed (non-hidden body, plus `--expect-title` / `--expect-count` when given). Rejected attempts are kept under `rejected/` as diagnostics and retried with a fresh browser (3 attempts per run); they never count as results.
@@ -49,6 +51,10 @@ perf-preload --from Trace-1.json --from Trace-2.json -o ./preloads
 ```
 
 ```sh
+# Versioned experiment config (committed and pushed; the workflow reads the copy on --ref, default main)
+perf-ab --config experiments/acrobat-plans.json -n 1 -o ./ab-smoke   # smoke: one pair
+perf-ab --config experiments/acrobat-plans.json -n 3 -o ./ab-full    # full: three pairs, three parallel jobs
+
 # One URL as-is
 perf-ab "https://www.adobe.com/acrobat/plans.html" -n 3
 
@@ -71,13 +77,37 @@ perf-ab "https://www.stage.adobe.com/products/photoshop.html" -b my-feature-stag
 ```
 
 Output (`-o`, default `./traces`), downloaded from the workflow artifact `perf-ab-<request id>`:
-- `results.json`: status, egress checks, resolved Lighthouse profile, Lighthouse and Chrome versions, cold-run flags, per-run metrics, medians and delta, hint report, rejected attempts.
-- `<variant><i>/`: `report.html` and `report.json` (the official Lighthouse reports), `trace.json`, `devtoolslog.json`, `run.json` (render check, first document response, proxy request log with original and served compressed sizes, document geo).
-- `rejected/<variant><i>-attempt<k>/`: the same for rejected attempts.
+- `results.json` (aggregate, `mode: "pagespeed-us-paired"`): `status` (`ok` / `partial` / `failed`) and `errorKind`, `samples` (`requested`, `pairs`, `before`, `after`, `rejected`), `medians` (`before`, `after`, `delta` = median per-pair delta), `pairs[]` (per-pair metrics, delta and `job`: runner, Chrome version, benchmark index, run attempt), `profile` and `profileKey`, `egress`, `experiment` (config name and path, when used), `github` (run URL, SHA), hint report.
+- `pair<i>/results.json`: that job's own result (egress checks, resolved Lighthouse profile, Lighthouse and Chrome versions, cold-run flags, per-run metrics, rejected attempts).
+- `pair<i>/<variant><i>/`: `report.html` and `report.json` (the official Lighthouse reports), `trace.json`, `devtoolslog.json`, `run.json` (render check, first document response, proxy request log with original and served compressed sizes, document geo).
+- `pair<i>/rejected/<variant><i>-attempt<k>/`: the same for rejected attempts.
 
-Any earlier results, run folders and `rejected/` in `-o` are removed before the download, so nothing stale is mixed in.
+Any earlier results, run and pair folders and `rejected/` in `-o` are removed before the download, so nothing stale is mixed in.
 
-The workflow is `.github/workflows/perf-ab.yml` (manual `workflow_dispatch` only, `contents: read`, inputs `request_id` and `spec`, the base64 JSON built by the CLI). It is meant to be started by the CLI, not by hand.
+`profileKey` (for example `lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile`) names the complete compared preset: Lighthouse version, form factor, throttling method, RTT, throughput, CPU multiplier, viewport, device scale factor and mobile flag. Only results with the same key are comparable. Chrome version and CPU benchmark stay per-pair metadata.
+
+The workflow is `.github/workflows/perf-ab.yml`: manual `workflow_dispatch` only, `contents: read`, jobs `prepare` → `measure` (matrix, one pair per job) → `aggregate`. Its form inputs are `config` (an `experiments/*.json` path), `url` (one page measured unchanged), `runs` (pairs, 1-10; empty = the config's default) and, for the CLI, `spec` (gzip+base64 JSON) and `request_id`. Artifacts, kept 90 days: `perf-ab-<request id>-pair<i>` (one per job), `perf-ab-<request id>` (all pairs plus the aggregate; what the CLI downloads) and `perf-ab-<request id>-results` (the aggregate `results.json` only, for downstream consumers). Without a CLI request id, the id is `gh-run-<run id>`.
+
+### Experiment configs (`--config`)
+
+A reviewed optimization can be stored as a versioned config, so the same changes can be re-run from the CLI or the Actions form. `experiments/acrobat-plans.json` holds the latest approved Acrobat plans optimizations: 57 static hints, the CSS/JS priorities, and the guarded market-config loading fix (MWPW-213916) as three exact-match patches of the live `utils.js` (no vendored production file).
+
+```json
+{
+  "schema": "perf-ab/experiment-v1",
+  "name": "acrobat-plans-latest",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "runs": 3,
+  "expect": { "title": "Acrobat plans", "counts": { "body:has(merch-card)": 1 } },
+  "after": {
+    "headInject": "acrobat-plans/head.html",
+    "priorities": { "/libs/utils/utils.js": "high" },
+    "patches": ["acrobat-plans/market-config.patch.json"]
+  }
+}
+```
+
+File references (`headInject`, `patches`) are relative to the config and must stay inside its directory (no `..` or absolute paths); `after.sources` maps live paths to replacement `https://` URLs; unknown fields are rejected, and `/experienceedge` hints are refused. Hints with country/locale parameters are re-resolved against the US baseline at run time, as with `--head-inject`. Commit and push a config before using it: the workflow reads the committed copy, and the CLI refuses to dispatch when the local file differs from `origin/<ref>`.
 
 Legacy local mode, only on explicit request: `perf-ab --local-devtools <url> ...` runs the old local DevTools trace runner on this machine (headed Chrome, iPhone 16 Pro Max, 4x CPU, DevTools "Slow 4G", cache disabled; not PageSpeed and not US). It keeps its old options (`--override`, `--override-before`, `--pr-local`, `--device`, `--cpu`, `--headless`, ...), saves `before<i>.json` / `after<i>.json` traces and prints DevTools timings. Its numbers are not comparable with the default mode. `perf-preload --local-devtools` records with it.
 

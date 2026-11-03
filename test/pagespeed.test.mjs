@@ -323,7 +323,7 @@ test('remote: auth, dispatch permission, failed run, failed job, foreign artifac
     await assert.rejects(runRemote(remoteOpts(fakeGh({ failAt: 'auth status' }), out)), /not authenticated/);
     await assert.rejects(runRemote(remoteOpts(fakeGh({ failAt: 'workflow run' }), out)), /cannot dispatch perf-ab\.yml.*Actions write permission/);
     await assert.rejects(runRemote(remoteOpts(fakeGh({ conclusion: 'failure', results: (rid) => ({ ...okResults(rid), status: 'failed', error: 'US egress verification failed: egress is not US' }) }), out)),
-      (e) => /workflow run failure: US egress verification failed/.test(e.message) && /step log line/.test(e.message) && e.results.status === 'failed');
+      (e) => /job reported failed: US egress verification failed/.test(e.message) && /step log line/.test(e.message) && e.results.status === 'failed');
     await assert.rejects(runRemote(remoteOpts(fakeGh({ results: (rid) => ({ ...okResults(rid), status: 'failed', error: 'render check failed' }) }), out)), /job reported failed: render check failed/);
     await assert.rejects(runRemote(remoteOpts(fakeGh({ results: () => okResults('someone-else') }), out)), /belongs to request someone-else/);
     await assert.rejects(runRemote(remoteOpts(fakeGh({ results: (rid) => ({ ...okResults(rid), egress: { country: 'CH' } }) }), out)), /US egress record/);

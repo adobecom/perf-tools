@@ -72,7 +72,7 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
   try {
     const results = await runJob({
       spec: {
-        version: 1, runs: 1, names: ['before', 'after'],
+        version: 1, runs: 2, names: ['before', 'after'],
         variants: {
           before: { url },
           after: {
@@ -86,6 +86,8 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
       },
       requestId: 'e2e-fixture-1',
       out,
+      // Paired matrix mode: this job measures only pair 2 of 2 (another runner measures pair 1).
+      pair: 2,
       fetchJson: async () => ({ country: 'US', country_iso: 'US', country_code: 'US' }),
       upstreamOrigin: `https://127.0.0.1:${server.address().port}`,
       upstreamOptions: { rejectUnauthorized: false },
@@ -104,13 +106,17 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
     assert.equal(results.profile.throttlingMethod, 'simulate');
     assert.deepEqual(results.cold, { freshBrowserPerAttempt: true, emptyProfilePerAttempt: true, warmups: 0, lighthouseStorageReset: true });
 
-    // Exactly one accepted run per variant; the incorrect render was kept as a rejected diagnostic and retried fresh.
-    assert.deepEqual(results.runs.map((r) => `${r.variant}${r.run}#${r.attempt}`), ['before1#1', 'after1#2']);
+    // Exactly one accepted run per variant, for pair 2 only; the incorrect render was kept as a rejected diagnostic and
+    // retried fresh.
+    assert.equal(results.pair, 2);
+    assert.deepEqual(results.runs.map((r) => `${r.variant}${r.run}#${r.attempt}`), ['before2#1', 'after2#2']);
+    assert.deepEqual(results.pairs.map((p) => p.index), [2]);
+    assert.deepEqual(results.samples, { requested: 1, pairs: 1, rejected: 1 });
     assert.equal(results.rejected.length, 1);
     assert.equal(results.rejected[0].variant, 'after');
     assert.match(results.rejected[0].reason, /render check failed/);
     assert.ok(fs.existsSync(path.join(out, results.rejected[0].dir, 'report.html')));
-    assert.equal(documents, 3, 'three cold navigations: before1, after1 (rejected), after1 retry; no warm-ups');
+    assert.equal(documents, 3, 'three cold navigations: before2, after2 (rejected), after2 retry; no warm-ups or pair-1 runs');
 
     for (const r of results.runs) {
       // Full rendered DOM checked in the measured page itself.
@@ -127,8 +133,8 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
     assert.ok(Object.values(results.medians.delta).every(Number.isFinite));
 
     const runJson = (d) => JSON.parse(fs.readFileSync(path.join(out, d, 'run.json'), 'utf8'));
-    const before = runJson('before1');
-    const after = runJson('after1');
+    const before = runJson('before2');
+    const after = runJson('after2');
     // Baseline: served exactly as the origin sent it (same compressed bytes, nothing edited), over HTTP/2.
     assert.deepEqual(before.editedResponses, []);
     for (const r of before.requests.filter((x) => x.kind)) {
@@ -141,10 +147,10 @@ test('runner job: real Lighthouse PageSpeed mobile through the HTTP/2 proxy, col
     // Change: document + patched module edited and recompressed as Brotli; hints and Link header priority applied.
     assert.deepEqual([...after.editedResponses].sort(), ['/app.js', '/page']);
     assert.ok(after.requests.filter((r) => r.edited).every((r) => r.encoding === 'br' && r.servedEncodedBytes > 0));
-    const dlog = JSON.parse(fs.readFileSync(path.join(out, 'after1', 'devtoolslog.json'), 'utf8'));
+    const dlog = JSON.parse(fs.readFileSync(path.join(out, 'after2', 'devtoolslog.json'), 'utf8'));
     const doc = dlog.find((e) => e.method === 'Network.responseReceived' && e.params.type === 'Document').params.response;
     assert.match(Object.entries(doc.headers).find(([k]) => k.toLowerCase() === 'link')[1], /<\/app\.js>; rel=modulepreload; fetchpriority=high/);
-    const lhrAfter = JSON.parse(fs.readFileSync(path.join(out, 'after1', 'report.json'), 'utf8'));
+    const lhrAfter = JSON.parse(fs.readFileSync(path.join(out, 'after2', 'report.json'), 'utf8'));
     const reqs = lhrAfter.audits['network-requests'].details.items.map((x) => new URL(x.url).pathname);
     assert.equal(reqs.filter((p) => p === '/data.json').length, 1, 'injected fetch preload was consumed (no second download)');
     assert.equal(results.hints.requestedLinks, 1);

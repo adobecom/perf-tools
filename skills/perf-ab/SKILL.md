@@ -16,15 +16,21 @@ Default conditions (do not substitute others):
 
 Cold-run policy: every measured run starts cold. Runs alternate before/after; each run, and each retry of it, launches a new Chrome process with an empty temporary profile (and a fresh proxy), so no HTTP cache, V8 code cache, cookies, storage, service workers, open connections or Chrome DNS cache carry over. There are no warm-up loads; every load is measured and counted. Lighthouse's storage reset stays on and a run whose first document response came from a cache is rejected. The OS DNS cache and shared CDN / edge caches are outside the browser and are left alone: do not purge them and do not add cache-busting query parameters. Requests that one page load makes for the same resource are part of that load, not prewarming.
 
+Paired matrix: `-n N` starts N parallel jobs; each measures ONE complete cold before/after pair on the same runner VM. Medians per variant and the median per-pair delta use complete pairs only. A missing or failed pair makes the result `partial` (no pair: `failed`) and the command exits 1; report it as incomplete, never as a result. Runners are not identical hardware: each pair records its runner, Chrome version and CPU benchmark, and comparisons are made within pairs.
+
 Accepted runs only: Lighthouse must finish without a runtime error, every metric must be a finite number, and the render guard must pass (non-hidden body, plus `--expect-title` / `--expect-count`). A rejected attempt (for example NO_FCP or a broken render) is saved under `rejected/` and retried with a fresh browser, up to 3 attempts per run. If a run never succeeds, or any infrastructure step fails, the command exits non-zero and `results.json` has `status: "failed"`: report the failure, never a partial result.
 
-Run it async; a job takes several minutes (queueing plus about 1 to 2 minutes per run). **Start with a smoke test of one pair (`-n 1`)** and check the reports and the render before a full campaign (`-n 3` or more).
+Run it async; a job takes several minutes (queueing plus about 2 to 4 minutes per pair, pairs run in parallel). **Start with a smoke test of one pair (`-n 1`)** and check the reports and the render before a full campaign (`-n 3` or more).
+
+Reviewed optimizations live as versioned configs under `experiments/` (schema `perf-ab/experiment-v1`; see the README). Run them with `perf-ab --config experiments/acrobat-plans.json -n 1 -o ./ab-smoke`, then `-n 3`. The workflow reads the committed copy on `--ref` (default `main`): commit and push config changes first (the CLI refuses a config that differs from `origin/<ref>`). `--config` cannot be combined with a URL or change options. The same config can be started from the Actions "Run workflow" form (`config`, `runs`).
 
 Output (`-o <dir>`, default `./traces`; earlier results in that folder are removed first):
-- `results.json`: `status`, `egress` (country and per-service checks), `profile` (resolved Lighthouse settings), `lighthouseVersion`, `chromeVersion`, `cold` flags, `runs` (per-run metrics, first document response, render check), `medians` per variant, `delta`, `hints` (requested / used / contextual / dropped), `rejected`.
-- `<variant><i>/`: `report.html` and `report.json` (the official Lighthouse reports; share these, never a hand-made summary), `trace.json` and `devtoolslog.json` (raw), `run.json` (render check, proxy request log with original and served encoded sizes, document geo).
-- `rejected/<variant><i>-attempt<k>/`: the same for rejected attempts.
-- The console prints the medians per variant, the hint usage and the workflow run URL.
+- `results.json` (aggregate): `status` (`ok` / `partial` / `failed`), `errorKind`, `samples` (`requested`, `pairs`, `before`, `after`, `rejected`), `medians` (`before`, `after`, `delta` = median per-pair delta), `pairs[]` (per-pair metrics, delta, `job` metadata), `profile`, `profileKey`, `egress`, `experiment`, `github`, `hints` (requested / used / contextual / dropped).
+- `pair<i>/results.json`: the job's own result (`egress` checks, resolved `profile`, `lighthouseVersion`, `chromeVersion`, `cold` flags, `runs` with first document response and render check, `rejected`).
+- `pair<i>/<variant><i>/`: `report.html` and `report.json` (the official Lighthouse reports; share these, never a hand-made summary), `trace.json` and `devtoolslog.json` (raw), `run.json` (render check, proxy request log with original and served encoded sizes, document geo).
+- `pair<i>/rejected/<variant><i>-attempt<k>/`: the same for rejected attempts.
+- The console prints each pair, the medians per variant, the median delta, the hint usage and the workflow run URL.
+- Only compare results with the same `profileKey` (Lighthouse version, form factor, throttling, RTT, throughput, CPU multiplier, viewport, DPR, mobile).
 
 ## 1. Choose the change
 
@@ -77,8 +83,8 @@ Other flags: `--param`, `--suffix` (`--suffix ""` for raw values), `--before-que
 
 ## 2. Read the results
 
-- First confirm `status: "ok"`, `egress.country: "US"`, `lighthouseVersion: "13.6.0"` and the profile, and open one `report.html` per variant to check the page rendered as expected.
-- Use the **medians** in `results.json` (and the per-run values to spot outliers). With 1 to 3 runs per variant, treat small differences (a few score points, FCP / LCP under about 100 ms) as noise.
+- First confirm `status: "ok"` (not `partial`), `samples.pairs` equals `samples.requested`, `egress.country: "US"`, `lighthouseVersion: "13.6.0"` and the profile, and open one `report.html` per variant to check the page rendered as expected.
+- Use the **medians** and the median per-pair `delta` in `results.json` (and `pairs[]` to spot outliers; do not drop or re-run outliers to change a result). With 1 to 3 runs per variant, treat small differences (a few score points, FCP / LCP under about 100 ms) as noise.
 - Lighthouse metrics are modeled (simulated throttling) from the observed load; `trace.json` / `devtoolslog.json` are the raw observed load. Never mix raw trace timings with the Lighthouse values in one comparison.
 - Sanity checks: CLS and TBT should not regress, the request counts in `run.json` should be about the same, and `rejected` should be empty or explained.
 - Repeat on a second, heavier page before a go / no-go. Check Safari and Firefox manually.

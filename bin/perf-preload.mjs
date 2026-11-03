@@ -50,7 +50,8 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
   -o, --out <dir>      output dir for the snippet and traces (default ./preloads)
   --from <path>        analyze existing DevTools traces (file or dir of *.json) instead of recording (repeatable).
                        In a dir, legacy perf-ab warm-ups (before0.json / after0.json) are skipped; a default perf-ab
-                       output dir (results.json) contributes only its accepted runs' trace.json, never rejected/.
+                       output dir (results.json) contributes only its accepted runs' trace.json, never rejected/;
+                       for a before/after output only the unchanged "before" runs.
   --min-runs <k>       traces a resource must appear in (default: majority, e.g. 2 of 3)
   --all-origins        keep cross-site resources too (default: same site as the page only)
   --no-lcp-image       do not preload the LCP image (its URL is viewport specific)
@@ -70,8 +71,12 @@ if (o.from.length) {
       // Default perf-ab output: only the accepted runs listed in results.json, never rejected/ attempts.
       const results = JSON.parse(fs.readFileSync(path.join(abs, 'results.json'), 'utf8'));
       if (results.status !== 'ok') { console.error(`${p}: perf-ab results status is ${results.status}; not analyzing`); process.exit(1); }
-      console.warn(`${p}: Lighthouse ${results.lighthouseVersion} traces (observed runner timings, not Lighthouse's modeled metrics)`);
-      for (const r of results.runs) {
+      // A/B outputs: only the unchanged production variant ("before"); the "after" page carries the tested changes.
+      // Single-URL outputs measure the page as "after". Paired outputs list pair<i>/<variant><i> dirs.
+      const variant = (results.runs ?? []).some((r) => r.variant === 'before') ? 'before' : 'after';
+      const runs = (results.runs ?? []).filter((r) => r.variant === variant);
+      console.warn(`${p}: Lighthouse ${results.lighthouseVersion} traces of the ${variant === 'before' ? 'unchanged "before"' : 'measured'} variant, ${runs.length} run(s) (observed runner timings, not Lighthouse's modeled metrics)`);
+      for (const r of runs) {
         const f = path.join(abs, r.dir, 'trace.json');
         if (!fs.existsSync(f)) { console.error(`Missing trace ${f}`); process.exit(1); }
         traceFiles.push(f);
@@ -107,16 +112,18 @@ if (o.from.length) {
     console.error(`perf-ab failed (exit ${e.status ?? e.message}); no preloads generated`);
     process.exit(1);
   }
+  let results = null;
   if (!legacy) {
-    let results;
     try { results = JSON.parse(fs.readFileSync(path.join(traceDir, 'results.json'), 'utf8')); } catch (e) { console.error(`perf-ab produced no readable results.json: ${e.message}`); process.exit(1); }
     if (results.status !== 'ok' || results.egress?.country !== 'US' || !results.profile) { console.error(`perf-ab results are not a verified US Lighthouse run (status ${results.status}); no preloads generated`); process.exit(1); }
     console.log(`traces: Lighthouse ${results.lighthouseVersion} ${results.profile.name}, US egress, ${results.runsPerVariant} cold run(s); using observed trace timings only`);
   }
-  // perf-ab saves one cold load per run (default: after<i>/trace.json; legacy: after<i>.json) and no warm-up. Read
-  // exactly the requested runs, never whatever else happens to be in the folder.
+  // perf-ab saves one cold load per run and no warm-up: default mode lists each accepted run's directory in
+  // results.json (pair<i>/after<i>/ for the paired matrix jobs), legacy mode writes after<i>.json. Read exactly the
+  // requested runs, never whatever else happens to be in the folder.
   for (let i = 1; i <= Number(o.runs); i += 1) {
-    const f = legacy ? path.join(traceDir, `after${i}.json`) : path.join(traceDir, `after${i}`, 'trace.json');
+    const run = results?.runs?.find((r) => r.variant === 'after' && r.run === i && r.dir);
+    const f = legacy ? path.join(traceDir, `after${i}.json`) : path.join(traceDir, run?.dir ?? `after${i}`, 'trace.json');
     if (!fs.existsSync(f)) { console.error(`Missing trace ${f}: perf-ab did not record run ${i}`); process.exit(1); }
     traceFiles.push(f);
   }
