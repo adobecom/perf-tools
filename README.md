@@ -77,6 +77,8 @@ The snippet is inserted into the change variant's document before the first `<sc
 
 Stylesheet preloads use absolute URLs, even same-origin ones: some site loaders look up `link[href="<path>"]` without checking `rel`, treat a relative preload as the stylesheet and never apply it. They never get `crossorigin`, because `<link rel="stylesheet">` and `@import` fetch without CORS; fonts, fetches and cross-origin scripts do.
 
+Besides scripts, stylesheets, fonts and the LCP image, `perf-preload` keeps GET JSON/HTML data fetches (`fetch()`, XHR, script `as="fetch"` preloads) that finished before LCP; Chrome records these as type `Other`, which earlier versions omitted. POST, beacons, unrelated `Other` requests and any `/experienceedge` or `/experienceedge/*` path are never preloaded. Each URL counts once per trace for `--min-runs`. Credentialled or custom-header fetches cannot be detected from a trace and are not emitted. URLs with country/locale parameters (for example MAS `/mas/io/fragment?...&country=CH`) are marked `!`: serve them only to the matching context, never hardcode them for every geo.
+
 Static tags need no script in `<head>`: the preload scanner finds them as soon as the HTML arrives. `head.html` is shared by all pages, so only resources common to every page belong there; page-specific tags need per-page injection (an edge worker or server-side). The LCP image URL is viewport-specific; use `perf-preload --no-lcp-image` when the tags are not mobile-only.
 
 What to check afterwards:

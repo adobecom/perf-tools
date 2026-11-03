@@ -31,7 +31,9 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
 
   Loads <pageUrl> -n times through perf-ab (iPhone 16 Pro Max, 4x CPU, Slow 4G, cache disabled; every load cold in
   a fresh browser process and profile, no warm-up), finds the LCP in each trace and keeps the scripts,
-  stylesheets, fonts, fetches and the LCP image that finished before it.
+  stylesheets, fonts, GET JSON/HTML data fetches (fetch(), XHR or script as="fetch" preloads, also when Chrome
+  records them as type Other) and the LCP image that finished before it. POST, beacons, other requests and any
+  /experienceedge or /experienceedge/* path never become preloads. Each URL counts once per trace.
   Resources the HTML parser already requests from the document itself are skipped. A resource must appear in
   --min-runs traces to be kept. Writes <out>/<page-key>.html with static <link> tags, ready for
   perf-ab --head-inject.
@@ -81,7 +83,29 @@ if (o.from.length) {
 if (!traceFiles.length) { console.error('No traces to analyze'); process.exit(1); }
 
 const site = (host) => host.split('.').slice(-2).join('.');
-const KEEP = new Set(['Script', 'Stylesheet', 'Font', 'Fetch', 'XHR']);
+const KEEP = new Set(['Script', 'Stylesheet', 'Font']);
+// Data requests a static <link rel="preload" as="fetch" crossorigin> can serve. Modern Chrome records fetch(),
+// XHR and script-inserted as="fetch" preloads as resourceType "Other", so the role comes from the initiator's
+// fetchType and the response MIME. Only GET JSON/HTML with a 2xx response qualifies; POST, beacons, pings,
+// navigations, favicons, workers and other "Other" requests never do.
+// Never preloaded, whatever the method, type or MIME: Adobe Experience Platform Edge (analytics/personalization).
+const EXCLUDED_PATH = /^\/experienceedge(\/|$)/;
+const DATA_MIME = /^(application\/(.+\+)?json|text\/json|text\/html)$/i;
+let legacyNoMethod = 0;
+function dataRequest(d, res) {
+  const explicit = d.resourceType === 'Fetch' || d.resourceType === 'XHR';
+  const fetchType = d.initiator?.fetchType;
+  const consumer = explicit || fetchType === 'fetch' || fetchType === 'xmlhttprequest';
+  const fetchPreload = d.resourceType === 'Other' && fetchType === 'link' && !!d.isLinkPreload;
+  if (!consumer && !fetchPreload) return false;
+  if (d.requestMethod === undefined) {
+    // Older/synthetic traces without requestMethod: only an explicit Fetch/XHR is assumed to be GET.
+    if (!explicit) return false;
+    legacyNoMethod += 1;
+  } else if (String(d.requestMethod).toUpperCase() !== 'GET') return false;
+  if (!res) return explicit;
+  return res.statusCode >= 200 && res.statusCode < 300 && DATA_MIME.test(res.mimeType ?? '');
+}
 
 function analyze(file) {
   const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -98,25 +122,39 @@ function analyze(file) {
     : null;
   const modules = new Set(events.filter((e) => e.name === 'v8.compileModule').map((e) => e.args?.data?.url));
   const finish = new Map(events.filter((e) => e.name === 'ResourceFinish').map((e) => [e.args.data.requestId, e.ts]));
-  const reqs = [];
+  const response = new Map(events.filter((e) => e.name === 'ResourceReceiveResponse').map((e) => [e.args.data.requestId, e.args.data]));
+  // One entry per URL per trace: a page can request the same URL more than once (a script preload plus the
+  // consumer fetch), and that must count as one run for --min-runs.
+  const byUrl = new Map();
   for (const e of events) {
     if (e.name !== 'ResourceSendRequest' || e.ts < t0 || e.args.data.frame !== frame) continue;
     const d = e.args.data;
     const end = finish.get(d.requestId);
-    if (!end || end > lcp.ts || d.url === docUrl || !d.url.startsWith('http')) continue;
+    if (!end || end > lcp.ts || d.url === docUrl || !/^https?:\/\//.test(d.url)) continue;
+    if (EXCLUDED_PATH.test(new URL(d.url).pathname)) continue;
     const isLcpImage = d.url === lcpImage;
-    if (!KEEP.has(d.resourceType) && !isLcpImage) continue;
+    const data = !isLcpImage && dataRequest(d, response.get(d.requestId));
+    if (!KEEP.has(d.resourceType) && !isLcpImage && !data) continue;
     if (d.initiator?.type === 'parser' && d.initiator.url === docUrl && !isLcpImage) continue;
-    reqs.push({
+    const jsPreload = !!d.isLinkPreload && d.initiator?.type !== 'parser';
+    const q = {
       url: d.url,
-      type: isLcpImage ? 'LCP image' : d.resourceType,
+      type: isLcpImage ? 'LCP image' : data ? 'Fetch' : d.resourceType,
+      // A real consumer (not a script-inserted preload) decides the preload type and its fetch mode.
+      consumer: !jsPreload,
       module: modules.has(d.url),
-      jsPreload: !!d.isLinkPreload && d.initiator?.type !== 'parser',
+      jsPreload,
       start: (e.ts - t0) / 1000,
       end: (end - t0) / 1000,
-    });
+    };
+    const x = byUrl.get(d.url);
+    if (!x) { byUrl.set(d.url, q); continue; }
+    if (q.consumer && !x.consumer) Object.assign(x, { type: q.type, consumer: true });
+    if (q.start < x.start) Object.assign(x, { start: q.start, end: q.end });
+    x.module ||= q.module;
+    x.jsPreload ||= q.jsPreload;
   }
-  return { docUrl, lcp: (lcp.ts - t0) / 1000, lcpNode: lcp.args.data.nodeName, lcpImage, reqs };
+  return { docUrl, lcp: (lcp.ts - t0) / 1000, lcpNode: lcp.args.data.nodeName, lcpImage, reqs: [...byUrl.values()] };
 }
 
 const runs = traceFiles.map(analyze).filter(Boolean);
@@ -129,10 +167,15 @@ const byUrl = new Map();
 for (const r of runs) for (const q of r.reqs) {
   if (!byUrl.has(q.url)) byUrl.set(q.url, { ...q, starts: [], ends: [] });
   const x = byUrl.get(q.url);
-  x.starts.push(q.start);
+  x.starts.push(q.start); // r.reqs holds each URL once, so starts.length counts traces
   x.ends.push(q.end);
+  if (q.consumer && !x.consumer) Object.assign(x, { type: q.type, consumer: true });
   x.module ||= q.module;
+  x.jsPreload ||= q.jsPreload;
 }
+if (legacyNoMethod) console.warn(`${legacyNoMethod} Fetch/XHR request(s) without requestMethod (older or synthetic trace) were assumed to be GET`);
+const CONTEXT_PARAM = /^(country|locale|lang|language|geo|region|market)$/i;
+const contextual = (url) => [...new URL(url).searchParams.keys()].some((k) => CONTEXT_PARAM.test(k));
 const picked = [...byUrl.values()]
   .filter((x) => x.starts.length >= minRuns)
   .filter((x) => o['all-origins'] || site(new URL(x.url).hostname) === site(page.hostname))
@@ -140,7 +183,7 @@ const picked = [...byUrl.values()]
   .map((x) => ({ ...x, start: median(x.starts), end: median(x.ends) }))
   .sort((a, b) => a.start - b.start);
 
-const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 function tag(x) {
   const u = new URL(x.url);
   const cross = u.origin !== page.origin;
@@ -168,10 +211,11 @@ console.log(`\n${page.href}: ${runs.length} traces, LCP ${lcps.join(' / ')} ms (
 console.log(`Resources finished before LCP in >= ${minRuns} traces (median ms):`);
 console.log('start'.padStart(7), 'end'.padStart(7), ' type'.padEnd(18), 'url');
 for (const x of picked) {
-  const type = `${x.type}${x.module ? ' (module)' : ''}${x.jsPreload ? ' *' : ''}`;
+  const type = `${x.type}${x.module ? ' (module)' : ''}${x.jsPreload ? ' *' : ''}${contextual(x.url) ? ' !' : ''}`;
   console.log(String(Math.round(x.start)).padStart(7), String(Math.round(x.end)).padStart(7), ` ${type}`.padEnd(18), x.url);
 }
 if (picked.some((x) => x.jsPreload)) console.log('* already preloaded by a script (e.g. preloadLcpCodeFiles); a static tag starts it earlier');
+if (picked.some((x) => contextual(x.url))) console.log('! country/locale specific URL: serve this link only to visitors in the matching context, never hardcode it for every geo');
 console.log(`\nSnippet (${picked.length} links): ${snippet}`);
 const rel = path.relative(process.cwd(), snippet);
 if (positionals[0]) console.log(`Validate: perf-ab "${page.href}" --head-inject ${rel.startsWith('..') ? snippet : rel} -n 5`);
