@@ -1,7 +1,74 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-03T15:26:33.123Z",
+  "updatedAt": "2026-11-03T15:29:13.597Z",
   "runs": [
+    {
+      "id": "41663991862-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-03T15:26:57.000Z",
+      "finishedAt": "2026-11-03T15:29:01.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/creativecloud/plans.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 1,
+        "before": 1,
+        "after": 1,
+        "pairs": 1,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 71,
+          "FCP": 855.4573999999999,
+          "LCP": 855.4573999999999,
+          "SI": 6393.467051415062,
+          "TBT": 1082.5000000000018,
+          "CLS": 0.02192678961839356
+        },
+        "after": {
+          "performance": 97,
+          "FCP": 1624.7451999999998,
+          "LCP": 1624.7451999999998,
+          "SI": 3919.4134792229643,
+          "TBT": 99.00000000000182,
+          "CLS": 0.02192678961839356
+        },
+        "delta": {
+          "performance": 26,
+          "FCP": 769.2878,
+          "LCP": 769.2878,
+          "SI": -2474.053572192098,
+          "TBT": -983.5,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41663991862/attempts/1",
+        "sha": "c77430f1b4eca4c40c25787621024e793d8e4bff"
+      },
+      "detailPath": "data/runs/41663991862-1.json"
+    },
     {
       "id": "41663472086-1",
       "name": null,
