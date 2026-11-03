@@ -114,7 +114,7 @@
     "hints": {
       "requested": 57,
       "used": 57,
-      "contextual": 0,
+      "contextual": 2,
       "dropped": 0,
       "pairs": []
     },
