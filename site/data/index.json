@@ -1,7 +1,141 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-03T15:31:07.049Z",
+  "updatedAt": "2026-11-03T15:33:23.516Z",
   "runs": [
+    {
+      "id": "41664663744-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-03T15:30:52.000Z",
+      "finishedAt": "2026-11-03T15:33:16.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/creativecloud/plans.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 3,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 75,
+          "FCP": 852.0075,
+          "LCP": 852.0075,
+          "SI": 6616.515953238866,
+          "TBT": 779.5,
+          "CLS": 0.02192678961839356
+        },
+        "after": {
+          "performance": 91,
+          "FCP": 1629.0170000000003,
+          "LCP": 1629.0170000000003,
+          "SI": 5064.409885842169,
+          "TBT": 189,
+          "CLS": 0.02192678961839356
+        },
+        "delta": {
+          "performance": 5,
+          "FCP": 824.9070000000004,
+          "LCP": 824.9070000000004,
+          "SI": -672.9595579006336,
+          "TBT": -220,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41664663744/attempts/1",
+        "sha": "bcf4b06b6f011132c1ac0a69d1b3d89aee72146c"
+      },
+      "detailPath": "data/runs/41664663744-1.json"
+    },
+    {
+      "id": "41664663364-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-03T15:30:52.000Z",
+      "finishedAt": "2026-11-03T15:33:05.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/products/catalog.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 3,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 60,
+          "FCP": 845.7883999999999,
+          "LCP": 4207.3085,
+          "SI": 5617.255309260003,
+          "TBT": 813.5,
+          "CLS": 0
+        },
+        "after": {
+          "performance": 76,
+          "FCP": 1616.0519999999997,
+          "LCP": 4420.760500000001,
+          "SI": 3926.162641938488,
+          "TBT": 368,
+          "CLS": 0
+        },
+        "delta": {
+          "performance": 16,
+          "FCP": 747.9605999999999,
+          "LCP": -203.41539999999986,
+          "SI": -2112.881059986903,
+          "TBT": -512,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41664663364/attempts/1",
+        "sha": "bcf4b06b6f011132c1ac0a69d1b3d89aee72146c"
+      },
+      "detailPath": "data/runs/41664663364-1.json"
+    },
     {
       "id": "41663992859-1",
       "name": null,
