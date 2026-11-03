@@ -337,17 +337,12 @@ function renderHistory() {
       h('summary', { text: `${state.history.skipped.length} entr${state.history.skipped.length === 1 ? 'y' : 'ies'} skipped: not valid history-v1 runs` }),
       h('ul', {}, state.history.skipped.slice(0, 20).map((m) => h('li', { text: m })))));
   }
-  if (!all.length) {
-    nodes.push(h('div', { class: 'empty' },
-      h('p', { class: 'empty-title', text: 'No runs published yet' }),
-      h('p', { text: 'Runs appear here after the perf-ab workflow finishes on GitHub Actions and the publisher adds its sanitized results to this site.' }),
-      extLink(core.WORKFLOW_URL, 'Open the perf-ab workflow')));
-  } else if (!runs.length) {
+  if (all.length && !runs.length) {
     nodes.push(h('div', { class: 'empty' },
       h('p', { class: 'empty-title', text: 'No runs match these filters' }),
       h('p', { text: `${all.length} published run${all.length === 1 ? ' is' : 's are'} hidden by the current filters.` }),
       h('button', { type: 'button', class: 'btn', text: 'Clear filters', on: { click: clearFilters } })));
-  } else {
+  } else if (runs.length) {
     nodes.push(historyTable(runs));
   }
   els.body.replaceChildren(...nodes);

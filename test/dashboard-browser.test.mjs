@@ -394,10 +394,11 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.equal((await rows(page)).length, 13);
 
     await open(page, 'empty');
-    assert.match(await text(page, '#history-body'), /No runs published yet/);
+    assert.equal(await text(page, '#history-body'), '');
+    assert.equal(await page.locator('#history-body .empty').count(), 0);
     assert.match(await text(page, '#data-meta'), /^0 runs · updated/);
     assert.match(await text(page, '#detail'), /Nothing to show yet/);
-    assert.equal(await page.locator('#history-body a', { hasText: 'Open the perf-ab workflow' }).getAttribute('href'),
+    assert.equal(await page.locator('.topbar-nav a').getAttribute('href'),
       'https://github.com/adobecom/perf-tools/actions/workflows/perf-ab.yml');
     await assertSafe(page);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-empty.png') });
