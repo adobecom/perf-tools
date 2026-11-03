@@ -240,7 +240,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.match(detail, /Run failed: rejected after retries/);
     assert.match(detail, /Lighthouse failed/);
     assert.match(detail, /<img src=x onerror="window\.__xss=1"> rejected after 3 attempts/, 'error text renders literally');
-    assert.match(detail, /No artifact was recorded/);
+    assert.match(detail, /No full report artifact is available/);
     assert.match(detail, /Workflow conclusionfailure/);
     assert.equal(await page.$$eval('#detail img', (i) => i.length), 0);
     await assertSafe(page);

@@ -90,7 +90,7 @@ The workflow is `.github/workflows/perf-ab.yml`: manual `workflow_dispatch` only
 
 ### Public history dashboard
 
-Browse the read-only dashboard at <https://adobecom.github.io/perf-tools/>. It does not dispatch runs or expose a write API; start measurements through the `perf-ab` GitHub Actions workflow or the CLI. `.github/workflows/pages.yml` publishes sanitized run summaries and per-pair metrics as durable static JSON on `main`. Raw Lighthouse reports and traces remain in the private-to-the-repository Actions artifacts, which expire; the dashboard records each artifact's actual expiration date.
+Browse the read-only dashboard at <https://adobecom.github.io/perf-tools/>. It does not dispatch runs or expose a write API; start measurements through the `perf-ab` GitHub Actions workflow or the CLI. `.github/workflows/pages.yml` publishes sanitized run summaries and per-pair metrics as durable static JSON on `main`. Raw Lighthouse reports and traces remain in the GitHub Actions artifacts, which require sign-in and expire; the dashboard records each artifact's actual expiration date.
 
 To backfill completed measurements, manually run the `perf-ab Pages` workflow from `main`. Leave its `run_ids` input empty to sweep completed eligible `perf-ab` runs, or enter comma-separated run IDs to import specific runs. Only completed runs from the trusted `main` workflow are considered. The dashboard exposes summaries and approved metadata only; it never publishes raw reports, traces, request data, or secrets.
 

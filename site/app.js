@@ -760,7 +760,7 @@ function changesSection(run) {
   return section('Changes',
     c.kinds.length ? h('div', { class: 'badges' }, c.kinds.map((k) => badge(CHANGE_KINDS[k] ?? k))) : null,
     h('div', { class: 'kv-grid' }, hints, priorities, pathList('Patched paths', c.patchPaths), pathList('Source override paths', c.sourcePaths)),
-    h('p', { class: 'note', text: 'Only change kinds, counts and paths are published; code, snippets and credentials stay in the private artifact.' }));
+    h('p', { class: 'note', text: 'Only change kinds, counts and paths are published; code, snippets and credentials stay in the workflow artifact.' }));
 }
 
 function rejectedSection(run) {
@@ -862,7 +862,7 @@ function artifactSection(run) {
   const st = core.artifactState(a);
   const name = a?.name ? mono(a.name) : 'Artifact';
   let body;
-  if (st === 'missing') body = h('p', { text: 'No artifact was recorded for this run.' });
+  if (st === 'missing') body = h('p', { text: 'No full report artifact is available for this run.' });
   else if (st === 'expired') {
     body = callout('neutral', 'Artifact expired',
       h('p', {}, name, a.expiresAt != null ? [' expired on ', timeEl(a.expiresAt, core.formatDay(a.expiresAt)), '.'] : ' has expired.'),
