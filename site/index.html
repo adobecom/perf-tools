@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-src 'none'; object-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Read-only history of perf-ab PageSpeed before/after benchmark runs from adobecom/perf-tools.">
+  <title>perf-ab history · adobecom/perf-tools</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#detail">Skip to run details</a>
+  <header class="topbar">
+    <div class="brand">
+      <img src="favicon.svg" alt="" width="20" height="20">
+      <h1>perf-ab history</h1>
+      <span class="brand-repo">adobecom/perf-tools</span>
+    </div>
+    <p class="topbar-meta" id="data-meta" aria-live="polite">Loading history…</p>
+    <nav class="topbar-nav" aria-label="Project">
+      <a href="https://github.com/adobecom/perf-tools/actions/workflows/perf-ab.yml" rel="noopener noreferrer">Workflow on GitHub Actions</a>
+    </nav>
+  </header>
+
+  <main class="layout" id="layout" data-view="list">
+    <section class="history" aria-labelledby="history-title">
+      <div class="history-head">
+        <h2 id="history-title">Runs</h2>
+        <p class="history-count" id="history-count" aria-live="polite"></p>
+      </div>
+      <form class="filters" id="filters" role="search" aria-label="Filter runs" novalidate>
+        <label class="field field-q">
+          <span class="field-label">Page URL or name</span>
+          <input type="search" name="q" id="filter-q" autocomplete="off" spellcheck="false" placeholder="www.adobe.com/…">
+        </label>
+        <label class="field">
+          <span class="field-label">Status</span>
+          <select name="status" id="filter-status">
+            <option value="">All statuses</option>
+            <option value="ok">Complete</option>
+            <option value="partial">Partial</option>
+            <option value="failed">Failed</option>
+          </select>
+        </label>
+        <label class="field field-profile">
+          <span class="field-label">Profile</span>
+          <select name="profile" id="filter-profile">
+            <option value="">All profiles</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field-label">From (UTC)</span>
+          <input type="date" name="from" id="filter-from">
+        </label>
+        <label class="field">
+          <span class="field-label">To (UTC)</span>
+          <input type="date" name="to" id="filter-to">
+        </label>
+        <div class="field field-actions">
+          <button type="button" class="btn btn-quiet" id="filter-clear" disabled>Clear filters</button>
+        </div>
+      </form>
+      <div class="history-body" id="history-body"></div>
+    </section>
+
+    <section class="detail" id="detail" tabindex="-1" aria-label="Run details"></section>
+  </main>
+
+  <noscript>
+    <p class="noscript">This read-only dashboard needs JavaScript to read the published history. The raw data is at <a href="data/index.json">data/index.json</a>.</p>
+  </noscript>
+</body>
+</html>

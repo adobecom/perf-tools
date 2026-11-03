@@ -1,0 +1,61 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "41700000007-1",
+  "createdAt": "2026-10-29T07:30:00Z",
+  "finishedAt": "2026-10-29T07:36:00.000Z",
+  "status": "failed",
+  "errorKind": "infrastructure",
+  "error": "Egress was not verified as US for every pair.",
+  "url": "https://www.adobe.com/products/photoshop.html",
+  "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+  "profile": {
+    "name": "PageSpeed mobile (lr-mobile)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": "142.0.7444.59",
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "cpuSlowdownMultiplier": 1.2,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "DE",
+    "verified": false,
+    "documentGeo": "non-US"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 0,
+    "after": 0,
+    "pairs": 0,
+    "rejected": 0
+  },
+  "medians": {
+    "before": null,
+    "after": null,
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000007/attempts/1",
+    "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+  },
+  "detailPath": "data/runs/41700000007-1.json",
+  "errorCode": "non-us-egress",
+  "conclusion": "success",
+  "pairs": [],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "query"
+    ]
+  },
+  "artifact": {
+    "name": "perf-ab-41700000007-1",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41700000007/artifacts/7",
+    "expiresAt": "2099-01-31T00:00:00Z",
+    "expired": false
+  }
+}

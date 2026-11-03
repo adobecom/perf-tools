@@ -1,0 +1,121 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "41700000008-1",
+  "name": "cc-baseline",
+  "createdAt": "2026-10-27T12:00:00Z",
+  "finishedAt": "2026-10-27T12:38:00.000Z",
+  "status": "ok",
+  "url": "https://www.adobe.com/creativecloud.html",
+  "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+  "profile": {
+    "name": "PageSpeed mobile (lr-mobile)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": "142.0.7444.59",
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "cpuSlowdownMultiplier": 1.2,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 3,
+    "before": 0,
+    "after": 3,
+    "pairs": 3,
+    "rejected": 0
+  },
+  "medians": {
+    "before": null,
+    "after": {
+      "performance": 54,
+      "FCP": 2738,
+      "LCP": 5183,
+      "SI": 6022,
+      "TBT": 689,
+      "CLS": 0.019
+    },
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000008/attempts/1",
+    "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+  },
+  "detailPath": "data/runs/41700000008-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": null,
+      "after": {
+        "performance": 55,
+        "FCP": 2721,
+        "LCP": 5203,
+        "SI": 6013,
+        "TBT": 689,
+        "CLS": 0.019
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1791
+      },
+      "delta": null
+    },
+    {
+      "index": 2,
+      "before": null,
+      "after": {
+        "performance": 51,
+        "FCP": 2777,
+        "LCP": 5183,
+        "SI": 6022,
+        "TBT": 622,
+        "CLS": 0.018
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1778
+      },
+      "delta": null
+    },
+    {
+      "index": 3,
+      "before": null,
+      "after": {
+        "performance": 54,
+        "FCP": 2738,
+        "LCP": 5140,
+        "SI": 6192,
+        "TBT": 708,
+        "CLS": 0.022
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1770
+      },
+      "delta": null
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": []
+  },
+  "artifact": {
+    "name": "perf-ab-41700000008-1",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41700000008/artifacts/8",
+    "expiresAt": "2099-01-31T00:00:00Z",
+    "expired": false
+  }
+}

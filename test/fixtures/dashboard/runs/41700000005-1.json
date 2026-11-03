@@ -1,0 +1,227 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "41700000005-1",
+  "name": "photoshop-lcp-preloads",
+  "config": "experiments/photoshop-lcp-preloads.json",
+  "createdAt": "2026-10-30T16:20:00Z",
+  "finishedAt": "2026-10-30T16:58:00.000Z",
+  "status": "partial",
+  "errorKind": "rejected-after-retries",
+  "error": "pair4: pair job missing accepted metrics; pair5: pair job produced no results (artifact missing)",
+  "url": "https://www.adobe.com/products/photoshop.html",
+  "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+  "profile": {
+    "name": "PageSpeed mobile (lr-mobile)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": "142.0.7444.59",
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "cpuSlowdownMultiplier": 1.2,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 4,
+    "after": 3,
+    "pairs": 3,
+    "rejected": 2
+  },
+  "medians": {
+    "before": {
+      "performance": 55,
+      "FCP": 2777,
+      "LCP": 5213,
+      "SI": 6036,
+      "TBT": 649,
+      "CLS": 0.021
+    },
+    "after": {
+      "performance": 56,
+      "FCP": 2809,
+      "LCP": 5040,
+      "SI": 6000,
+      "TBT": 604,
+      "CLS": 0.02
+    },
+    "delta": {
+      "performance": 1,
+      "FCP": 13,
+      "LCP": -206,
+      "SI": -48,
+      "TBT": 22,
+      "CLS": -0.001
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000005/attempts/1",
+    "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+  },
+  "detailPath": "data/runs/41700000005-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "performance": 55,
+        "FCP": 2847,
+        "LCP": 5191,
+        "SI": 6051,
+        "TBT": 649,
+        "CLS": 0.023
+      },
+      "after": {
+        "performance": 56,
+        "FCP": 2809,
+        "LCP": 4930,
+        "SI": 6003,
+        "TBT": 595,
+        "CLS": 0.022
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1839
+      },
+      "delta": {
+        "performance": 1,
+        "FCP": -38,
+        "LCP": -261,
+        "SI": -48,
+        "TBT": -54,
+        "CLS": -0.001
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "performance": 56,
+        "FCP": 2768,
+        "LCP": 5213,
+        "SI": 6036,
+        "TBT": 582,
+        "CLS": 0.021
+      },
+      "after": {
+        "performance": 57,
+        "FCP": 2818,
+        "LCP": 5112,
+        "SI": 5960,
+        "TBT": 604,
+        "CLS": 0.019
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1859
+      },
+      "delta": {
+        "performance": 1,
+        "FCP": 50,
+        "LCP": -101,
+        "SI": -76,
+        "TBT": 22,
+        "CLS": -0.002
+      }
+    },
+    {
+      "index": 3,
+      "before": {
+        "performance": 54,
+        "FCP": 2777,
+        "LCP": 5246,
+        "SI": 5983,
+        "TBT": 661,
+        "CLS": 0.02
+      },
+      "after": {
+        "performance": 53,
+        "FCP": 2790,
+        "LCP": 5040,
+        "SI": 6000,
+        "TBT": 713,
+        "CLS": 0.02
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1878
+      },
+      "delta": {
+        "performance": -1,
+        "FCP": 13,
+        "LCP": -206,
+        "SI": 17,
+        "TBT": 52,
+        "CLS": 0
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "performance": 53,
+        "FCP": 2810,
+        "LCP": 5236,
+        "SI": 5999,
+        "TBT": 633,
+        "CLS": 0.022
+      },
+      "after": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1851
+      },
+      "delta": null
+    },
+    {
+      "index": 5,
+      "before": null,
+      "after": null,
+      "job": null,
+      "delta": null
+    }
+  ],
+  "rejectedAttempts": [
+    {
+      "variant": "after",
+      "run": 4,
+      "attempt": 1,
+      "reason": "Lighthouse runtime error NO_FCP on https://www.adobe.com/products/photoshop.html"
+    },
+    {
+      "variant": "after",
+      "run": 4,
+      "attempt": 2,
+      "reason": "Lighthouse runtime error NO_FCP on https://www.adobe.com/products/photoshop.html"
+    }
+  ],
+  "changes": {
+    "kinds": [
+      "headInject"
+    ],
+    "hints": {
+      "requested": 12,
+      "used": 12,
+      "contextual": 0,
+      "dropped": 0
+    }
+  },
+  "artifact": {
+    "name": "perf-ab-41700000005-1",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41700000005/artifacts/5",
+    "expiresAt": "2099-01-31T00:00:00Z",
+    "expired": false
+  }
+}

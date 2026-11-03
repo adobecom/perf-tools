@@ -1,0 +1,796 @@
+{
+  "schema": "perf-ab/history-v1",
+  "updatedAt": "2026-11-02T18:00:00Z",
+  "runs": [
+    {
+      "id": "41700000001-1",
+      "name": "photoshop-lcp-preloads",
+      "config": "experiments/photoshop-lcp-preloads.json",
+      "createdAt": "2026-10-20T09:12:00Z",
+      "finishedAt": "2026-10-20T09:50:00.000Z",
+      "status": "ok",
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 5,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 54,
+          "FCP": 2838,
+          "LCP": 5210,
+          "SI": 6191,
+          "TBT": 641,
+          "CLS": 0.019
+        },
+        "after": {
+          "performance": 59,
+          "FCP": 2811,
+          "LCP": 4792,
+          "SI": 6228,
+          "TBT": 609,
+          "CLS": 0.019
+        },
+        "delta": {
+          "performance": 5,
+          "FCP": -10,
+          "LCP": -420,
+          "SI": 35,
+          "TBT": -40,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000001/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41700000001-1.json"
+    },
+    {
+      "id": "41700000002-1",
+      "name": "photoshop-tiny-change",
+      "config": "experiments/photoshop-tiny-change.json",
+      "createdAt": "2026-10-25T14:40:00Z",
+      "finishedAt": "2026-10-25T15:18:00.000Z",
+      "status": "ok",
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 5,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 55,
+          "FCP": 2809,
+          "LCP": 5180,
+          "SI": 6086,
+          "TBT": 661,
+          "CLS": 0.021
+        },
+        "after": {
+          "performance": 56,
+          "FCP": 2759,
+          "LCP": 5140,
+          "SI": 6036,
+          "TBT": 645,
+          "CLS": 0.021
+        },
+        "delta": {
+          "performance": 1,
+          "FCP": -50,
+          "LCP": -40,
+          "SI": -50,
+          "TBT": -20,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000002/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41700000002-1.json"
+    },
+    {
+      "id": "41700000003-2",
+      "name": "photoshop-font-swap",
+      "config": "experiments/photoshop-font-swap.json",
+      "createdAt": "2026-10-28T08:05:00Z",
+      "finishedAt": "2026-10-28T08:43:00.000Z",
+      "status": "ok",
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 5,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 55,
+          "FCP": 2794,
+          "LCP": 5202,
+          "SI": 6033,
+          "TBT": 595,
+          "CLS": 0.021
+        },
+        "after": {
+          "performance": 51,
+          "FCP": 2789,
+          "LCP": 5553,
+          "SI": 6099,
+          "TBT": 616,
+          "CLS": 0.022
+        },
+        "delta": {
+          "performance": -4,
+          "FCP": -5,
+          "LCP": 310,
+          "SI": 28,
+          "TBT": 33,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000003/attempts/2",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41700000003-2.json"
+    },
+    {
+      "id": "41631000001-1",
+      "name": "acrobat-plans-latest",
+      "config": "experiments/acrobat-plans-latest.json",
+      "createdAt": "2026-11-02T10:00:00Z",
+      "finishedAt": "2026-11-02T10:21:00.000Z",
+      "status": "ok",
+      "url": "https://www.adobe.com/acrobat/pricing.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 1,
+        "before": 1,
+        "after": 1,
+        "pairs": 1,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 58,
+          "FCP": 2410,
+          "LCP": 4920,
+          "SI": 5880,
+          "TBT": 1836,
+          "CLS": 0.004
+        },
+        "after": {
+          "performance": 90,
+          "FCP": 2380,
+          "LCP": 3010,
+          "SI": 4010,
+          "TBT": 24,
+          "CLS": 0.004
+        },
+        "delta": {
+          "performance": 32,
+          "FCP": -30,
+          "LCP": -1910,
+          "SI": -1870,
+          "TBT": -1812,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41631000001/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41631000001-1.json"
+    },
+    {
+      "id": "41700000005-1",
+      "name": "photoshop-lcp-preloads",
+      "config": "experiments/photoshop-lcp-preloads.json",
+      "createdAt": "2026-10-30T16:20:00Z",
+      "finishedAt": "2026-10-30T16:58:00.000Z",
+      "status": "partial",
+      "errorKind": "rejected-after-retries",
+      "error": "pair4: pair job missing accepted metrics; pair5: pair job produced no results (artifact missing)",
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 4,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 2
+      },
+      "medians": {
+        "before": {
+          "performance": 55,
+          "FCP": 2777,
+          "LCP": 5213,
+          "SI": 6036,
+          "TBT": 649,
+          "CLS": 0.021
+        },
+        "after": {
+          "performance": 56,
+          "FCP": 2809,
+          "LCP": 5040,
+          "SI": 6000,
+          "TBT": 604,
+          "CLS": 0.02
+        },
+        "delta": {
+          "performance": 1,
+          "FCP": 13,
+          "LCP": -206,
+          "SI": -48,
+          "TBT": 22,
+          "CLS": -0.001
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000005/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41700000005-1.json"
+    },
+    {
+      "id": "41700000006-1",
+      "name": "<img src=x onerror=\"window.__xss=1\">",
+      "createdAt": "2026-10-31T11:00:00Z",
+      "finishedAt": "2026-10-31T11:12:00.000Z",
+      "status": "failed",
+      "errorKind": "rejected-after-retries",
+      "error": "pair1: pair job failed: <img src=x onerror=\"window.__xss=1\"> rejected after 3 attempts",
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 3
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000006/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41700000006-1.json",
+      "errorCode": "lighthouse-failed",
+      "conclusion": "failure"
+    },
+    {
+      "id": "41700000007-1",
+      "createdAt": "2026-10-29T07:30:00Z",
+      "finishedAt": "2026-10-29T07:36:00.000Z",
+      "status": "failed",
+      "errorKind": "infrastructure",
+      "error": "Egress was not verified as US for every pair.",
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "DE",
+        "verified": false,
+        "documentGeo": "non-US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000007/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41700000007-1.json",
+      "errorCode": "non-us-egress",
+      "conclusion": "success"
+    },
+    {
+      "id": "41700000008-1",
+      "name": "cc-baseline",
+      "createdAt": "2026-10-27T12:00:00Z",
+      "finishedAt": "2026-10-27T12:38:00.000Z",
+      "status": "ok",
+      "url": "https://www.adobe.com/creativecloud.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 0,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": {
+          "performance": 54,
+          "FCP": 2738,
+          "LCP": 5183,
+          "SI": 6022,
+          "TBT": 689,
+          "CLS": 0.019
+        },
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000008/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41700000008-1.json"
+    },
+    {
+      "id": "41500000009-1",
+      "name": "photoshop-lcp-preloads",
+      "config": "experiments/photoshop-lcp-preloads.json",
+      "createdAt": "2026-08-01T10:00:00Z",
+      "finishedAt": "2026-08-01T10:38:00.000Z",
+      "status": "ok",
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 5,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 55,
+          "FCP": 2801,
+          "LCP": 5182,
+          "SI": 6143,
+          "TBT": 653,
+          "CLS": 0.022
+        },
+        "after": {
+          "performance": 59,
+          "FCP": 2800,
+          "LCP": 4821,
+          "SI": 6227,
+          "TBT": 619,
+          "CLS": 0.022
+        },
+        "delta": {
+          "performance": 4,
+          "FCP": -16,
+          "LCP": -330,
+          "SI": 41,
+          "TBT": 5,
+          "CLS": 0.001
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41500000009/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41500000009-1.json"
+    },
+    {
+      "id": "41400000010-1",
+      "name": "photoshop-lcp-preloads",
+      "createdAt": "2026-07-15T10:00:00Z",
+      "finishedAt": "2026-07-15T10:38:00.000Z",
+      "status": "ok",
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "profileKey": "lh13.5.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.5.0",
+        "chromeVersion": "141.0.7390.122",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 5,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 56,
+          "FCP": 2822,
+          "LCP": 5178,
+          "SI": 6050,
+          "TBT": 586,
+          "CLS": 0.022
+        },
+        "after": {
+          "performance": 55,
+          "FCP": 2829,
+          "LCP": 4906,
+          "SI": 6103,
+          "TBT": 565,
+          "CLS": 0.021
+        },
+        "delta": {
+          "performance": 0,
+          "FCP": -6,
+          "LCP": -272,
+          "SI": 14,
+          "TBT": -22,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41400000010/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41400000010-1.json"
+    },
+    {
+      "id": "41700000011-1",
+      "createdAt": "2026-10-26T09:00:00Z",
+      "finishedAt": "2026-10-26T09:38:00.000Z",
+      "status": "ok",
+      "url": "https://www.adobe.com/express/<script>window.__xss=1</script>",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 3,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 54,
+          "FCP": 2830,
+          "LCP": 5239,
+          "SI": 6039,
+          "TBT": 603,
+          "CLS": 0.02
+        },
+        "after": {
+          "performance": 55,
+          "FCP": 2785,
+          "LCP": 5322,
+          "SI": 6152,
+          "TBT": 609,
+          "CLS": 0.021
+        },
+        "delta": {
+          "performance": 1,
+          "FCP": -28,
+          "LCP": 83,
+          "SI": 40,
+          "TBT": 6,
+          "CLS": -0.001
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000011/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41700000011-1.json"
+    },
+    {
+      "id": "41700000012-1",
+      "createdAt": "2026-10-24T09:00:00Z",
+      "finishedAt": "2026-10-24T09:38:00.000Z",
+      "status": "ok",
+      "url": "https://www.adobe.com/express/",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 3,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 54,
+          "FCP": 2763,
+          "LCP": 5152,
+          "SI": 6128,
+          "TBT": 572,
+          "CLS": 0.019
+        },
+        "after": {
+          "performance": 55,
+          "FCP": 2755,
+          "LCP": 5176,
+          "SI": 6031,
+          "TBT": 594,
+          "CLS": 0.019
+        },
+        "delta": {
+          "performance": 1,
+          "FCP": -40,
+          "LCP": 15,
+          "SI": -111,
+          "TBT": 22,
+          "CLS": -0.002
+        }
+      },
+      "github": {
+        "runUrl": "javascript:window.__xss=1",
+        "sha": "not-a-sha"
+      },
+      "detailPath": "data/runs/41700000012-1.json"
+    },
+    {
+      "id": "41700000013-1",
+      "createdAt": "2026-10-23T09:00:00Z",
+      "finishedAt": "2026-10-23T09:38:00.000Z",
+      "status": "queued",
+      "url": "https://www.adobe.com/express/",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed mobile (lr-mobile)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": "142.0.7444.59",
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000013/attempts/1",
+        "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+      },
+      "detailPath": "data/runs/41700000013-1.json"
+    },
+    {
+      "id": "not-a-run-id",
+      "createdAt": "2026-10-01T00:00:00Z",
+      "status": "ok"
+    },
+    {
+      "id": "41700000099-1",
+      "createdAt": "yesterday",
+      "status": "ok"
+    }
+  ]
+}

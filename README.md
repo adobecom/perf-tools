@@ -88,6 +88,12 @@ Any earlier results, run and pair folders and `rejected/` in `-o` are removed be
 
 The workflow is `.github/workflows/perf-ab.yml`: manual `workflow_dispatch` only, `contents: read`, jobs `prepare` → `measure` (matrix, one pair per job) → `aggregate`. Its form inputs are `config` (an `experiments/*.json` path), `url` (one page measured unchanged), `runs` (pairs, 1-10; empty = the config's default) and, for the CLI, `spec` (gzip+base64 JSON) and `request_id`. Artifacts, kept 90 days: `perf-ab-<request id>-pair<i>` (one per job), `perf-ab-<request id>` (all pairs plus the aggregate; what the CLI downloads) and `perf-ab-<request id>-results` (the aggregate `results.json` only, for downstream consumers). Without a CLI request id, the id is `gh-run-<run id>`.
 
+### Public history dashboard
+
+Browse the read-only dashboard at <https://adobecom.github.io/perf-tools/>. It does not dispatch runs or expose a write API; start measurements through the `perf-ab` GitHub Actions workflow or the CLI. `.github/workflows/pages.yml` publishes sanitized run summaries and per-pair metrics as durable static JSON on `main`. Raw Lighthouse reports and traces remain in the private-to-the-repository Actions artifacts, which expire; the dashboard records each artifact's actual expiration date.
+
+To backfill completed measurements, manually run the `perf-ab Pages` workflow from `main`. Leave its `run_ids` input empty to sweep completed eligible `perf-ab` runs, or enter comma-separated run IDs to import specific runs. Only completed runs from the trusted `main` workflow are considered. The dashboard exposes summaries and approved metadata only; it never publishes raw reports, traces, request data, or secrets.
+
 ### Experiment configs (`--config`)
 
 A reviewed optimization can be stored as a versioned config, so the same changes can be re-run from the CLI or the Actions form. `experiments/acrobat-plans.json` holds the latest approved Acrobat plans optimizations: 57 static hints, the CSS/JS priorities, and the guarded market-config loading fix (MWPW-213916) as three exact-match patches of the live `utils.js` (no vendored production file).

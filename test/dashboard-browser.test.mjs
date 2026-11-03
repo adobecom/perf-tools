@@ -1,0 +1,430 @@
+// Real-browser checks for the read-only history dashboard (site/). A local fixture server serves site/ with
+// synthetic test-only data under /m/<mode>/data/, and headless Chromium loads it as GitHub Pages would.
+// Covers every page state, URL filters and deep links, mobile master/detail, and read-only/XSS/link safety.
+// Set DASHBOARD_SCREENSHOTS=<dir> to also write desktop, mobile and dark-mode screenshots to <dir>.
+import { describe, test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
+import { safeExternalUrl } from '../site/dashboard-core.mjs';
+
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const SITE = path.join(ROOT, 'site');
+const FIXTURES = path.join(ROOT, 'test', 'fixtures', 'dashboard');
+const NOW = new Date('2026-11-03T12:00:00Z');
+const SHOTS = process.env.DASHBOARD_SCREENSHOTS || '';
+const skip = fs.existsSync(chromium.executablePath()) ? false : 'Playwright Chromium is not installed (npx playwright install chromium)';
+
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const MODES = new Set(['populated', 'empty', 'schema', 'badjson', 'missing', 'slow', 'warning']);
+
+function inside(base, rel) {
+  const file = path.resolve(base, rel);
+  return file.startsWith(base + path.sep) ? file : null;
+}
+
+function startServer() {
+  const requests = [];
+  let releaseSlow;
+  const slowGate = new Promise((r) => { releaseSlow = r; });
+  const send = (res, status, body, type = 'application/json') => {
+    res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' });
+    res.end(body);
+  };
+  const sendFile = (res, file) => {
+    if (!file || !fs.existsSync(file) || !fs.statSync(file).isFile()) return send(res, 404, 'not found', 'text/plain');
+    return send(res, 200, fs.readFileSync(file), TYPES[path.extname(file)] ?? 'application/octet-stream');
+  };
+  const server = http.createServer(async (req, res) => {
+    const u = new URL(req.url, 'http://x');
+    requests.push({ method: req.method, path: u.pathname });
+    if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405, 'read-only', 'text/plain');
+    const m = /^\/m\/([a-z]+)\/(.*)$/.exec(decodeURIComponent(u.pathname));
+    if (!m || !MODES.has(m[1]) || m[2].includes('\0')) return send(res, 404, 'not found', 'text/plain');
+    const [, mode, rest] = m;
+    if (!rest.startsWith('data/')) return sendFile(res, inside(SITE, rest || 'index.html'));
+    const data = rest.slice('data/'.length);
+    if (mode === 'empty' && data === 'index.json') return send(res, 200, JSON.stringify({ schema: 'perf-ab/history-v1', updatedAt: '2026-11-02T18:00:00Z', runs: [] }));
+    if (mode === 'schema' && data === 'index.json') return send(res, 200, JSON.stringify({ schema: 'perf-ab/history-v0', runs: [] }));
+    if (mode === 'badjson' && data === 'index.json') return send(res, 200, '{"schema":"perf-ab/history-v1","runs":[{"id":');
+    if (mode === 'missing') return send(res, 404, 'not found', 'text/plain');
+    if (mode === 'slow' && data === 'index.json') await slowGate;
+    if (mode === 'warning' && data === 'runs/41700000001-1.json') {
+      const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
+      detail.warnings = [{ kind: 'environment-variability', benchmark: { min: 1000, max: 1800, ratio: 1.8, threshold: 1.2 } }];
+      return send(res, 200, JSON.stringify(detail));
+    }
+    return sendFile(res, inside(FIXTURES, data));
+  });
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => resolve({ server, requests, releaseSlow, origin: `http://127.0.0.1:${server.address().port}` }));
+  });
+}
+
+describe('history dashboard in a real browser', { skip }, () => {
+  let srv;
+  let browser;
+  const pageErrors = [];
+
+  before(async () => {
+    srv = await startServer();
+    browser = await chromium.launch();
+    if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
+  });
+
+  after(async () => {
+    srv?.releaseSlow();
+    await browser?.close();
+    await new Promise((r) => (srv ? srv.server.close(r) : r()));
+  });
+
+  async function newPage({ mobile = false, dark = false } = {}) {
+    const context = await browser.newContext({
+      viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },
+      deviceScaleFactor: mobile ? 2 : 1,
+      isMobile: mobile,
+      hasTouch: mobile,
+      colorScheme: dark ? 'dark' : 'light',
+      reducedMotion: 'reduce',
+    });
+    await context.clock.setFixedTime(NOW);
+    await context.addInitScript(() => {
+      window.__csp = [];
+      document.addEventListener('securitypolicyviolation', (e) => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`));
+    });
+    const page = await context.newPage();
+    page.on('pageerror', (e) => pageErrors.push(`pageerror: ${e.message}`));
+    page.on('console', (msg) => {
+      if (msg.type() !== 'error') return;
+      if (/Failed to load resource: the server responded with a status of 404/.test(msg.text())) return;
+      pageErrors.push(`console: ${msg.text()}`);
+    });
+    page.on('request', (req) => {
+      const u = new URL(req.url());
+      if (u.origin !== srv.origin) pageErrors.push(`cross-origin request: ${req.url()}`);
+      if (req.method() !== 'GET') pageErrors.push(`non-GET request: ${req.method()} ${req.url()}`);
+    });
+    return page;
+  }
+
+  const settled = (page) => page.waitForFunction(() => {
+    const meta = document.getElementById('data-meta').textContent;
+    const detail = document.getElementById('detail');
+    return meta !== 'Loading history…' && !detail.hasAttribute('aria-busy');
+  });
+
+  async function open(page, mode, search = '') {
+    await page.goto(`${srv.origin}/m/${mode}/${search}`);
+    await settled(page);
+  }
+
+  const text = (page, sel) => page.$eval(sel, (el) => el.textContent.replace(/\s+/g, ' '));
+  const verdicts = (page) => page.$$eval('#detail td.verdict[data-verdict]', (tds) => tds.map((td) => td.dataset.verdict));
+  const rows = (page) => page.$$eval('#history-body a.run-link', (as) => as.map((a) => a.dataset.run));
+
+  // Every page state must stay inert: no frames, no injected markup, only vetted links, no CSP violations.
+  async function assertSafe(page) {
+    const r = await page.evaluate(() => ({
+      xss: window.__xss,
+      csp: window.__csp,
+      frames: document.querySelectorAll('iframe, frame, object, embed').length,
+      imgs: [...document.images].map((i) => i.getAttribute('src')),
+      scripts: [...document.scripts].map((s) => s.getAttribute('src')),
+      forms: [...document.forms].map((f) => [f.getAttribute('action'), f.getAttribute('method')]),
+      inputs: [...document.querySelectorAll('input[type=submit], button[type=submit], button:not([type])')].length,
+      hrefs: [...document.querySelectorAll('a[href]')].map((a) => a.href),
+      stray: (document.body.textContent.match(/\[object \w+\]|\bundefined\b|\bnull\b|\bNaN\b/g) ?? []),
+      handlers: [...document.querySelectorAll('*')].flatMap((el) => [...el.attributes].filter((a) => /^on/i.test(a.name)).map((a) => a.name)),
+      duplicateIds: [...document.querySelectorAll('[id]')].map((el) => el.id).filter((id, i, ids) => ids.indexOf(id) !== i),
+    }));
+    assert.equal(r.xss, undefined, 'no injected script ran');
+    assert.deepEqual(r.csp, [], 'no CSP violations');
+    assert.equal(r.frames, 0, 'no frames or embedded reports');
+    assert.deepEqual(r.imgs, ['favicon.svg']);
+    assert.deepEqual(r.scripts, ['app.js']);
+    assert.deepEqual(r.forms, [[null, null]], 'the filter form has no action or method');
+    assert.equal(r.inputs, 0, 'no submit controls');
+    assert.deepEqual(r.handlers, [], 'no inline event handler attributes');
+    assert.deepEqual(r.duplicateIds, [], 'every document id is unique');
+    assert.deepEqual(r.stray, [], 'no stringified objects or missing values in the page text');
+    for (const href of r.hrefs) {
+      const u = new URL(href);
+      assert.ok(u.origin === srv.origin ? u.pathname.startsWith('/m/') : safeExternalUrl(href) === href, `unexpected link ${href}`);
+    }
+  }
+
+  test('populated history: newest run selected, smoke run labelled with no performance conclusion', async () => {
+    const page = await newPage();
+    await open(page, 'populated');
+    assert.equal((await rows(page)).length, 13);
+    assert.equal(await text(page, '#history-count'), '13 total');
+    assert.match(await text(page, '#data-meta'), /^13 runs · updated 2026-11-02 18:00 UTC$/);
+    assert.match(await text(page, '#history-body details.skipped summary'), /^2 entries skipped: not valid history-v1 runs$/);
+    assert.equal(await page.$eval('a.run-link[aria-current="true"]', (a) => a.dataset.run), '41631000001-1');
+    const smokeRow = await text(page, 'tr.run-row.is-selected');
+    assert.match(smokeRow, /1-pair smoke/);
+    assert.match(smokeRow, /1\/1/);
+    const detail = await text(page, '#detail');
+    assert.match(detail, /Smoke run: one pair, no performance conclusion/);
+    assert.match(detail, /1\/1 pair/);
+    assert.match(detail, /US verified/);
+    assert.match(detail, /acrobat-plans-latest/);
+    assert.doesNotMatch(await text(page, '#detail table.medians tbody'), /Consistently|signific|confiden/i);
+    assert.doesNotMatch(await text(page, '#detail .detail-head'), /signific|confiden|\bwins?\b|improve/i);
+    const v = await verdicts(page);
+    assert.equal(v.length, 6);
+    assert.ok(v.every((x) => x === 'inconclusive'), `smoke verdicts ${v}`);
+    assert.match(detail, /Direction is a descriptive heuristic, not a statistical significance test/);
+    assert.match(await text(page, '#detail table.medians thead'), /Median paired Δ/);
+    assert.equal(await page.$$eval('#detail svg.plot-svg', (s) => s.length), 6);
+    assert.equal(await page.locator('#detail a', { hasText: 'Download perf-ab-41631000001-1' }).getAttribute('href'),
+      'https://github.com/adobecom/perf-tools/actions/runs/41631000001/artifacts/1');
+    await assertSafe(page);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-smoke.png'), fullPage: true });
+    await page.context().close();
+  });
+
+  test('tiny unanimous changes read Within noise; a clear improvement names a direction', async () => {
+    const page = await newPage();
+    await open(page, 'populated', '?run=41700000002-1');
+    assert.deepEqual(await verdicts(page), Array(6).fill('noise'));
+    assert.doesNotMatch(await text(page, '#detail table.medians tbody'), /Consistently/);
+    assert.equal(await page.$$eval('#detail svg.plot-svg line.link.dir-better, #detail svg.plot-svg line.link.dir-worse', (l) => l.length), 0, 'tiny pair deltas are drawn neutral');
+
+    await open(page, 'populated', '?run=41700000001-1');
+    const byMetric = await page.$$eval('#detail table.medians tbody tr', (trs) => Object.fromEntries(trs.map((tr) => [tr.querySelector('.metric-short').textContent, tr.dataset.verdict])));
+    assert.deepEqual(byMetric, { Perf: 'better', FCP: 'noise', LCP: 'better', SI: byMetric.SI, TBT: 'noise', CLS: byMetric.CLS });
+    const lcpRow = await text(page, '#detail table.medians tbody tr:nth-child(3)');
+    assert.match(lcpRow, /Consistently better/);
+    assert.match(lcpRow, /5\/5 pairs same direction/);
+    assert.ok(await page.$$eval('#detail svg.plot-svg line.link.dir-better', (l) => l.length) >= 5);
+    assert.equal(await page.$eval('a.run-link[aria-current="true"]', (a) => a.dataset.run), '41700000001-1');
+    const detail = await text(page, '#detail');
+    assert.match(detail, /Comparable runs/);
+    assert.match(detail, /3 other runs of this page excluded/);
+    assert.match(detail, /57/);
+    await assertSafe(page);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-improvement.png'), fullPage: true });
+    await page.context().close();
+  });
+
+  test('worse, expired, partial, failed, non-US, single-URL and unknown runs are explicit', async () => {
+    const page = await newPage();
+    await open(page, 'populated', '?run=41700000003-2');
+    let detail = await text(page, '#detail');
+    assert.match(detail, /Consistently worse/);
+    assert.match(detail, /Artifact expired/);
+    assert.match(detail, /1, 2 \(failed jobs were re-run\)/);
+    assert.match(detail, /attempt 2 · Chrome 142\.0\.7444\.60 · CPU benchmark \d+ · US/);
+    assert.equal(await page.locator('#detail a', { hasText: /^Download/ }).count(), 0, 'no link to an expired artifact');
+
+    await open(page, 'populated', '?run=41500000009-1');
+    detail = await text(page, '#detail');
+    assert.match(detail, /Artifact expired.*expired on 2026-08-31/);
+    assert.equal(await page.locator('#detail a', { hasText: /^Download/ }).count(), 0);
+
+    await open(page, 'populated', '?run=41700000005-1');
+    detail = await text(page, '#detail');
+    assert.match(detail, /Partial run3 of 5 requested pairs completed; 2 pairs are incomplete/);
+    assert.match(detail, /2 attempts were rejected and retried/);
+    assert.match(detail, /2 incomplete pairs are listed but excluded/);
+    assert.equal(await page.$$eval('#detail tr.pair-incomplete.pair-start', (t) => t.length), 2);
+    assert.match(await text(page, '#sec-rejected-attempts + *'), /after41/);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-partial.png'), fullPage: true });
+
+    await open(page, 'populated', '?run=41700000006-1');
+    detail = await text(page, '#detail');
+    assert.match(detail, /Run failed: rejected after retries/);
+    assert.match(detail, /Lighthouse failed/);
+    assert.match(detail, /<img src=x onerror="window\.__xss=1"> rejected after 3 attempts/, 'error text renders literally');
+    assert.match(detail, /No artifact was recorded/);
+    assert.match(detail, /Workflow conclusionfailure/);
+    assert.equal(await page.$$eval('#detail img', (i) => i.length), 0);
+    await assertSafe(page);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-failed.png'), fullPage: true });
+
+    await open(page, 'populated', '?run=41700000007-1');
+    detail = await text(page, '#detail');
+    assert.match(detail, /Not US-verified \(DE\)/);
+    assert.match(detail, /Not measured from a verified US egress/);
+    assert.match(detail, /Egress was not verified as US/);
+    assert.match(detail, /This run itself does not meet these conditions/);
+
+    await open(page, 'populated', '?run=41700000008-1');
+    detail = await text(page, '#detail');
+    assert.match(detail, /Single-URL run/);
+    assert.deepEqual(await verdicts(page), []);
+
+    await open(page, 'populated', '?run=41700000013-1');
+    assert.match(await text(page, '#detail'), /Unrecognized run status.*"queued"/);
+    await page.context().close();
+  });
+
+  test('published runner-variability warnings are visible without asserting a gain', async () => {
+    const page = await newPage();
+    await open(page, 'warning', '?run=41700000001-1');
+    const detail = await text(page, '#detail');
+    assert.match(detail, /Runner environment varied/);
+    assert.match(detail, /Treat them as indicative, not a confirmed gain/);
+    await assertSafe(page);
+    await page.context().close();
+  });
+
+  test('missing or malformed detail files and unknown deep links fail visibly', async () => {
+    const page = await newPage();
+    await open(page, 'populated', '?run=41700000011-1');
+    let detail = await text(page, '#detail');
+    assert.match(detail, /Run detail could not be loaded/);
+    assert.match(detail, /HTTP 404/);
+    assert.equal(await text(page, '#detail h2'), 'www.adobe.com/express/%3Cscript%3Ewindow.__xss=1%3C/script%3E', 'URL renders as text');
+    assert.equal(await page.$$eval('#detail script, #history-body script', (s) => s.length), 0);
+    await assertSafe(page);
+
+    await open(page, 'populated', '?run=41700000012-1');
+    detail = await text(page, '#detail');
+    assert.match(detail, /Run detail has an unexpected format/);
+    assert.match(detail, /attempt 1 \(no link published\)/);
+    assert.equal(await page.locator('#detail a[href^="javascript"]').count(), 0);
+    await assertSafe(page);
+
+    await open(page, 'populated', '?run=99999999999-1');
+    assert.match(await text(page, '#detail'), /Run 99999999999-1 is not in the published history/);
+    await page.context().close();
+  });
+
+  test('filters live in the URL; no-match and hidden-selection states are explicit', async () => {
+    const page = await newPage();
+    await open(page, 'populated', '?q=acrobat');
+    assert.equal(await page.inputValue('#filter-q'), 'acrobat');
+    assert.equal(await text(page, '#history-count'), '1 of 13 shown');
+    assert.deepEqual(await rows(page), ['41631000001-1']);
+
+    await open(page, 'populated', '?status=failed');
+    assert.deepEqual(await rows(page), ['41700000006-1', '41700000007-1']);
+
+    await open(page, 'populated', '?status=failed&run=41700000001-1');
+    assert.match(await text(page, '#detail'), /This run is hidden by the current filters\./);
+
+    await open(page, 'populated', '?q=no-such-page');
+    assert.match(await text(page, '#history-body'), /No runs match these filters13 published runs are hidden/);
+    await page.click('#history-body button:has-text("Clear filters")');
+    assert.equal((await rows(page)).length, 13);
+    assert.equal(new URL(page.url()).search, '');
+    assert.equal(await page.isDisabled('#filter-clear'), true);
+
+    await page.selectOption('#filter-status', 'partial');
+    assert.deepEqual(await rows(page), ['41700000005-1']);
+    assert.equal(new URL(page.url()).searchParams.get('status'), 'partial');
+    await page.fill('#filter-from', '2026-10-31');
+    await page.selectOption('#filter-status', '');
+    await page.waitForFunction(() => document.querySelectorAll('#history-body a.run-link').length === 2);
+    assert.deepEqual(await rows(page), ['41631000001-1', '41700000006-1']);
+
+    const oldKey = await page.$eval('#filter-profile', (s) => [...s.options].find((o) => /13\.5\.0/.test(o.textContent))?.value);
+    await page.click('#filter-clear');
+    await page.selectOption('#filter-profile', oldKey);
+    assert.deepEqual(await rows(page), ['41400000010-1']);
+
+    await page.click('#filter-clear');
+    await page.click('a.run-link[data-run="41700000005-1"]');
+    await settled(page);
+    assert.equal(new URL(page.url()).searchParams.get('run'), '41700000005-1');
+    await page.click('a.run-link[data-run="41700000001-1"]');
+    await settled(page);
+    await page.goBack();
+    await settled(page);
+    assert.equal(await page.$eval('a.run-link[aria-current="true"]', (a) => a.dataset.run), '41700000005-1');
+    assert.match(await text(page, '#detail'), /Partial run/);
+    await assertSafe(page);
+    await page.context().close();
+  });
+
+  test('loading, empty, unpublished, wrong-schema and invalid-JSON histories', async () => {
+    const page = await newPage();
+    await page.goto(`${srv.origin}/m/slow/`);
+    await page.waitForSelector('#history-body[aria-busy="true"]');
+    assert.equal(await text(page, '#data-meta'), 'Loading history…');
+    assert.equal(await page.$eval('#detail', (d) => d.getAttribute('aria-busy')), 'true');
+    srv.releaseSlow();
+    await settled(page);
+    assert.equal((await rows(page)).length, 13);
+
+    await open(page, 'empty');
+    assert.match(await text(page, '#history-body'), /No runs published yet/);
+    assert.match(await text(page, '#data-meta'), /^0 runs · updated/);
+    assert.match(await text(page, '#detail'), /Nothing to show yet/);
+    assert.equal(await page.locator('#history-body a', { hasText: 'Open the perf-ab workflow' }).getAttribute('href'),
+      'https://github.com/adobecom/perf-tools/actions/workflows/perf-ab.yml');
+    await assertSafe(page);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-empty.png') });
+
+    await open(page, 'missing');
+    assert.match(await text(page, '#history-body'), /History is not published yet.*HTTP 404/);
+    assert.equal(await text(page, '#data-meta'), 'History unavailable');
+    assert.equal(await page.locator('#history-body button', { hasText: 'Retry' }).count(), 1);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-not-published.png') });
+
+    await open(page, 'schema');
+    assert.match(await text(page, '#history-body'), /History has an unexpected format.*history-v0/);
+
+    await open(page, 'badjson');
+    assert.match(await text(page, '#history-body'), /History could not be loaded.*not valid JSON/);
+    await page.click('#history-body button:has-text("Retry")');
+    await settled(page);
+    assert.match(await text(page, '#history-body'), /not valid JSON/);
+    await assertSafe(page);
+    await page.context().close();
+  });
+
+  test('mobile: list first, run detail on selection, back returns to the list', async () => {
+    const page = await newPage({ mobile: true });
+    await open(page, 'populated');
+    assert.equal(await page.$eval('#layout', (l) => l.dataset.view), 'list');
+    assert.equal(await page.isVisible('#detail'), false);
+    assert.equal(await page.$$eval('a.run-link[aria-current="true"]', (a) => a.length), 0, 'nothing auto-selected on narrow screens');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(overflow <= 0, `page scrolls horizontally by ${overflow}px`);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'mobile-list.png'), fullPage: true });
+
+    await page.click('a.run-link[data-run="41631000001-1"]');
+    await settled(page);
+    assert.equal(await page.$eval('#layout', (l) => l.dataset.view), 'detail');
+    assert.equal(await page.isVisible('.history'), false);
+    assert.equal(await page.isVisible('#detail .back'), true);
+    assert.match(await text(page, '#detail'), /Smoke run: one pair, no performance conclusion/);
+    const detailOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(detailOverflow <= 0, `detail scrolls horizontally by ${detailOverflow}px`);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'mobile-smoke-detail.png'), fullPage: true });
+
+    await page.click('#detail .back');
+    assert.equal(await page.$eval('#layout', (l) => l.dataset.view), 'list');
+    assert.equal(new URL(page.url()).searchParams.get('run'), null);
+    assert.equal(await page.evaluate(() => document.activeElement?.dataset.run), '41631000001-1');
+
+    await open(page, 'populated', '?run=41700000001-1');
+    assert.equal(await page.$eval('#layout', (l) => l.dataset.view), 'detail');
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'mobile-improvement-detail.png'), fullPage: true });
+    await assertSafe(page);
+    await page.context().close();
+  });
+
+  test('dark mode renders the same detail', { skip: !SHOTS && 'screenshots only (DASHBOARD_SCREENSHOTS)' }, async () => {
+    const page = await newPage({ dark: true });
+    await open(page, 'populated', '?run=41700000001-1');
+    await assertSafe(page);
+    await page.screenshot({ path: path.join(SHOTS, 'desktop-improvement-dark.png'), fullPage: true });
+    await page.context().close();
+  });
+
+  test('the dashboard only ever issued GET requests for its own files', () => {
+    assert.deepEqual(pageErrors, []);
+    assert.ok(srv.requests.length > 20);
+    for (const r of srv.requests) {
+      assert.equal(r.method, 'GET', `${r.method} ${r.path}`);
+      assert.match(r.path, /^\/m\/[a-z]+\/(|index\.html|app\.js|dashboard-core\.mjs|styles\.css|favicon\.svg|data\/index\.json|data\/runs\/[0-9]+-[0-9]+\.json)$/, r.path);
+    }
+  });
+});

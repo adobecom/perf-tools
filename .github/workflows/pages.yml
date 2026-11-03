@@ -1,0 +1,92 @@
+name: perf-ab Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/pages.yml"
+      - "lib/pagespeed/history.mjs"
+      - "lib/pagespeed/publish.mjs"
+      - "site/**"
+  workflow_run:
+    workflows: ["perf-ab"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_ids:
+        description: Optional comma-separated perf-ab run IDs to import; empty sweeps completed main runs
+        required: false
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+  id-token: write
+  pages: write
+
+concurrency:
+  group: perf-ab-pages-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' ||
+       github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Import completed artifacts and build history
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_IDS: ${{ inputs.run_ids }}
+          SWEEP: ${{ github.event_name != 'workflow_dispatch' || inputs.run_ids == '' }}
+        run: node lib/pagespeed/publish.mjs
+      - name: Commit public summaries and deploy source to main
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data
+          git commit -m "Publish perf-ab history" || {
+            if git diff --cached --quiet; then
+              echo "No history changes to commit."
+            else
+              exit 1
+            fi
+          }
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Could not publish after three main-branch push attempts." >&2
+              exit 1
+            fi
+            sleep "$attempt"
+          done
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

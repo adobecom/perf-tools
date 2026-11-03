@@ -1,0 +1,131 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "41631000001-1",
+  "name": "acrobat-plans-latest",
+  "config": "experiments/acrobat-plans-latest.json",
+  "createdAt": "2026-11-02T10:00:00Z",
+  "finishedAt": "2026-11-02T10:21:00.000Z",
+  "status": "ok",
+  "url": "https://www.adobe.com/acrobat/pricing.html",
+  "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+  "profile": {
+    "name": "PageSpeed mobile (lr-mobile)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": "142.0.7444.59",
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "cpuSlowdownMultiplier": 1.2,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 1,
+    "before": 1,
+    "after": 1,
+    "pairs": 1,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "performance": 58,
+      "FCP": 2410,
+      "LCP": 4920,
+      "SI": 5880,
+      "TBT": 1836,
+      "CLS": 0.004
+    },
+    "after": {
+      "performance": 90,
+      "FCP": 2380,
+      "LCP": 3010,
+      "SI": 4010,
+      "TBT": 24,
+      "CLS": 0.004
+    },
+    "delta": {
+      "performance": 32,
+      "FCP": -30,
+      "LCP": -1910,
+      "SI": -1870,
+      "TBT": -1812,
+      "CLS": 0
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41631000001/attempts/1",
+    "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+  },
+  "detailPath": "data/runs/41631000001-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "performance": 58,
+        "FCP": 2410,
+        "LCP": 4920,
+        "SI": 5880,
+        "TBT": 1836,
+        "CLS": 0.004
+      },
+      "after": {
+        "performance": 90,
+        "FCP": 2380,
+        "LCP": 3010,
+        "SI": 4010,
+        "TBT": 24,
+        "CLS": 0.004
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1874
+      },
+      "delta": {
+        "performance": 32,
+        "FCP": -30,
+        "LCP": -1910,
+        "SI": -1870,
+        "TBT": -1812,
+        "CLS": 0
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "headInject",
+      "priorities",
+      "patches"
+    ],
+    "hints": {
+      "requested": 57,
+      "used": 57,
+      "contextual": 2,
+      "dropped": 0
+    },
+    "priorityPaths": [
+      {
+        "path": "/libs/deps/mas/mas.js",
+        "priority": "high"
+      }
+    ],
+    "patchPaths": [
+      "libs/blocks/merch-card/merch-card.js"
+    ]
+  },
+  "artifact": {
+    "name": "perf-ab-41631000001-1",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41631000001/artifacts/1",
+    "expiresAt": "2099-01-31T00:00:00Z",
+    "expired": false
+  }
+}

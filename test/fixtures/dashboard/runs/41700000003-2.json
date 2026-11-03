@@ -1,0 +1,253 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "41700000003-2",
+  "name": "photoshop-font-swap",
+  "config": "experiments/photoshop-font-swap.json",
+  "createdAt": "2026-10-28T08:05:00Z",
+  "finishedAt": "2026-10-28T08:43:00.000Z",
+  "status": "ok",
+  "url": "https://www.adobe.com/products/photoshop.html",
+  "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+  "profile": {
+    "name": "PageSpeed mobile (lr-mobile)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": "142.0.7444.59",
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "cpuSlowdownMultiplier": 1.2,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 5,
+    "after": 5,
+    "pairs": 5,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "performance": 55,
+      "FCP": 2794,
+      "LCP": 5202,
+      "SI": 6033,
+      "TBT": 595,
+      "CLS": 0.021
+    },
+    "after": {
+      "performance": 51,
+      "FCP": 2789,
+      "LCP": 5553,
+      "SI": 6099,
+      "TBT": 616,
+      "CLS": 0.022
+    },
+    "delta": {
+      "performance": -4,
+      "FCP": -5,
+      "LCP": 310,
+      "SI": 28,
+      "TBT": 33,
+      "CLS": 0
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41700000003/attempts/2",
+    "sha": "a3f1c9e27b4d5f60812c9d3e4f5a6b7c8d9e0f12"
+  },
+  "detailPath": "data/runs/41700000003-2.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "performance": 55,
+        "FCP": 2816,
+        "LCP": 5243,
+        "SI": 6019,
+        "TBT": 583,
+        "CLS": 0.021
+      },
+      "after": {
+        "performance": 51,
+        "FCP": 2756,
+        "LCP": 5553,
+        "SI": 5954,
+        "TBT": 616,
+        "CLS": 0.022
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1790
+      },
+      "delta": {
+        "performance": -4,
+        "FCP": -60,
+        "LCP": 310,
+        "SI": -65,
+        "TBT": 33,
+        "CLS": 0.001
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "performance": 55,
+        "FCP": 2784,
+        "LCP": 5202,
+        "SI": 6026,
+        "TBT": 595,
+        "CLS": 0.022
+      },
+      "after": {
+        "performance": 52,
+        "FCP": 2758,
+        "LCP": 5482,
+        "SI": 6054,
+        "TBT": 542,
+        "CLS": 0.024
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1801
+      },
+      "delta": {
+        "performance": -3,
+        "FCP": -26,
+        "LCP": 280,
+        "SI": 28,
+        "TBT": -53,
+        "CLS": 0.002
+      }
+    },
+    {
+      "index": 3,
+      "before": {
+        "performance": 56,
+        "FCP": 2794,
+        "LCP": 5122,
+        "SI": 6198,
+        "TBT": 595,
+        "CLS": 0.02
+      },
+      "after": {
+        "performance": 51,
+        "FCP": 2789,
+        "LCP": 5472,
+        "SI": 6280,
+        "TBT": 579,
+        "CLS": 0.018
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "142.0.7444.59",
+        "egressCountry": "US",
+        "benchmarkIndex": 1812
+      },
+      "delta": {
+        "performance": -5,
+        "FCP": -5,
+        "LCP": 350,
+        "SI": 82,
+        "TBT": -16,
+        "CLS": -0.002
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "performance": 55,
+        "FCP": 2753,
+        "LCP": 5318,
+        "SI": 6033,
+        "TBT": 629,
+        "CLS": 0.021
+      },
+      "after": {
+        "performance": 52,
+        "FCP": 2801,
+        "LCP": 5558,
+        "SI": 6099,
+        "TBT": 686,
+        "CLS": 0.02
+      },
+      "job": {
+        "runAttempt": 2,
+        "chromeVersion": "142.0.7444.60",
+        "egressCountry": "US",
+        "benchmarkIndex": 1823
+      },
+      "delta": {
+        "performance": -3,
+        "FCP": 48,
+        "LCP": 240,
+        "SI": 66,
+        "TBT": 57,
+        "CLS": -0.001
+      }
+    },
+    {
+      "index": 5,
+      "before": {
+        "performance": 54,
+        "FCP": 2799,
+        "LCP": 5175,
+        "SI": 6186,
+        "TBT": 621,
+        "CLS": 0.023
+      },
+      "after": {
+        "performance": 48,
+        "FCP": 2832,
+        "LCP": 5575,
+        "SI": 6187,
+        "TBT": 671,
+        "CLS": 0.023
+      },
+      "job": {
+        "runAttempt": 2,
+        "chromeVersion": "142.0.7444.60",
+        "egressCountry": "US",
+        "benchmarkIndex": 1834
+      },
+      "delta": {
+        "performance": -6,
+        "FCP": 33,
+        "LCP": 400,
+        "SI": 1,
+        "TBT": 50,
+        "CLS": 0
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "patches",
+      "sources"
+    ],
+    "patchPaths": [
+      "libs/styles/styles.css"
+    ],
+    "sourcePaths": [
+      "libs/utils/fonts.js"
+    ]
+  },
+  "artifact": {
+    "name": "perf-ab-41700000003-2",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41700000003/artifacts/3",
+    "expiresAt": "2099-01-31T00:00:00Z",
+    "expired": true
+  }
+}
