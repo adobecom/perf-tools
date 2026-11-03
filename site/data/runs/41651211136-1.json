@@ -1,0 +1,236 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "41651211136-1",
+  "name": "acrobat-plans-latest",
+  "config": "experiments/acrobat-plans.json",
+  "createdAt": "2026-11-03T14:11:16.000Z",
+  "finishedAt": "2026-11-03T14:14:29.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+  "profile": {
+    "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "cpuSlowdownMultiplier": 1.2,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 1,
+    "before": 1,
+    "after": 1,
+    "pairs": 1,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "performance": 50,
+      "FCP": 1134.5990000000002,
+      "LCP": 4962.2164999999995,
+      "SI": 6202.860677155708,
+      "TBT": 1575.5000000000027,
+      "CLS": 0.017116456762482822
+    },
+    "after": {
+      "performance": 68,
+      "FCP": 1421.9099999999999,
+      "LCP": 4235.110999999999,
+      "SI": 5081.134568220556,
+      "TBT": 518,
+      "CLS": 0.02759423904391904
+    },
+    "delta": {
+      "performance": 18,
+      "FCP": 287.3109999999997,
+      "LCP": -727.1055000000006,
+      "SI": -1121.7261089351523,
+      "TBT": -1057.5000000000027,
+      "CLS": 0.01047778228143622
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41651211136/attempts/1",
+    "sha": "5324fdcd284ba394f000a4800257627f064b1557"
+  },
+  "detailPath": "data/runs/41651211136-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "performance": 50,
+        "FCP": 1134.5990000000002,
+        "LCP": 4962.2164999999995,
+        "SI": 6202.860677155708,
+        "TBT": 1575.5000000000027,
+        "CLS": 0.017116456762482822
+      },
+      "after": {
+        "performance": 68,
+        "FCP": 1421.9099999999999,
+        "LCP": 4235.110999999999,
+        "SI": 5081.134568220556,
+        "TBT": 518,
+        "CLS": 0.02759423904391904
+      },
+      "delta": {
+        "performance": 18,
+        "FCP": 287.3109999999997,
+        "LCP": -727.1055000000006,
+        "SI": -1121.7261089351523,
+        "TBT": -1057.5000000000027,
+        "CLS": 0.01047778228143622
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.47",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1685,
+          "after": 2457
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "headInject",
+      "priorities",
+      "sources"
+    ],
+    "hints": {
+      "requested": 57,
+      "used": 57,
+      "contextual": 2,
+      "dropped": 0,
+      "pairs": [
+        {
+          "pair": 1,
+          "used": 57,
+          "contextual": 2,
+          "dropped": 0
+        }
+      ]
+    },
+    "priorityPaths": [
+      {
+        "path": "/libs/c2/styles/styles.css",
+        "priority": "high"
+      },
+      {
+        "path": "/acrobat/styles/styles.css",
+        "priority": "high"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "priority": "high"
+      },
+      {
+        "path": "/libs/martech/helpers.js",
+        "priority": "high"
+      },
+      {
+        "path": "/acrobat/scripts/scripts.js",
+        "priority": "high"
+      },
+      {
+        "path": "/libs/features/personalization/personalization.js",
+        "priority": "low"
+      },
+      {
+        "path": "/libs/martech/martech.js",
+        "priority": "low"
+      },
+      {
+        "path": "/libs/blocks/merch/merch.js",
+        "priority": "auto"
+      },
+      {
+        "path": "/mas/libs/commerce.js",
+        "priority": "auto"
+      }
+    ],
+    "patchPaths": [],
+    "sourcePaths": [
+      "/libs/utils/utils.js"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/milo",
+        "number": 7095,
+        "baseRef": "stage",
+        "headRef": "MWPW-213916",
+        "baseSha": "21ff01ef84f642ea82f9a2b74c349f53b2b2b2c6",
+        "headSha": "84d74f2875d18c049dd92c0b42d78a5f9e6227c0",
+        "mergeBaseSha": "21ff01ef84f642ea82f9a2b74c349f53b2b2b2c6",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/libs/utils/utils.js",
+            "previousPath": null,
+            "blobSha": "ba8c9b2daeac9bae3fd8cee68aa74d35bd2f5d2f"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7095,
+        "pair": 1,
+        "expectedMergeBaseSha256": "4946e56e78634fe1170b96fcefe1a3c6c0ef0e9220b3ae48adf4b7d3f07caa1d",
+        "productionSha256": "16e815898083a4ad91c972ef507c73aabe8ede63fff4dc627a3ad7049116dce9",
+        "productionStatus": 200,
+        "status": "drift"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1685,
+        "max": 2457,
+        "ratio": 1.458,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 1685,
+          "after": 2457,
+          "ratio": 1.458
+        }
+      ]
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7095,
+      "pair": 1,
+      "expectedMergeBaseSha256": "4946e56e78634fe1170b96fcefe1a3c6c0ef0e9220b3ae48adf4b7d3f07caa1d",
+      "productionSha256": "16e815898083a4ad91c972ef507c73aabe8ede63fff4dc627a3ad7049116dce9"
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-gh-run-41651211136",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41651211136/artifacts/13237446817",
+    "expiresAt": "2027-02-01T14:11:17.000Z",
+    "expired": false
+  }
+}
