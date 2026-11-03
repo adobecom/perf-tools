@@ -141,3 +141,89 @@ test('published run artifact repair changes only the link metadata and remains i
   });
   assert.deepEqual(JSON.parse(fs.readFileSync(detailPath, 'utf8')), repaired);
 });
+
+test('history cutoff excludes old runs from sweeps and explicit imports, while keeping future runs eligible', async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-cutoff-test-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const data = path.join(root, 'site/data');
+  fs.mkdirSync(data, { recursive: true });
+  const cutoff = '2026-11-03T15:59:33.532Z';
+  fs.writeFileSync(path.join(data, 'history-policy.json'), JSON.stringify({
+    schema: 'perf-ab/history-policy-v1',
+    cutoff,
+  }));
+  fs.writeFileSync(path.join(data, 'index.json'), JSON.stringify({
+    schema: 'perf-ab/history-v1',
+    updatedAt: cutoff,
+    runs: [{ id: '41631057972-1', createdAt: '2026-11-03T11:52:43.000Z', status: 'ok' }],
+  }));
+
+  const oldRun = {
+    ...run,
+    id: 41631057972,
+    run_attempt: 1,
+    created_at: '2026-11-03T11:52:43Z',
+    updated_at: '2026-11-03T11:54:30Z',
+    conclusion: 'success',
+  };
+  const futureRun = {
+    ...run,
+    id: 41700000001,
+    run_attempt: 1,
+    created_at: '2026-11-03T16:00:00Z',
+    updated_at: '2026-11-03T16:01:00Z',
+    conclusion: 'success',
+  };
+  let sweepRuns = [oldRun, futureRun];
+  const byId = new Map([[oldRun.id, oldRun], [futureRun.id, futureRun]]);
+  const server = http.createServer((req, res) => {
+    res.setHeader('content-type', 'application/json');
+    const url = new URL(req.url, 'http://127.0.0.1');
+    let response;
+    if (url.pathname === '/repos/adobecom/perf-tools/actions/workflows/perf-ab.yml') response = { id: 123 };
+    else if (url.pathname === '/repos/adobecom/perf-tools/actions/workflows/perf-ab.yml/runs') response = { workflow_runs: sweepRuns };
+    else {
+      const match = /^\/repos\/adobecom\/perf-tools\/actions\/runs\/(\d+)(\/artifacts)?$/.exec(url.pathname);
+      if (match && match[2]) response = { artifacts: [] };
+      else if (match) response = byId.get(Number(match[1]));
+    }
+    if (!response) {
+      res.writeHead(404);
+      res.end('{}');
+      return;
+    }
+    res.end(JSON.stringify(response));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())));
+  const options = { root, apiUrl: `http://127.0.0.1:${server.address().port}`, token: 'test-token', now: Date.parse(cutoff) };
+
+  const swept = await publishRuns({ ...options, sweep: true });
+  assert.equal(swept.excludedExisting, 1);
+  assert.deepEqual(swept.excludedRunIds, [String(oldRun.id)]);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(data, 'index.json'), 'utf8')).runs.map((entry) => entry.id), ['41700000001-1']);
+
+  const explicit = await publishRuns({ ...options, runIds: [String(oldRun.id)] });
+  assert.deepEqual(explicit.excludedRunIds, [String(oldRun.id)]);
+  assert.equal(explicit.total, 1);
+
+  fs.writeFileSync(path.join(data, 'index.json'), JSON.stringify({
+    schema: 'perf-ab/history-v1',
+    updatedAt: cutoff,
+    runs: [],
+  }));
+  sweepRuns = [oldRun];
+  const resetSweep = await publishRuns({ ...options, sweep: true });
+  assert.deepEqual(resetSweep.excludedRunIds, [String(oldRun.id)]);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(data, 'index.json'), 'utf8')).runs, []);
+  await publishRuns({ ...options, sweep: true });
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(data, 'index.json'), 'utf8')).runs, []);
+});
+
+test('invalid history policy fails before contacting GitHub', async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-invalid-policy-test-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, 'site/data'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'site/data/history-policy.json'), '{');
+  await assert.rejects(publishRuns({ root, token: 'test-token' }), /history policy is not valid JSON/);
+});

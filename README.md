@@ -98,6 +98,8 @@ Browse the read-only dashboard at <https://adobecom.github.io/perf-tools/>. It d
 
 To backfill completed measurements, manually run the `perf-ab Pages` workflow from `main`. Leave its `run_ids` input empty to sweep completed eligible `perf-ab` runs, or enter comma-separated run IDs to import specific runs. Only completed runs from the trusted `main` workflow are considered. The dashboard exposes summaries and approved metadata only; it never publishes raw reports, traces, request data, or secrets.
 
+To reset the published history, set `site/data/history-policy.json` to `{"schema":"perf-ab/history-policy-v1","cutoff":"<UTC timestamp>"}`, clear `runs` in `site/data/index.json`, and remove only the per-run JSON files referenced by the previous index. The cutoff is inclusive and uses each workflow run's creation time, so neither a sweep nor an explicit run-ID import can restore earlier runs. Existing summaries are filtered too. Removing the policy restores the previous behavior; lowering its cutoff and running a sweep can restore eligible history from retained Actions artifacts. This reset affects only published site data: it does not delete Git history, Actions runs, or their artifacts.
+
 ### Experiment configs (`--config`)
 
 A reviewed optimization can be stored as a versioned config, so the same changes can be re-run from the CLI or the Actions form. `experiments/acrobat-plans.json` holds the latest approved Acrobat plans optimizations: 57 static hints, the CSS/JS priorities, and the mapped `utils.js` source from [adobecom/milo#7095](https://github.com/adobecom/milo/pull/7095), pinned to the PR commit resolved when the campaign starts.
