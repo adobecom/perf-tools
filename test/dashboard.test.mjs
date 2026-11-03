@@ -195,7 +195,7 @@ test('filters parse from and serialize to the URL, dropping invalid values', () 
   assert.equal(core.hasFilters({ ...core.EMPTY_FILTERS, to: '2026-01-01' }), true);
 });
 
-test('applyFilters matches URL/name/id text, status, profile and inclusive UTC dates', () => {
+test('applyFilters matches text, status and inclusive browser-local dates', () => {
   const { runs } = history();
   const ids = (f) => core.applyFilters(runs, { ...core.EMPTY_FILTERS, ...f }).map((r) => r.id).sort();
   assert.deepEqual(ids({ q: 'ACROBAT' }), ['41631000001-1']);
@@ -212,6 +212,18 @@ test('applyFilters matches URL/name/id text, status, profile and inclusive UTC d
   const opts = core.profileOptions(runs);
   assert.ok(opts.length >= 2);
   assert.ok(opts.some((o) => o.value === oldKey && /Lighthouse 13\.5\.0/.test(o.label)));
+});
+
+test('local date filters handle UTC midnight and daylight-saving transitions', () => {
+  const runs = [
+    { id: 'before-midnight', createdAt: Date.parse('2026-03-08T07:59:00Z') },
+    { id: 'after-midnight', createdAt: Date.parse('2026-03-08T08:01:00Z') },
+    { id: 'after-dst-jump', createdAt: Date.parse('2026-03-08T10:30:00Z') },
+  ];
+  const filter = (from, to, timeZone) => core.applyFilters(runs, { from, to }, timeZone).map((run) => run.id);
+  assert.deepEqual(filter('2026-03-07', '2026-03-07', 'America/Los_Angeles'), ['before-midnight']);
+  assert.deepEqual(filter('2026-03-08', '2026-03-08', 'America/Los_Angeles'), ['after-midnight', 'after-dst-jump']);
+  assert.deepEqual(filter('2026-03-08', '2026-03-08', 'Asia/Tokyo'), ['before-midnight', 'after-midnight', 'after-dst-jump']);
 });
 
 test('comparableRuns never mixes profiles, regions or failed runs', () => {

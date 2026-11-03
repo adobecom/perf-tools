@@ -407,15 +407,13 @@ export function serializeState({ q = '', status = '', profile = '', from = '', t
 
 export const hasFilters = (f) => !!(f.q || f.status || f.profile || f.from || f.to);
 
-const utcDay = (t) => new Date(t).toISOString().slice(0, 10);
-
-export function applyFilters(runs, f) {
+export function applyFilters(runs, f, timeZone) {
   const q = (f.q ?? '').toLowerCase();
   return runs.filter((r) => {
     if (q && !`${r.url ?? ''} ${r.name ?? ''} ${r.id}`.toLowerCase().includes(q)) return false;
     if (f.status && r.status !== f.status) return false;
     if (f.profile && r.profileKey !== f.profile) return false;
-    const day = utcDay(r.createdAt);
+    const day = formatLocalDay(r.createdAt, timeZone);
     if (f.from && day < f.from) return false;
     if (f.to && day > f.to) return false;
     return true;

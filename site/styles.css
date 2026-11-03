@@ -358,6 +358,9 @@ table.compact th, table.compact td { padding: 6px 10px; }
 .block h4 { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
 .note { color: var(--ink-3); font-size: 12px; max-width: 90ch; }
 
+.medians-content { min-width: 0; max-width: 100%; }
+.medians-scroll { width: 100%; min-width: 0; max-width: 100%; }
+.medians { min-width: 720px; }
 .medians tbody th { white-space: nowrap; }
 .metric-short { display: inline-block; min-width: 3.4em; }
 .metric-long { color: var(--ink-3); font-weight: 400; font-size: 12px; margin-left: 6px; }
@@ -490,7 +493,6 @@ tr.is-self .weak, tr.is-self .sub { color: var(--ink-2); }
   .detail-inner { gap: 16px; padding: 8px 12px 40px; }
   .detail-head h2 { font-size: 18px; }
   .metric-long { display: none; }
-  .medians { min-width: 520px; }
   .kv { grid-template-columns: minmax(0, 1fr); }
   .kv dt { border-bottom: 0; padding-bottom: 0; background: transparent; font-size: 12px; }
   .stats { grid-template-columns: repeat(2, minmax(0, auto)); }

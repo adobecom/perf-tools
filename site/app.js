@@ -614,8 +614,8 @@ function mediansTable(run, pairs) {
   const note = complete == null
     ? 'Sample counts were not published for this run.'
     : `Medians over ${complete} complete pair${complete === 1 ? '' : 's'}. Δ is the median of per-pair differences (after − before), not the difference of the medians; Δ % is relative to the before median.`;
-  return h('div', {},
-    h('div', { class: 'table-scroll' }, h('table', { class: 'data medians' },
+  return h('div', { class: 'medians-content' },
+    h('div', { class: 'table-scroll medians-scroll' }, h('table', { class: 'data medians' },
       h('thead', {}, h('tr', {},
         h('th', { scope: 'col', text: 'Metric' }),
         h('th', { scope: 'col', class: 'num', text: 'Before' }),
@@ -889,13 +889,13 @@ function artifactSection(run) {
   if (st === 'missing') body = h('p', { text: 'No full report artifact is available for this run.' });
   else if (st === 'expired') {
     body = callout('neutral', 'Artifact expired',
-      h('p', {}, name, a.expiresAt != null ? [' expired on ', timeEl(a.expiresAt, core.formatDay(a.expiresAt)), '.'] : ' has expired.'),
+      h('p', {}, name, a.expiresAt != null ? [' expired on ', timeEl(a.expiresAt, core.formatLocalDay(a.expiresAt)), '.'] : ' has expired.'),
       h('p', { text: 'The raw Lighthouse reports are gone; the published numbers on this page remain.' }));
   } else if (st === 'unlinked') {
-    body = h('p', {}, name, ' has no published link.', a.expiresAt != null ? [' Expires ', timeEl(a.expiresAt, core.formatDay(a.expiresAt)), '.'] : null);
+    body = h('p', {}, name, ' has no published link.', a.expiresAt != null ? [' Expires ', timeEl(a.expiresAt, core.formatLocalDay(a.expiresAt)), '.'] : null);
   } else {
     body = h('p', {}, extLink(a.url, a.name ? `Download ${a.name}` : 'Download artifact'),
-      a.expiresAt != null ? [' · expires ', timeEl(a.expiresAt, core.formatDay(a.expiresAt)), ` (${core.formatRelativeDays(a.expiresAt)})`] : null,
+      a.expiresAt != null ? [' · expires ', timeEl(a.expiresAt, core.formatLocalDay(a.expiresAt)), ` (${core.formatRelativeDays(a.expiresAt)})`] : null,
       h('span', { class: 'sub sub-line', text: 'GitHub sign-in required.' }));
   }
   return section('Reports and artifact', body,

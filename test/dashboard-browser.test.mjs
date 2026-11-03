@@ -87,9 +87,9 @@ describe('history dashboard in a real browser', { skip }, () => {
     await new Promise((r) => (srv ? srv.server.close(r) : r()));
   });
 
-  async function newPage({ mobile = false, dark = false, timezoneId = 'UTC' } = {}) {
+  async function newPage({ mobile = false, dark = false, timezoneId = 'UTC', viewportWidth } = {}) {
     const context = await browser.newContext({
-      viewport: mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },
+      viewport: mobile ? { width: 390, height: 844 } : { width: viewportWidth ?? 1440, height: 900 },
       deviceScaleFactor: mobile ? 2 : 1,
       isMobile: mobile,
       hasTouch: mobile,
@@ -202,6 +202,26 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.equal(await smokeRow.locator('time').textContent(), '2026-11-02 02:00 PST');
     assert.equal(await page.$eval('#history-body th', (el) => el.textContent), 'Created (local)');
     assert.equal(await page.$eval('#detail time[datetime]', (el) => el.textContent), '2026-11-02 02:00 PST');
+    await page.fill('#filter-from', '2026-11-02');
+    await page.fill('#filter-to', '2026-11-02');
+    assert.deepEqual(await rows(page), ['41631000001-1']);
+    await assertSafe(page);
+    await page.context().close();
+  });
+
+  test('intermediate desktop keeps the wide medians table inside its local scroller', async () => {
+    const page = await newPage({ viewportWidth: 1076 });
+    await open(page, 'populated', '?run=41700000001-1');
+    const sizes = await page.evaluate(() => ({
+      viewport: window.innerWidth,
+      document: document.documentElement.scrollWidth,
+      table: document.querySelector('.medians').scrollWidth,
+      scroller: document.querySelector('.medians-scroll').clientWidth,
+      scrollable: document.querySelector('.medians-scroll').scrollWidth,
+    }));
+    assert.ok(sizes.table > sizes.scroller, `medians table should scroll inside wrapper: ${JSON.stringify(sizes)}`);
+    assert.ok(sizes.document <= sizes.viewport, `page should not scroll horizontally: ${JSON.stringify(sizes)}`);
+    await assertSafe(page);
     await page.context().close();
   });
 
