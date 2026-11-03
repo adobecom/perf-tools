@@ -188,9 +188,28 @@
     "hints": {
       "requested": 57,
       "used": 57,
-      "contextual": 0,
+      "contextual": 2,
       "dropped": 0,
-      "pairs": []
+      "pairs": [
+        {
+          "pair": 1,
+          "used": 57,
+          "contextual": 2,
+          "dropped": 0
+        },
+        {
+          "pair": 2,
+          "used": 57,
+          "contextual": 2,
+          "dropped": 0
+        },
+        {
+          "pair": 3,
+          "used": 57,
+          "contextual": 2,
+          "dropped": 0
+        }
+      ]
     },
     "priorityPaths": [
       {
