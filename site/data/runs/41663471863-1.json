@@ -1,0 +1,172 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "41663471863-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-03T15:23:56.000Z",
+  "finishedAt": "2026-11-03T15:25:55.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/creativecloud/plans.html",
+  "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+  "profile": {
+    "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "cpuSlowdownMultiplier": 1.2,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 3,
+    "before": 0,
+    "after": 3,
+    "pairs": 3,
+    "rejected": 0
+  },
+  "medians": {
+    "before": null,
+    "after": {
+      "performance": 73,
+      "FCP": 865.89,
+      "LCP": 865.89,
+      "SI": 5761.879260468252,
+      "TBT": 1115.5,
+      "CLS": 0.02192678961839356
+    },
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41663471863/attempts/1",
+    "sha": "af405caeb48a976ed305a5aea5aa25db07cefcd2"
+  },
+  "detailPath": "data/runs/41663471863-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": null,
+      "after": {
+        "performance": 71,
+        "FCP": 855.8234999999999,
+        "LCP": 855.8234999999999,
+        "SI": 5761.879260468252,
+        "TBT": 1163.5,
+        "CLS": 0.02192678961839356
+      },
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.47",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": 2445
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": null,
+      "after": {
+        "performance": 81,
+        "FCP": 1924.934,
+        "LCP": 1924.934,
+        "SI": 6125.935531165085,
+        "TBT": 453,
+        "CLS": 0.02192678961839356
+      },
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.47",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": 2048.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": null,
+      "after": {
+        "performance": 73,
+        "FCP": 865.89,
+        "LCP": 865.89,
+        "SI": 4894.372799925494,
+        "TBT": 1115.5,
+        "CLS": 0.02192678961839356
+      },
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.47",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": 1777.5
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [],
+    "hints": null,
+    "priorityPaths": [],
+    "patchPaths": [],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1777.5,
+        "max": 2445,
+        "ratio": 1.376,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": null,
+          "after": 2445,
+          "ratio": 1
+        },
+        {
+          "pair": 2,
+          "before": null,
+          "after": 2048.5,
+          "ratio": 1
+        },
+        {
+          "pair": 3,
+          "before": null,
+          "after": 1777.5,
+          "ratio": 1
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mw0u8kdm-2x5gcrjf",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41663471863/artifacts/13243535870",
+    "expiresAt": "2027-02-01T15:23:57.000Z",
+    "expired": false
+  }
+}
