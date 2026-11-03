@@ -1,5 +1,4 @@
 {
-  "schema": "perf-ab/run-v1",
   "id": "41633898462-1",
   "name": "acrobat-plans-latest",
   "config": "experiments/acrobat-plans.json",
@@ -65,6 +64,7 @@
     "sha": "faa725932a9d91d2955bb760641d5d4c841f2506"
   },
   "detailPath": "data/runs/41633898462-1.json",
+  "schema": "perf-ab/run-v1",
   "pairs": [
     {
       "index": 1,
@@ -188,28 +188,9 @@
     "hints": {
       "requested": 57,
       "used": 57,
-      "contextual": 2,
+      "contextual": 0,
       "dropped": 0,
-      "pairs": [
-        {
-          "pair": 1,
-          "used": 57,
-          "contextual": 2,
-          "dropped": 0
-        },
-        {
-          "pair": 2,
-          "used": 57,
-          "contextual": 2,
-          "dropped": 0
-        },
-        {
-          "pair": 3,
-          "used": 57,
-          "contextual": 2,
-          "dropped": 0
-        }
-      ]
+      "pairs": []
     },
     "priorityPaths": [
       {
@@ -286,8 +267,8 @@
     }
   ],
   "artifact": {
-    "name": "perf-ab-mw0nfld0-cebtakma-results",
-    "url": "https://github.com/adobecom/perf-tools/actions/runs/41633898462/artifacts/13228774534",
+    "name": "perf-ab-mw0nfld0-cebtakma",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41633898462/artifacts/13228639242",
     "expiresAt": "2027-02-01T12:13:27.000Z",
     "expired": false
   }
