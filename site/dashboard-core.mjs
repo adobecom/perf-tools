@@ -50,7 +50,7 @@ export const CHANGE_KINDS = {
   headInject: 'Injected head snippet',
   priorities: 'Fetch priorities',
   patches: 'Source patches',
-  sources: 'Source overrides',
+  sources: 'Pinned PR source files',
 };
 
 // Direction heuristic (shown in the UI). It is descriptive, not a statistical test: a direction is only named
@@ -95,7 +95,8 @@ export function safeExternalUrl(value) {
   if (u.protocol !== 'https:' || u.username || u.password || u.port) return null;
   const host = u.hostname.toLowerCase();
   if (host === 'github.com') {
-    return u.pathname === '/adobecom/perf-tools' || u.pathname.startsWith('/adobecom/perf-tools/') ? u.href : null;
+    if (u.pathname === '/adobecom/perf-tools' || u.pathname.startsWith('/adobecom/perf-tools/')) return u.href;
+    return /^\/adobecom\/(?:milo|mas)\/pull\/[1-9][0-9]*$/.test(u.pathname) ? u.href : null;
   }
   if (host === 'adobe.com' || host.endsWith('.adobe.com')) return u.href;
   return null;
@@ -294,15 +295,26 @@ export function parseRun(json, expectedId) {
   const c = isObject(json.changes) ? json.changes : {};
   const h = isObject(c.hints) ? c.hints : null;
   const a = isObject(json.artifact) ? json.artifact : null;
-  const warnings = Array.isArray(json.warnings) ? json.warnings.filter((w) => w?.kind === 'environment-variability').slice(0, 10).map((w) => ({
-    kind: 'environment-variability',
-    benchmark: isObject(w.benchmark) ? {
-      min: positive(w.benchmark.min),
-      max: positive(w.benchmark.max),
-      ratio: positive(w.benchmark.ratio),
-      threshold: positive(w.benchmark.threshold),
-    } : null,
-  })) : [];
+  const warnings = Array.isArray(json.warnings) ? json.warnings.filter((w) => ['environment-variability', 'production-source-drift', 'production-source-unverified'].includes(w?.kind)).slice(0, 30).map((w) => {
+    if (w.kind !== 'environment-variability') return {
+      kind: w.kind,
+      path: str(w.path, 300),
+      repo: ['adobecom/milo', 'adobecom/mas'].includes(w.repo) ? w.repo : null,
+      number: int(w.number),
+      pair: int(w.pair),
+      expectedMergeBaseSha256: typeof w.expectedMergeBaseSha256 === 'string' && /^[a-f0-9]{64}$/i.test(w.expectedMergeBaseSha256) ? w.expectedMergeBaseSha256.toLowerCase() : null,
+      productionSha256: typeof w.productionSha256 === 'string' && /^[a-f0-9]{64}$/i.test(w.productionSha256) ? w.productionSha256.toLowerCase() : null,
+    };
+    return {
+      kind: 'environment-variability',
+      benchmark: isObject(w.benchmark) ? {
+        min: positive(w.benchmark.min),
+        max: positive(w.benchmark.max),
+        ratio: positive(w.benchmark.ratio),
+        threshold: positive(w.benchmark.threshold),
+      } : null,
+    };
+  }) : [];
   return {
     ...summary,
     pairs,
@@ -322,6 +334,34 @@ export function parseRun(json, expectedId) {
         .map((p) => ({ path: str(p.path, 300), priority: str(p.priority, 20) })).filter((p) => p.path) : [],
       patchPaths: strList(c.patchPaths, 100),
       sourcePaths: strList(c.sourcePaths, 100),
+      prSources: Array.isArray(c.prSources) ? c.prSources.slice(0, 20).filter(isObject).map((pr) => {
+        if (!['adobecom/milo', 'adobecom/mas'].includes(pr.repo) || !Number.isInteger(pr.number) || pr.number < 1
+          || !safeSha(pr.baseSha) || !safeSha(pr.headSha) || !safeSha(pr.mergeBaseSha)) return null;
+        const validPath = (p) => {
+          const value = str(p, 300);
+          const prefix = pr.repo === 'adobecom/milo' ? '/libs/' : '/mas/libs/';
+          return value?.startsWith(prefix) ? value : null;
+        };
+        return {
+          repo: pr.repo, number: pr.number,
+          baseRef: str(pr.baseRef, 120), headRef: str(pr.headRef, 120),
+          baseSha: pr.baseSha.toLowerCase(), headSha: pr.headSha.toLowerCase(), mergeBaseSha: pr.mergeBaseSha.toLowerCase(),
+          files: Array.isArray(pr.files) ? pr.files.slice(0, 300).filter(isObject).map((file) => ({
+            status: ['added', 'modified', 'removed', 'renamed'].includes(file.status) ? file.status : null,
+            path: validPath(file.path), previousPath: validPath(file.previousPath),
+            blobSha: safeSha(file.blobSha),
+          })).filter((file) => file.status && (file.path || file.previousPath)) : [],
+        };
+      }).filter(Boolean) : [],
+      sourceDrift: Array.isArray(c.sourceDrift) ? c.sourceDrift.slice(0, 300).filter(isObject).map((row) => ({
+        path: str(row.path, 300),
+        repo: ['adobecom/milo', 'adobecom/mas'].includes(row.repo) ? row.repo : null,
+        number: int(row.number), pair: int(row.pair),
+        expectedMergeBaseSha256: typeof row.expectedMergeBaseSha256 === 'string' && /^[a-f0-9]{64}$/i.test(row.expectedMergeBaseSha256) ? row.expectedMergeBaseSha256.toLowerCase() : null,
+        productionSha256: typeof row.productionSha256 === 'string' && /^[a-f0-9]{64}$/i.test(row.productionSha256) ? row.productionSha256.toLowerCase() : null,
+        productionStatus: int(row.productionStatus),
+        status: ['matches-merge-base', 'drift', 'unverified'].includes(row.status) ? row.status : null,
+      })).filter((row) => row.path && row.repo && row.status) : [],
     },
     artifact: a && { name: str(a.name, 200), url: safeExternalUrl(a.url), expiresAt: time(a.expiresAt), expired: a.expired === true },
     warnings,

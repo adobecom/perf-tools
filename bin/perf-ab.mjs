@@ -75,8 +75,8 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
                           after document's Link response header entries
   --patch <file.json>     {"replacements":[{"path":"/libs/utils/utils.js","find":"...","replace":"..."}]}:
                           guarded edits of live sources (after only); each find must match exactly once or the job fails
-  --milo-pr <n> / --mas-pr <n>   serve the files changed by an adobecom/milo or adobecom/mas PR (same-repo branches):
-                          after = PR branch, before = stage (milo) / main (mas), both from aem.live
+  --milo-pr <n> / --mas-pr <n>   pin the PR's exact commit, locally read only mapped changed files, and serve them
+                          through the proxy in the after variant. Before remains unchanged production.
   --expect-title <regex>  render guard: document title must match
   --expect-count <selector=n>   render guard (repeatable), e.g. merch-card=19
   --repo <owner/name>     workflow repository (default adobecom/perf-tools)   --ref <branch> (default main)
@@ -87,27 +87,7 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
 
 const fail = (m) => { console.error(`perf-ab: ${m}`); process.exit(1); };
 const gh = (args) => execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 1 << 28 });
-const aemHost = (ref, repo) => `${ref.toLowerCase().replace(/[^a-z0-9-]/g, '-')}--${repo.split('/')[1]}--${repo.split('/')[0]}.aem.live`;
-const TEXT = /\.(?:m?js|css|json|html|svg|txt)$/i;
-
-function prSources(repo, num, rule) {
-  const { headRefOid, headRefName, headRepositoryOwner } = JSON.parse(gh(['pr', 'view', num, '-R', repo, '--json', 'headRefOid,headRefName,headRepositoryOwner']));
-  if (headRepositoryOwner.login !== repo.split('/')[0]) fail(`${repo}#${num} is from a fork; only same-repository PR branches can be served from aem.live`);
-  const base = repo.endsWith('/milo') ? 'stage' : 'main';
-  const files = gh(['api', `repos/${repo}/compare/${base}...${headRefOid}`, '--paginate', '--jq', '.files[]']).split('\n').filter(Boolean).map((l) => JSON.parse(l));
-  const out = { before: {}, after: {} };
-  for (const f of files) {
-    if (!f.filename.startsWith(rule.from)) continue;
-    const pathname = `${rule.to}/${f.filename.slice(rule.from.length)}`;
-    if (!TEXT.test(pathname)) { console.warn(`${repo}#${num}: skipping non-text ${pathname}`); continue; }
-    if (f.status !== 'removed') out.after[pathname] = `https://${aemHost(headRefName, repo)}/${f.filename}`;
-    if (f.status !== 'added') out.before[pathname] = `https://${aemHost(base, repo)}/${f.previous_filename ?? f.filename}`;
-  }
-  console.log(`${repo}#${num}: after=${aemHost(headRefName, repo)} before=${aemHost(base, repo)} (${Object.keys(out.after).length} files)`);
-  return out;
-}
-
-export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'utf8'), prSourcesFn = prSources } = {}) {
+export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'utf8') } = {}) {
   const runs = Number(o.runs ?? 3);
   if (!Number.isInteger(runs) || runs < 1 || runs > 10) throw new Error('--runs must be an integer 1..10');
   const withQuery = (value, extra) => {
@@ -127,13 +107,13 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
     if (!Array.isArray(p.replacements) || !p.replacements.length) throw new Error(`--patch ${o.patch}: expected {"replacements":[{path,find,replace}]}`);
     after.patches = p.replacements.map(({ path: p2, find, replace }) => ({ path: p2, find, replace }));
   }
-  for (const [flag, repo, rule] of [['milo-pr', 'adobecom/milo', { from: 'libs/', to: '/libs' }], ['mas-pr', 'adobecom/mas', { from: 'web-components/dist/', to: '/mas/libs' }]]) {
+  for (const [flag, repo] of [['milo-pr', 'adobecom/milo'], ['mas-pr', 'adobecom/mas']]) {
     if (!o[flag]) continue;
-    const s = prSourcesFn(repo, o[flag], rule);
-    after.sources = { ...after.sources, ...s.after };
-    before.sources = { ...before.sources, ...s.before };
+    const number = Number(o[flag]);
+    if (!Number.isInteger(number) || number < 1 || number > 999999) throw new Error(`--${flag} must be a positive PR number`);
+    after.pullRequests = [...(after.pullRequests ?? []), { repo, number }];
   }
-  const changed = o.before != null || o['before-query'] || o['after-query'] || after.headInject != null || after.priorities || after.patches || after.sources;
+  const changed = o.before != null || o['before-query'] || o['after-query'] || after.headInject != null || after.priorities || after.patches || after.sources || after.pullRequests;
   const expect = {};
   if (o['expect-title']) expect.title = o['expect-title'];
   if (o['expect-count'].length) {

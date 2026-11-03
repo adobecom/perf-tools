@@ -16,11 +16,19 @@ on:
         required: false
         type: string
       url:
-        description: Or one https://*.adobe.com page to measure unchanged
+        description: One https://*.adobe.com page (unchanged unless a PR input is supplied)
         required: false
         type: string
       runs:
         description: Pairs (1 = smoke, 3 = full; 1-10). Empty = config default
+        required: false
+        type: string
+      milo_pr:
+        description: Optional adobecom/milo PR number; overrides the config's Milo PR reference
+        required: false
+        type: string
+      mas_pr:
+        description: Optional adobecom/mas PR number; overrides the config's MAS PR reference
         required: false
         type: string
       spec:
@@ -61,6 +69,8 @@ jobs:
           URL: ${{ inputs.url }}
           RUNS: ${{ inputs.runs }}
           REQUEST_ID: ${{ inputs.request_id }}
+          MILO_PR: ${{ inputs.milo_pr }}
+          MAS_PR: ${{ inputs.mas_pr }}
         run: node lib/pagespeed/prepare.mjs
 
   measure:

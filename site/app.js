@@ -562,6 +562,19 @@ function stateCallouts(run, ready) {
     out.push(callout('warn', 'Runner environment varied',
       h('p', { text: `${benchmarkRange ? `Lighthouse CPU benchmark scores varied across loads (${benchmarkRange}); ` : ''}runner variability can affect Lighthouse deltas. Treat them as indicative, not a confirmed gain.` })));
   }
+  for (const warning of run.warnings?.filter((w) => w.kind === 'production-source-drift' || w.kind === 'production-source-unverified') ?? []) {
+    const prUrl = warning.repo && warning.number ? core.safeExternalUrl(`https://github.com/${warning.repo}/pull/${warning.number}`) : null;
+    out.push(callout(warning.kind === 'production-source-drift' ? 'warn' : 'neutral',
+      warning.kind === 'production-source-drift' ? 'Production source differs from the PR merge base' : 'Production source drift was not checked',
+      h('div', {},
+        h('p', {}, warning.kind === 'production-source-drift'
+          ? `${warning.path} differs from the pinned merge-base source; the after variant still uses the exact pinned PR head `
+          : `No baseline response for ${warning.path} was observed, so its merge-base drift could not be checked `,
+        prUrl ? extLink(prUrl, `${warning.repo}#${warning.number}`) : `${warning.repo}#${warning.number}`),
+        warning.kind === 'production-source-drift'
+          ? h('p', { class: 'note', text: `Merge-base SHA-256: ${warning.expectedMergeBaseSha256 ?? 'absent'} · production SHA-256: ${warning.productionSha256 ?? 'unavailable'}` })
+          : null)));
+  }
   return out;
 }
 
@@ -747,7 +760,7 @@ function pathList(title, paths) {
 
 function changesSection(run) {
   const c = run.changes;
-  const nothing = !c.kinds.length && !c.hints && !c.priorityPaths.length && !c.patchPaths.length && !c.sourcePaths.length;
+  const nothing = !c.kinds.length && !c.hints && !c.priorityPaths.length && !c.patchPaths.length && !c.sourcePaths.length && !c.prSources?.length;
   if (nothing) return section('Changes', h('p', { class: 'note', text: 'The published data records no change inputs for this run.' }));
   const hints = c.hints && h('div', { class: 'kv-block' }, h('h4', { text: 'Resource hints' }),
     h('dl', { class: 'stats' },
@@ -757,10 +770,21 @@ function changesSection(run) {
     h('div', { class: 'table-scroll' }, h('table', { class: 'data compact' },
       h('thead', {}, h('tr', {}, h('th', { scope: 'col', text: 'Path' }), h('th', { scope: 'col', text: 'Priority' }))),
       h('tbody', {}, c.priorityPaths.map((p) => h('tr', {}, h('td', {}, mono(p.path)), h('td', { text: p.priority ?? '—' }))))))) : null;
+  const prSources = c.prSources?.length ? h('div', { class: 'kv-block' }, h('h4', { text: 'Pinned pull request sources' }),
+    c.prSources.map((pr) => {
+      const link = core.safeExternalUrl(`https://github.com/${pr.repo}/pull/${pr.number}`);
+      return h('div', { class: 'source-provenance' },
+        h('p', {}, link ? extLink(link, `${pr.repo}#${pr.number}`) : `${pr.repo}#${pr.number}`,
+          ` · ${pr.files.length} mapped file change(s)`),
+        h('dl', { class: 'stats' }, [
+          ['Base', pr.baseSha], ['Merge base', pr.mergeBaseSha], ['Pinned head', pr.headSha],
+        ].map(([label, sha]) => h('div', {}, h('dt', { text: label }), h('dd', {}, mono(sha))))),
+        h('ul', {}, pr.files.map((file) => h('li', {}, `${file.status} ${file.path ?? file.previousPath}`))));
+    })) : null;
   return section('Changes',
     c.kinds.length ? h('div', { class: 'badges' }, c.kinds.map((k) => badge(CHANGE_KINDS[k] ?? k))) : null,
-    h('div', { class: 'kv-grid' }, hints, priorities, pathList('Patched paths', c.patchPaths), pathList('Source override paths', c.sourcePaths)),
-    h('p', { class: 'note', text: 'Only change kinds, counts and paths are published; code, snippets and credentials stay in the workflow artifact.' }));
+    h('div', { class: 'kv-grid' }, hints, priorities, pathList('Patched paths', c.patchPaths), pathList('Source override paths', c.sourcePaths), prSources),
+    h('p', { class: 'note', text: 'Only mapped file names, change status, commit IDs and hashes are published; source code, snippets, headers and credentials stay in the workflow artifact.' }));
 }
 
 function rejectedSection(run) {

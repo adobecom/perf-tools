@@ -1,7 +1,7 @@
 {
   "schema": "perf-ab/experiment-v1",
   "name": "acrobat-plans-latest",
-  "description": "Acrobat plans: unchanged production vs the latest approved optimizations - 57 static preload hints (42 code/CSS/fonts + 15 GET data/HTML, US-resolved, no /experienceedge), fetchpriority on hints and the document Link header, and the guarded shared market-config loading fix (MWPW-213916).",
+  "description": "Acrobat plans: unchanged production vs the latest approved optimizations - 57 static preload hints (42 code/CSS/fonts + 15 GET data/HTML, US-resolved, no /experienceedge), fetchpriority on hints and the document Link header, and changed mapped source files from adobecom/milo#7095 (MWPW-213916), pinned to its resolved commit.",
   "url": "https://www.adobe.com/acrobat/plans.html",
   "runs": 3,
   "expect": {
@@ -21,6 +21,6 @@
       "/libs/blocks/merch/merch.js": "auto",
       "/mas/libs/commerce.js": "auto"
     },
-    "patches": ["acrobat-plans/market-config.patch.json"]
+    "pullRequests": [{ "repo": "adobecom/milo", "number": 7095 }]
   }
 }

@@ -12,7 +12,6 @@ import { aggregatePairs, findPairResults } from '../lib/pagespeed/aggregate.mjs'
 import { loadExperiment } from '../lib/pagespeed/experiment.mjs';
 import { prepare } from '../lib/pagespeed/prepare.mjs';
 import { decodeSpec, encodeSpec, validateSpec } from '../lib/pagespeed/spec.mjs';
-import { applyPatches } from '../lib/pagespeed/transforms.mjs';
 import { runRemote } from '../lib/pagespeed/remote.mjs';
 import { runJob } from '../lib/pagespeed/job.mjs';
 import { resolveConfig, assertConfigPublished } from '../bin/perf-ab.mjs';
@@ -190,7 +189,7 @@ test('aggregate CLI exits 1 unless every pair is complete', async () => {
 
 // ---------- experiment configs ----------
 
-test('experiment: the Acrobat config builds the approved spec (57 US hints, priorities, guarded market-config patch)', () => {
+test('experiment: the Acrobat config uses the pinned Milo PR source (57 US hints and priorities)', () => {
   const s = loadExperiment(ACROBAT, { config: 'experiments/acrobat-plans.json' });
   assert.deepEqual(validateSpec(s), s);
   assert.equal(s.runs, 3);
@@ -202,27 +201,12 @@ test('experiment: the Acrobat config builds the approved spec (57 US hints, prio
   assert.doesNotMatch(s.variants.after.headInject, /country=CH|\/experienceedge/);
   assert.deepEqual(s.variants.after.priorities.filter((p) => p.priority === 'high').map((p) => p.path).sort(),
     ['/acrobat/scripts/scripts.js', '/acrobat/styles/styles.css', '/libs/c2/styles/styles.css', '/libs/martech/helpers.js', '/libs/utils/utils.js']);
-  assert.equal(s.variants.after.patches.length, 3);
-  assert.ok(s.variants.after.patches.every((p) => p.path === '/libs/utils/utils.js'));
+  assert.deepEqual(s.variants.after.pullRequests, [{ repo: 'adobecom/milo', number: 7095 }]);
+  assert.equal(s.variants.after.patches, undefined);
+  assert.equal(fs.existsSync(path.join(ROOT, 'experiments', 'acrobat-plans', 'market-config.patch.json')), false);
   assert.deepEqual(s.expect, { title: 'Acrobat plans', counts: [{ selector: 'body:has(merch-card)', count: 1 }, { selector: 'main h1', count: 1 }] });
   assert.equal(loadExperiment(ACROBAT, { runs: '1' }).runs, 1);
   assert.equal(decodeSpec(encodeSpec(s)).variants.after.headInject, s.variants.after.headInject, 'fits the dispatch input');
-});
-
-test('experiment: the market-config patch is guarded (exact single match) and fails on changed source', () => {
-  const { patches } = loadExperiment(ACROBAT).variants.after;
-  const src = patches.map((p) => `/*a*/${p.find}/*b*/`).join('\n');
-  const patched = applyPatches(src, patches, '/libs/utils/utils.js');
-  assert.ok(patches.every((p) => patched.includes(p.replace)));
-  assert.throws(() => applyPatches(src.replace(patches[1].find, 'changed upstream'), patches, '/libs/utils/utils.js'), (e) => e.fatal && /patch #2 .*occurs 0 times, expected exactly 1/.test(e.message));
-  assert.throws(() => applyPatches(`${src}\n${patches[0].find}`, patches, '/libs/utils/utils.js'), /occurs 2 times/);
-});
-
-const SNAP = process.env.PERF_AB_MARKET_CONFIG_SNAPSHOT ?? '/Users/ilyas/.copilot/chats/2026-11-02/cautious-bassoon-16efb0bd/preloads/banner-fix-2026-11-03';
-test('experiment: the market-config patch turns the production utils.js snapshot into the reviewed fix exactly', { skip: !fs.existsSync(path.join(SNAP, 'before', 'utils.js')) && 'reference snapshot not available' }, () => {
-  const { patches } = loadExperiment(ACROBAT).variants.after;
-  const before = fs.readFileSync(path.join(SNAP, 'before', 'utils.js'), 'utf8');
-  assert.equal(applyPatches(before, patches, '/libs/utils/utils.js'), fs.readFileSync(path.join(SNAP, 'after', 'utils.js'), 'utf8'));
 });
 
 test('experiment: unknown fields, traversal, absolute files, /experienceedge hints and bad names are rejected', () => {
@@ -252,32 +236,60 @@ test('experiment: unknown fields, traversal, absolute files, /experienceedge hin
 
 // ---------- workflow prepare ----------
 
-test('prepare: exactly one of spec/config/url, bounded runs, repository config paths only', () => {
-  const p = prepare({ CONFIG: 'experiments/acrobat-plans.json', RUNS: '1', REQUEST_ID: 'mw0-req-1' }, { root: ROOT });
+const PR_HEAD = 'a'.repeat(40);
+const PR_BASE = 'b'.repeat(40);
+const PR_MERGE = 'c'.repeat(40);
+const PR_BLOB = 'd'.repeat(40);
+const resolveTestPrs = async (requests) => ({
+  localSources: Object.fromEntries(requests.map((pr) => ['/libs/utils/utils.js', {
+    repo: pr.repo, number: pr.number, headSha: PR_HEAD, mergeBaseSha: PR_MERGE,
+    filePath: 'libs/utils/utils.js', baseFilePath: 'libs/utils/utils.js', blobSha: PR_BLOB, deleted: false,
+  }])),
+  sourcePrs: requests.map((pr) => ({
+    ...pr, baseRef: 'stage', headRef: 'MWPW-213916', baseSha: PR_BASE, headSha: PR_HEAD, mergeBaseSha: PR_MERGE,
+    files: [{ status: 'modified', path: '/libs/utils/utils.js', blobSha: PR_BLOB }],
+  })),
+});
+
+test('prepare: exactly one of spec/config/url, bounded runs and repository PR inputs', async () => {
+  const options = { root: ROOT, resolvePrs: resolveTestPrs };
+  const p = await prepare({ CONFIG: 'experiments/acrobat-plans.json', RUNS: '1', REQUEST_ID: 'mw0-req-1' }, options);
   assert.deepEqual([p.requestId, p.runs, p.pairs, p.names], ['mw0-req-1', 1, [1], ['before', 'after']]);
   assert.equal(decodeSpec(p.spec).meta.config, 'experiments/acrobat-plans.json');
-  const full = prepare({ CONFIG: 'experiments/acrobat-plans.json' }, { root: ROOT, runId: 123 });
+  assert.equal(decodeSpec(p.spec).variants.after.sourcePrs[0].headSha, PR_HEAD);
+  assert.deepEqual(Object.keys(decodeSpec(p.spec).variants.after.localSources), ['/libs/utils/utils.js']);
+  const full = await prepare({ CONFIG: 'experiments/acrobat-plans.json' }, { ...options, runId: 123 });
   assert.deepEqual([full.requestId, full.pairs], ['gh-run-123', [1, 2, 3]]);
-  const url = prepare({ URL: 'https://www.adobe.com/acrobat/plans.html', RUNS: '2' }, { root: ROOT, runId: 9 });
+  const url = await prepare({ URL: 'https://www.adobe.com/acrobat/plans.html', RUNS: '2' }, { ...options, runId: 9 });
   assert.deepEqual([url.names, url.pairs], [['after'], [1, 2]]);
+  const actionUrl = await prepare({ URL: 'https://www.adobe.com/acrobat/plans.html', MILO_PR: '7095', RUNS: '1' }, options);
+  assert.deepEqual(actionUrl.names, ['before', 'after']);
+  assert.equal(decodeSpec(actionUrl.spec).variants.after.sourcePrs[0].number, 7095);
+  let override;
+  await prepare({ CONFIG: 'experiments/acrobat-plans.json', MILO_PR: '7100' }, {
+    ...options, resolvePrs: async (reqs) => { override = reqs; return resolveTestPrs(reqs); },
+  });
+  assert.deepEqual(override, [{ repo: 'adobecom/milo', number: 7100 }], 'workflow input overrides the config PR for that repo');
   const enc = encodeSpec(validateSpec({ version: 1, runs: 2, names: ['after'], variants: { after: { url: 'https://www.adobe.com/' } }, expect: {} }));
-  assert.equal(prepare({ SPEC: enc, REQUEST_ID: 'cli-req-1' }, { root: ROOT }).spec, enc);
+  assert.equal((await prepare({ SPEC: enc, REQUEST_ID: 'cli-req-1' }, options)).spec, enc);
 
-  assert.throws(() => prepare({}, { root: ROOT }), /exactly one of spec, config or url is required \(got none\)/);
-  assert.throws(() => prepare({ CONFIG: 'experiments/acrobat-plans.json', URL: 'https://www.adobe.com/' }, { root: ROOT }), /got config, url/);
-  for (const RUNS of ['0', '11', '2.5', 'x']) assert.throws(() => prepare({ URL: 'https://www.adobe.com/', RUNS }, { root: ROOT }), /runs must be an integer 1\.\.10/);
-  assert.throws(() => prepare({ SPEC: enc, RUNS: '3' }, { root: ROOT }), /cannot override/);
+  await assert.rejects(prepare({}, options), /exactly one of spec, config or url is required \(got none\)/);
+  await assert.rejects(prepare({ CONFIG: 'experiments/acrobat-plans.json', URL: 'https://www.adobe.com/' }, options), /got config, url/);
+  for (const RUNS of ['0', '11', '2.5', 'x']) await assert.rejects(prepare({ URL: 'https://www.adobe.com/', RUNS }, options), /runs must be an integer 1\.\.10/);
+  await assert.rejects(prepare({ SPEC: enc, RUNS: '3' }, options), /cannot override/);
+  await assert.rejects(prepare({ SPEC: enc, MILO_PR: '7095' }, options), /cannot be combined with spec/);
+  for (const MILO_PR of ['0', '-1', '12x', '1000000']) await assert.rejects(prepare({ URL: 'https://www.adobe.com/', MILO_PR }, options), /positive PR number/);
   for (const CONFIG of ['../etc/x.json', 'experiments/../package.json', '/abs/experiments/x.json', 'package.json', 'experiments/x.js']) {
-    assert.throws(() => prepare({ CONFIG }, { root: ROOT }), /experiments\/<name>\.json/, CONFIG);
+    await assert.rejects(prepare({ CONFIG }, options), /experiments\/<name>\.json/, CONFIG);
   }
-  assert.throws(() => prepare({ URL: 'https://evil.example/' }, { root: ROOT, runId: 1 }), /adobe\.com/);
-  assert.throws(() => prepare({ URL: 'https://www.adobe.com/', REQUEST_ID: 'x;rm' }, { root: ROOT }), /invalid request id/);
+  await assert.rejects(prepare({ URL: 'https://evil.example/' }, { ...options, runId: 1 }), /adobe\.com/);
+  await assert.rejects(prepare({ URL: 'https://www.adobe.com/', REQUEST_ID: 'x;rm' }, options), /invalid request id/);
 });
 
 test('prepare CLI writes the step outputs; the workflow passes inputs through env only', async () => {
   const outFile = path.join(tmp('perf-ab-prep-'), 'out');
   try {
-    await run(process.execPath, [path.join(ROOT, 'lib', 'pagespeed', 'prepare.mjs')], { cwd: ROOT, env: { ...process.env, CONFIG: 'experiments/acrobat-plans.json', RUNS: '1', REQUEST_ID: 'mw0-req-2', GITHUB_OUTPUT: outFile, SPEC: '', URL: '' } });
+    await run(process.execPath, [path.join(ROOT, 'lib', 'pagespeed', 'prepare.mjs')], { cwd: ROOT, env: { ...process.env, CONFIG: '', RUNS: '1', REQUEST_ID: 'mw0-req-2', GITHUB_OUTPUT: outFile, SPEC: '', URL: 'https://www.adobe.com/' } });
     const o = Object.fromEntries(fs.readFileSync(outFile, 'utf8').trim().split('\n').map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
     assert.deepEqual([o.request_id, o.runs, o.pairs], ['mw0-req-2', '1', '[1]']);
     assert.equal(decodeSpec(o.spec).runs, 1);
@@ -287,6 +299,10 @@ test('prepare CLI writes the step outputs; the workflow passes inputs through en
   const wf = fs.readFileSync(path.join(ROOT, '.github', 'workflows', 'perf-ab.yml'), 'utf8');
   assert.doesNotMatch(wf.replace(/^run-name:.*$/m, ''), /run:[^\n]*\$\{\{\s*inputs\./, 'no inputs interpolated into shell');
   assert.match(wf, /permissions:\s*\n\s*contents: read/);
+  assert.match(wf, /milo_pr:\s*\n\s*description: Optional adobecom\/milo PR number/);
+  assert.match(wf, /mas_pr:\s*\n\s*description: Optional adobecom\/mas PR number/);
+  assert.match(wf, /MILO_PR: \$\{\{ inputs\.milo_pr \}\}/);
+  assert.match(wf, /MAS_PR: \$\{\{ inputs\.mas_pr \}\}/);
   assert.match(wf, /fail-fast: false/);
   assert.match(wf, /matrix:\s*\n\s*pair: \$\{\{ fromJSON\(needs\.prepare\.outputs\.pairs\) \}\}/);
   assert.doesNotMatch(wf, /schedule:|pull_request|contents: write|pages: write|id-token/);

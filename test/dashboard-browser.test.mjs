@@ -54,7 +54,13 @@ function startServer() {
     if (mode === 'slow' && data === 'index.json') await slowGate;
     if (mode === 'warning' && data === 'runs/41700000001-1.json') {
       const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
-      detail.warnings = [{ kind: 'environment-variability', benchmark: { min: 1000, max: 1800, ratio: 1.8, threshold: 1.2 } }];
+      detail.warnings = [
+        { kind: 'environment-variability', benchmark: { min: 1000, max: 1800, ratio: 1.8, threshold: 1.2 } },
+        {
+          kind: 'production-source-drift', path: '/libs/utils/utils.js', repo: 'adobecom/milo', number: 7095, pair: 1,
+          expectedMergeBaseSha256: 'a'.repeat(64), productionSha256: 'b'.repeat(64),
+        },
+      ];
       return send(res, 200, JSON.stringify(detail));
     }
     return sendFile(res, inside(FIXTURES, data));
@@ -269,6 +275,9 @@ describe('history dashboard in a real browser', { skip }, () => {
     const detail = await text(page, '#detail');
     assert.match(detail, /Runner environment varied/);
     assert.match(detail, /Treat them as indicative, not a confirmed gain/);
+    assert.match(detail, /Production source differs from the PR merge base/);
+    assert.match(detail, new RegExp(`Merge-base SHA-256: ${'a'.repeat(64)}`));
+    assert.equal(await page.$eval('#detail a[href="https://github.com/adobecom/milo/pull/7095"]', (a) => a.textContent), 'adobecom/milo#7095');
     await assertSafe(page);
     await page.context().close();
   });

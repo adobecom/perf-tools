@@ -350,6 +350,11 @@ test('CLI spec: unchanged URL measures one variant; changes give before=producti
   assert.deepEqual(s.expect, { title: 'Acrobat plans', counts: [{ selector: 'merch-card', count: 19 }] });
   const b = buildSpec(cliOpts({ before: 'stage', after: 'feat' }), page);
   assert.equal(new URL(b.variants.after.url).searchParams.get('milolibs'), 'feat--milo--adobecom');
+  const pr = buildSpec(cliOpts({ 'milo-pr': '7095' }), page);
+  assert.deepEqual(pr.names, ['before', 'after']);
+  assert.deepEqual(pr.variants.before, { url: page });
+  assert.deepEqual(pr.variants.after.pullRequests, [{ repo: 'adobecom/milo', number: 7095 }]);
+  assert.throws(() => buildSpec(cliOpts({ 'mas-pr': '0' }), page), /positive PR number/);
   assert.throws(() => buildSpec(cliOpts({ runs: '0' }), page), /--runs/);
   assert.throws(() => buildSpec(cliOpts({ after: 'x' }), page), /together/);
 });

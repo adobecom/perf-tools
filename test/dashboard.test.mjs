@@ -144,17 +144,20 @@ test('artifactState: missing, expired by flag or date, unlinked, available', () 
   assert.equal(core.artifactState(artifact, now), 'unlinked');
 });
 
-test('safeExternalUrl allows only https links to this repository and adobe.com', () => {
+test('safeExternalUrl allows https links to trusted repos and adobe.com', () => {
   const ok = [
     'https://github.com/adobecom/perf-tools/actions/runs/41631057972',
     'https://github.com/adobecom/perf-tools',
+    'https://github.com/adobecom/milo/pull/7095',
+    'https://github.com/adobecom/mas/pull/1487',
     'https://www.adobe.com/acrobat/pricing.html?x=1',
     'https://adobe.com/',
   ];
   for (const u of ok) assert.equal(core.safeExternalUrl(u), new URL(u).href, u);
   const bad = [
     'javascript:alert(1)', 'data:text/html,x', 'http://www.adobe.com/', 'https://user:pw@www.adobe.com/', 'https://www.adobe.com:8443/',
-    'https://evil-adobe.com/', 'https://www.adobe.com.evil.net/', 'https://github.com/adobecom/perf-tools-evil/x', 'https://github.com/evil/repo',
+    'https://evil-adobe.com/', 'https://www.adobe.com.evil.net/', 'https://github.com/adobecom/perf-tools-evil/x',
+    'https://github.com/adobecom/milo/issues/1', 'https://github.com/evil/repo',
     'https://gist.github.com/adobecom/perf-tools', '//www.adobe.com/', 'https://www.adobe.com/' + 'a'.repeat(2100), 42, null,
   ];
   for (const u of bad) assert.equal(core.safeExternalUrl(u), null, String(u).slice(0, 60));

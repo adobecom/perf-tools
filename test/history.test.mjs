@@ -69,7 +69,18 @@ test('sanitizes target URLs to strict HTTPS adobe subdomains without credentials
 });
 
 test('normalizes paired results, recomputes paired medians and trusts validated sample rows only', () => {
-  const detail = normalizeResult(result(), ghRun(), artifact, Date.parse('2026-11-03T00:00:00Z'));
+  const detail = normalizeResult(result({
+    sourcePrs: [{
+      repo: 'adobecom/milo', number: 7095, baseRef: 'stage', headRef: 'MWPW-213916',
+      baseSha: 'a'.repeat(40), headSha: 'b'.repeat(40), mergeBaseSha: 'c'.repeat(40),
+      files: [{ status: 'modified', path: '/libs/utils/utils.js', blobSha: 'd'.repeat(40) }],
+    }],
+    sourceDrift: [{
+      path: '/libs/utils/utils.js', repo: 'adobecom/milo', number: 7095, pair: 1,
+      expectedMergeBaseSha256: 'e'.repeat(64), productionSha256: 'f'.repeat(64), productionStatus: 200, status: 'drift',
+    }],
+    warnings: [{ kind: 'production-source-drift', path: '/libs/utils/utils.js', repo: 'adobecom/milo', number: 7095, pair: 1 }],
+  }), ghRun(), artifact, Date.parse('2026-11-03T00:00:00Z'));
   assert.equal(detail.status, 'ok');
   assert.equal(detail.url, 'https://www.adobe.com/products.html');
   assert.equal(detail.medians.before.LCP, 4500);
@@ -82,6 +93,10 @@ test('normalizes paired results, recomputes paired medians and trusts validated 
   assert.equal(detail.warnings[0].kind, 'environment-variability');
   assert.equal(detail.changes.patchPaths[0], '/libs/a.js');
   assert.equal(detail.changes.sourcePaths[0], '/libs/b.js');
+  assert.equal(detail.changes.prSources[0].headSha, 'b'.repeat(40));
+  assert.equal(detail.changes.prSources[0].files[0].path, '/libs/utils/utils.js');
+  assert.equal(detail.changes.sourceDrift[0].status, 'drift');
+  assert.equal(detail.warnings.find((w) => w.kind === 'production-source-drift').repo, 'adobecom/milo');
   assert.equal(detail.changes.hints.used, 57, 'per-pair counts are not summed');
   assert.equal(detail.changes.hints.contextual, 0);
   assert.deepEqual(detail.changes.hints.pairs.map((p) => p.used), [57, 57, 57]);
@@ -90,6 +105,9 @@ test('normalizes paired results, recomputes paired medians and trusts validated 
   assert.equal(parsed.medians.delta.LCP, 100);
   assert.equal(parsed.us, true);
   assert.equal(dashboard.cpuVariability(parsed.pairs).varied, true);
+  assert.equal(parsed.changes.prSources[0].headSha, 'b'.repeat(40));
+  assert.equal(parsed.changes.sourceDrift[0].status, 'drift');
+  assert.equal(parsed.warnings.find((w) => w.kind === 'production-source-drift').path, '/libs/utils/utils.js');
 });
 
 test('imports legacy result arrays by run index and does not duplicate scalar CPU into both variants', () => {

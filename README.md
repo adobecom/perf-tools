@@ -2,7 +2,7 @@
 
 Page-load performance tools, consumed mainly as **agent skills**:
 
-- `perf-ab` compares a live production page (for example `www.adobe.com`) as-is ("before") with the same page plus changes ("after"): an injected `head.html` snippet such as preload links, `fetchpriority` on hints and on the document's `Link` response header, guarded source patches, Milo / MAS PR files, or branch values. With no changes it measures one URL.
+- `perf-ab` compares a live production page (for example `www.adobe.com`) as-is ("before") with the same page plus changes ("after"): an injected `head.html` snippet such as preload links, `fetchpriority` on hints and on the document's `Link` response header, guarded source patches, Milo / MAS PR files, or branch values. PR source files are read from an isolated checkout of the exact PR commit and served locally through the measuring proxy; the baseline stays production. With no changes it measures one URL.
 - `perf-preload` loads a page several times, finds the LCP in each trace and the resources that finished before it, and writes static `<link rel="modulepreload|preload">` tags for `head.html`.
 
 **Default measurement: PageSpeed Insights mobile, from the US.** `perf-ab` (and `perf-preload`, which records through it) runs real **Lighthouse 13.6.0** with the PageSpeed mobile preset (`lr-mobile`: emulated Moto G Power, 412x823 at 1.75 DPR, **simulated** throttling with 150 ms TCP RTT and 1638.4 kb/s throughput, CPU slowdown 1.2) on the `perf-ab` GitHub Actions workflow of `adobecom/perf-tools`. The CLI dispatches the workflow with `gh`, waits and downloads the artifact. Before anything touches the measured site, the job checks its egress with neutral geolocation services and **fails closed** unless every answer is US; the page's own `Server-Timing: geo;desc=XX` is checked as well and a non-US value fails the job. There is **no local fallback**: missing `gh` access, non-US or unknown egress, render failures that outlast the retries, or infrastructure errors end with a non-zero exit and `results.json` `status: "failed"`. Metrics are Lighthouse's own audits and score (performance, FCP, LCP, SI, TBT, CLS), never DevTools timings converted into scores.
@@ -76,6 +76,10 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 --mas-pr 1487 
 perf-ab "https://www.stage.adobe.com/products/photoshop.html" -b my-feature-stage -a my-feature -n 3
 ```
 
+The manual `perf-ab` GitHub Actions form also has optional **Milo PR** and **MAS PR** number fields. Choose a versioned config or enter a URL, then optionally set either PR number. A supplied workflow PR number overrides that repository's PR reference in the config; an omitted number leaves the config value unchanged. With a URL, a PR input creates a production-before / PR-after pair. Do not combine PR number fields with the CLI `spec` input. The workflow accepts only same-repository PRs from `adobecom/milo` and `adobecom/mas`; it resolves the head, base and merge-base once in `prepare`, pins the diff for every matrix job, and does not execute code from the source checkout. Added, removed and renamed mapped files are handled explicitly; non-mapped test and documentation changes are not served.
+
+For a one-pair Acrobat smoke run from **Actions → perf-ab → Run workflow**, select `main`, set `config` to `experiments/acrobat-plans.json`, optionally set `milo_pr` to `7095` (it overrides the config's PR for that run), leave `mas_pr` empty, and set `runs` to `1`.
+
 Output (`-o`, default `./traces`), downloaded from the workflow artifact `perf-ab-<request id>`:
 - `results.json` (aggregate, `mode: "pagespeed-us-paired"`): `status` (`ok` / `partial` / `failed`) and `errorKind`, `samples` (`requested`, `pairs`, `before`, `after`, `rejected`), `medians` (`before`, `after`, `delta` = median per-pair delta), `pairs[]` (per-pair metrics, delta and `job`: runner, Chrome version, per-variant `benchmarkIndexes`, run attempt), `warnings[]` (e.g. `environment-variability`), `profile` and `profileKey`, `egress`, `experiment` (config name and path, when used), `github` (run URL, SHA), hint report.
 - `pair<i>/results.json`: that job's own result (egress checks, resolved Lighthouse profile, Lighthouse and Chrome versions, cold-run flags, per-run metrics, rejected attempts).
@@ -86,7 +90,7 @@ Any earlier results, run and pair folders and `rejected/` in `-o` are removed be
 
 `profileKey` (for example `lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile`) names the complete compared preset: Lighthouse version, form factor, throttling method, RTT, throughput, CPU multiplier, viewport, device scale factor and mobile flag. Only results with the same key are comparable. Chrome version and CPU benchmark stay per-pair metadata.
 
-The workflow is `.github/workflows/perf-ab.yml`: manual `workflow_dispatch` only, `contents: read`, jobs `prepare` → `measure` (matrix, one pair per job) → `aggregate`. Its form inputs are `config` (an `experiments/*.json` path), `url` (one page measured unchanged), `runs` (pairs, 1-10; empty = the config's default) and, for the CLI, `spec` (gzip+base64 JSON) and `request_id`. Artifacts, kept 90 days: `perf-ab-<request id>-pair<i>` (one per job), `perf-ab-<request id>` (all pairs plus the aggregate; what the CLI downloads) and `perf-ab-<request id>-results` (the aggregate `results.json` only, for downstream consumers). Without a CLI request id, the id is `gh-run-<run id>`.
+The workflow is `.github/workflows/perf-ab.yml`: manual `workflow_dispatch` only, `contents: read`, jobs `prepare` → `measure` (matrix, one pair per job) → `aggregate`. Its form inputs are `config` (an `experiments/*.json` path), `url` (one page), optional `milo_pr` and `mas_pr` numbers, `runs` (pairs, 1-10; empty = the config's default) and, for the CLI, `spec` (gzip+base64 JSON) and `request_id`. Artifacts, kept 90 days: `perf-ab-<request id>-pair<i>` (one per job), `perf-ab-<request id>` (all pairs plus the aggregate; what the CLI downloads) and `perf-ab-<request id>-results` (the aggregate `results.json` only, for downstream consumers). Without a CLI request id, the id is `gh-run-<run id>`.
 
 ### Public history dashboard
 
@@ -96,7 +100,7 @@ To backfill completed measurements, manually run the `perf-ab Pages` workflow fr
 
 ### Experiment configs (`--config`)
 
-A reviewed optimization can be stored as a versioned config, so the same changes can be re-run from the CLI or the Actions form. `experiments/acrobat-plans.json` holds the latest approved Acrobat plans optimizations: 57 static hints, the CSS/JS priorities, and the guarded market-config loading fix (MWPW-213916) as three exact-match patches of the live `utils.js` (no vendored production file).
+A reviewed optimization can be stored as a versioned config, so the same changes can be re-run from the CLI or the Actions form. `experiments/acrobat-plans.json` holds the latest approved Acrobat plans optimizations: 57 static hints, the CSS/JS priorities, and the mapped `utils.js` source from [adobecom/milo#7095](https://github.com/adobecom/milo/pull/7095), pinned to the PR commit resolved when the campaign starts.
 
 ```json
 {
@@ -108,12 +112,12 @@ A reviewed optimization can be stored as a versioned config, so the same changes
   "after": {
     "headInject": "acrobat-plans/head.html",
     "priorities": { "/libs/utils/utils.js": "high" },
-    "patches": ["acrobat-plans/market-config.patch.json"]
+    "pullRequests": [{ "repo": "adobecom/milo", "number": 7095 }]
   }
 }
 ```
 
-File references (`headInject`, `patches`) are relative to the config and must stay inside its directory (no `..` or absolute paths); `after.sources` maps live paths to replacement `https://` URLs; unknown fields are rejected, and `/experienceedge` hints are refused. Hints with country/locale parameters are re-resolved against the US baseline at run time, as with `--head-inject`. Commit and push a config before using it: the workflow reads the committed copy, and the CLI refuses to dispatch when the local file differs from `origin/<ref>`.
+File references (`headInject`, `patches`) are relative to the config and must stay inside its directory (no `..` or absolute paths); `pullRequests` accepts only same-repository Milo and MAS PR references and maps `libs/**` to `/libs/**` and `web-components/dist/**` to `/mas/libs/**`. The workflow resolves exact base/head/merge-base SHAs and the PR diff once before matrix fan-out. Only mapped changed files are read from an isolated local object checkout; source checkouts are never used as executable workspaces and branch URLs are never fetched in the measured page load. Production remains the unchanged before control. The result records mapped-file and commit provenance, plus a warning when a baseline source differs from the pinned PR merge base. `after.sources` remains available for explicitly configured HTTPS overrides; unknown fields are rejected, and `/experienceedge` hints are refused. Hints with country/locale parameters are re-resolved against the US baseline at run time, as with `--head-inject`. Commit and push a config before using it: the workflow reads the committed copy, and the CLI refuses to dispatch when the local file differs from `origin/<ref>`.
 
 Legacy local mode, only on explicit request: `perf-ab --local-devtools <url> ...` runs the old local DevTools trace runner on this machine (headed Chrome, iPhone 16 Pro Max, 4x CPU, DevTools "Slow 4G", cache disabled; not PageSpeed and not US). It keeps its old options (`--override`, `--override-before`, `--pr-local`, `--device`, `--cpu`, `--headless`, ...), saves `before<i>.json` / `after<i>.json` traces and prints DevTools timings. Its numbers are not comparable with the default mode. `perf-preload --local-devtools` records with it.
 
