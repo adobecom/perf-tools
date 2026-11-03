@@ -58,7 +58,7 @@ test('stats: medians and the median per-pair delta use complete pairs only', () 
 
 // ---------- aggregate ----------
 
-function pairJob(dir, i, { requestId = 'req-matrix-1', status = 'ok', pair = i, egress = { ok: true, country: 'US', checks: [] }, profile = EXPECTED, before = m(50 + i, 4000), after = m(80 + i, 3000), artifactName = `perf-ab-req-matrix-1-pair${i}` } = {}) {
+function pairJob(dir, i, { requestId = 'req-matrix-1', status = 'ok', pair = i, egress = { ok: true, country: 'US', checks: [] }, profile = EXPECTED, before = m(50 + i, 4000), after = m(80 + i, 3000), artifactName = `perf-ab-req-matrix-1-pair${i}`, bench = [1500 + i, 1520 + i] } = {}) {
   const d = path.join(dir, artifactName);
   fs.mkdirSync(path.join(d, `before${i}`), { recursive: true });
   fs.mkdirSync(path.join(d, `after${i}`), { recursive: true });
@@ -68,8 +68,8 @@ function pairJob(dir, i, { requestId = 'req-matrix-1', status = 'ok', pair = i, 
     experiment: { name: 'acrobat-plans-latest', config: 'experiments/acrobat-plans.json' }, egress, profile, chromeVersion: `HeadlessChrome/14${i}.0`,
     github: { runAttempt: 1, runner: `runner-${i}`, os: 'linux-x64', cpus: 4 }, cold: { warmups: 0 },
     runs: [
-      ...(before ? [{ variant: 'before', run: i, attempt: 1, dir: `before${i}`, metrics: before, benchmarkIndex: 1500 + i }] : []),
-      ...(after ? [{ variant: 'after', run: i, attempt: 1, dir: `after${i}`, metrics: after }] : []),
+      ...(before ? [{ variant: 'before', run: i, attempt: 1, dir: `before${i}`, metrics: before, benchmarkIndex: bench[0] }] : []),
+      ...(after ? [{ variant: 'after', run: i, attempt: 1, dir: `after${i}`, metrics: after, benchmarkIndex: bench[1] }] : []),
     ],
     rejected: status === 'ok' ? [] : [{ variant: 'after', run: i, attempt: 1, reason: 'render check failed', dir: `rejected/after${i}-attempt1` }],
     documentGeo: [{ variant: 'before', run: i, status: 'US' }],
@@ -79,6 +79,32 @@ function pairJob(dir, i, { requestId = 'req-matrix-1', status = 'ok', pair = i, 
   fs.writeFileSync(path.join(d, 'results.json'), JSON.stringify(r));
   return d;
 }
+
+test('aggregate: keeps both per-variant CPU benchmarks per pair and warns on runner variability without dropping runs', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-bench-'));
+  try {
+    // Actual benchmarkIndex values of run 41633898462 (before/after per pair).
+    const bench = [[2368.5, 3103], [2368.5, 2913.5], [1050, 2969]];
+    for (const i of [1, 2, 3]) pairJob(dir, i, { bench: bench[i - 1] });
+    const a = aggregatePairs({ pairsDir: dir, expected: 3, requestId: 'req-matrix-1', out: path.join(dir, 'out') });
+    assert.equal(a.status, 'ok');
+    assert.equal(a.samples.pairs, 3);
+    assert.deepEqual(a.pairs.map((p) => p.job.benchmarkIndexes), bench.map(([before, after]) => ({ before, after })));
+    assert.equal(a.warnings.length, 1);
+    const [w] = a.warnings;
+    assert.equal(w.kind, 'environment-variability');
+    assert.deepEqual([w.benchmark.min, w.benchmark.max], [1050, 3103]);
+    assert.match(w.message, /1050-3103/);
+    assert.match(w.message, /pair1 before 2368\.5\/after 3103/);
+    assert.match(w.message, /pair3 before 1050\/after 2969/);
+    assert.match(w.message, /not a confirmed gain/);
+    assert.deepEqual(w.pairs.map((p) => p.pair), [1, 2, 3]);
+    const saved = JSON.parse(fs.readFileSync(path.join(dir, 'out', 'results.json'), 'utf8'));
+    assert.deepEqual(saved.warnings, a.warnings);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test('aggregate: three complete pairs give ok paired medians, per-pair job metadata and pair<i>/ diagnostics', () => {
   const dir = tmp('perf-ab-agg-in-');
@@ -95,7 +121,8 @@ test('aggregate: three complete pairs give ok paired medians, per-pair job metad
     assert.equal(a.medians.delta.performance, 30);
     assert.equal(a.profileKey, EXPECTED_PROFILE_KEY);
     assert.deepEqual(a.experiment, { name: 'acrobat-plans-latest', config: 'experiments/acrobat-plans.json' });
-    assert.deepEqual(a.pairs.map((p) => [p.index, p.job.chromeVersion, p.job.runner, p.job.benchmarkIndex]), [[1, 'HeadlessChrome/141.0', 'runner-1', 1501], [2, 'HeadlessChrome/142.0', 'runner-2', 1502], [3, 'HeadlessChrome/143.0', 'runner-3', 1503]]);
+    assert.deepEqual(a.pairs.map((p) => [p.index, p.job.chromeVersion, p.job.runner, p.job.benchmarkIndexes]), [[1, 'HeadlessChrome/141.0', 'runner-1', { before: 1501, after: 1521 }], [2, 'HeadlessChrome/142.0', 'runner-2', { before: 1502, after: 1522 }], [3, 'HeadlessChrome/143.0', 'runner-3', { before: 1503, after: 1523 }]]);
+    assert.deepEqual(a.warnings, []);
     assert.deepEqual(a.github, { runId: 5, runAttempt: 2 });
     assert.deepEqual(a.runs.map((r) => r.dir), ['pair1/before1', 'pair1/after1', 'pair2/before2', 'pair2/after2', 'pair3/before3', 'pair3/after3']);
     assert.ok(fs.existsSync(path.join(out, 'pair2', 'after2', 'report.html')));

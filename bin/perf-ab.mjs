@@ -216,13 +216,15 @@ export async function main(argv = process.argv.slice(2)) {
   const pairs = results.pairs ?? [];
   console.log(`\nPageSpeed mobile (Lighthouse ${results.lighthouseVersion}, Chrome ${results.chromeVersion}), egress ${results.egress.country}, ${results.samples?.pairs ?? pairs.length}/${results.samples?.requested ?? results.runsPerVariant} complete cold pair(s)`);
   for (const p of pairs) {
-    const j = p.job ? ` [${p.job.chromeVersion ?? 'Chrome ?'}, attempt ${p.job.runAttempt ?? '?'}, benchmark ${p.job.benchmarkIndex ?? '?'}]` : '';
-    for (const n of ['before', 'after', 'delta']) if (p[n]) console.log(`  pair${p.index} ${n.padEnd(6)} ${line(p[n])}${n === 'before' ? j : ''}`);
+    const j = p.job ? ` [${p.job.chromeVersion ?? 'Chrome ?'}, attempt ${p.job.runAttempt ?? '?'}]` : '';
+    const bench = (n) => (p.job?.benchmarkIndexes && n in p.job.benchmarkIndexes ? ` [benchmark ${p.job.benchmarkIndexes[n] ?? '?'}]` : '');
+    for (const n of ['before', 'after', 'delta']) if (p[n]) console.log(`  pair${p.index} ${n.padEnd(6)} ${line(p[n])}${bench(n)}${n === 'before' || (n === 'after' && !p.before) ? j : ''}`);
   }
   console.log('  medians (complete pairs only; delta = median of per-pair deltas):');
   for (const n of Object.keys(results.medians)) if (results.medians[n]) console.log(`  ${n.padEnd(7)} ${line(results.medians[n])}`);
   if (results.hints) console.log(`  hints: ${results.hints.usedLinks ?? results.hints.requestedLinks}/${results.hints.requestedLinks} used; contextual ${results.hints.contextual?.length ?? 0}; dropped ${results.hints.dropped?.length ?? 0}`);
   if (results.rejected.length) console.log(`  rejected attempts (kept as diagnostics): ${results.rejected.length}`);
+  for (const w of results.warnings ?? []) console.log(`  WARNING (${w.kind}): ${w.message}`);
   console.log(`  reports: ${out}\n  run: ${res.runUrl}`);
 }
 
