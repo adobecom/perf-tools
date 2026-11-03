@@ -34,6 +34,8 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
   stylesheets, fonts, GET JSON/HTML data fetches (fetch(), XHR or script as="fetch" preloads, also when Chrome
   records them as type Other) and the LCP image that finished before it. POST, beacons, other requests and any
   /experienceedge or /experienceedge/* path never become preloads. Each URL counts once per trace.
+  Data links assume a default fetch()/XHR (CORS, same-origin credentials); custom headers or non-default
+  credentials are not detected or reproduced, so review and remove links for such consumers.
   Resources the HTML parser already requests from the document itself are skipped. A resource must appear in
   --min-runs traces to be kept. Writes <out>/<page-key>.html with static <link> tags, ready for
   perf-ab --head-inject.
