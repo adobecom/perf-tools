@@ -195,3 +195,30 @@ test('merge preserves immutable prior runs, deduplicates attempts, and re-saniti
   assert.equal(merged.details.get(first.id).id, first.id);
   assert.throws(() => mergeHistory({ schema: 'wrong', runs: [] }, []), /unsupported schema/);
 });
+
+test('re-sanitizing a published detail is idempotent and preserves per-pair hint summaries', () => {
+  const first = normalizeResult(result({
+    hints: {
+      requestedLinks: 57,
+      contextualCount: 2,
+      droppedCount: 0,
+      perPair: [1, 2, 3].map((pair) => ({ pair, usedLinks: 57, contextual: 2, dropped: 0 })),
+    },
+  }), ghRun(), artifact);
+  const reSanitize = (detail) => mergeHistory(
+    { schema: 'perf-ab/history-v1', runs: [summaryFromDetail(detail)] },
+    [],
+    Date.parse('2026-11-03T00:00:00Z'),
+    { [detail.id]: detail },
+  ).details.get(detail.id);
+  const once = reSanitize(first);
+  const twice = reSanitize(once);
+  assert.deepEqual(twice, once);
+  assert.equal(once.changes.hints.contextual, 2);
+  assert.deepEqual(once.changes.hints.pairs, [
+    { pair: 1, used: 57, contextual: 2, dropped: 0 },
+    { pair: 2, used: 57, contextual: 2, dropped: 0 },
+    { pair: 3, used: 57, contextual: 2, dropped: 0 },
+  ]);
+  assert.deepEqual(once.changes.kinds, ['headInject', 'priorities', 'patches', 'sources', 'query']);
+});
