@@ -84,7 +84,7 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
   --milo-pr <n> / --mas-pr <n>   pin the PR's exact commit, locally read only mapped changed files, and serve them
                           through the proxy in the after variant. Before remains unchanged production.
   --expect-title <regex>  render guard: document title must match
-  --expect-count <selector=n>   render guard (repeatable), e.g. merch-card=19
+  --expect-count <selector=n>   render guard (repeatable), full-DOM count (hidden matches included), e.g. merch-card=19
   --repo <owner/name>     workflow repository (default adobecom/perf-tools)   --ref <branch> (default main)
   --timeout <minutes>     wait limit (default 75)
   --local                 run the same Lighthouse measurement locally (Actions is the default)`;
