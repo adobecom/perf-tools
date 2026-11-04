@@ -54,13 +54,10 @@ test('target: accepts https *.adobe.com pages only', () => {
   assert.equal(isAdobeHost('www.adobe.com'), true);
 });
 
-test('target: loopback fixtures only with the explicit switch, and never other domains', () => {
-  assert.throws(() => assertTargetUrl('http://localhost:8080/page'), /https/);
-  assert.doesNotThrow(() => assertTargetUrl('http://localhost:8080/page', { allowLoopbackFixture: true }));
-  assert.doesNotThrow(() => assertTargetUrl('http://127.0.0.1:9/page', { allowLoopbackFixture: true }));
-  assert.throws(() => assertTargetUrl('http://10.0.0.1/page', { allowLoopbackFixture: true }), /https/);
-  assert.throws(() => assertTargetUrl('https://evil.example/', { allowLoopbackFixture: true }), /adobe\.com/);
-  assert.throws(() => assertTargetUrl('http://u:p@localhost/', { allowLoopbackFixture: true }), /https/);
+test('target: loopback and plain-http pages are never accepted', () => {
+  for (const bad of ['http://localhost:8080/page', 'http://127.0.0.1:9/page', 'https://localhost/', 'https://[::1]/']) {
+    assert.throws(() => assertTargetUrl(bad), (e) => e.fatal === true && e.code === 'ETARGET', bad);
+  }
 });
 
 test('target: private/reserved destinations are not public', () => {
@@ -173,11 +170,11 @@ test('target: CLIs reject non-Adobe pages before doing anything', async () => {
   try {
     for (const args of [
       [path.join(BIN, 'perf-ab.mjs'), 'https://www.adobe.com.evil.example/', '-n', '1', '-o', out],
-      [path.join(BIN, 'perf-ab.mjs'), '--local-devtools', 'https://evil.example/', '-n', '1', '-o', out],
-      [path.join(BIN, 'perf-ab.mjs'), '--local-devtools', 'http://localhost:9/page', '-n', '1', '-o', out],
+      [path.join(BIN, 'perf-ab.mjs'), '--local', 'https://evil.example/', '-n', '1', '-o', out],
+      [path.join(BIN, 'perf-ab.mjs'), '--local', 'http://localhost:9/page', '-n', '1', '-o', out],
       [path.join(BIN, 'perf-preload.mjs'), 'https://user@www.adobe.com/', '-n', '1', '-o', out],
     ]) {
-      const env = { ...process.env, PATH: process.env.PATH, GH_TOKEN: '', PERF_TOOLS_LOOPBACK_FIXTURE: '' };
+      const env = { ...process.env, PATH: process.env.PATH, GH_TOKEN: '' };
       await assert.rejects(run(process.execPath, args, { env, timeout: 30000 }), (e) => e.code === 1 && /adobe\.com|https|credentials/.test(e.stderr), args.join(' '));
     }
     assert.deepEqual(fs.readdirSync(out), [], 'nothing recorded or downloaded');

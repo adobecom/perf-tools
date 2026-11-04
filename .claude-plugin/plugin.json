@@ -1,7 +1,7 @@
 {
   "name": "perf-tools",
   "version": "0.3.0",
-  "description": "Page-load performance skills: perf-preload generates static LCP preload links from traces; perf-ab runs before/after comparisons of production URLs (Milo / MAS PRs, head.html snippets, guarded patches) with real Lighthouse 13.6.0 PageSpeed mobile on a verified-US GitHub Actions runner, and analyzes DevTools traces",
+  "description": "Page-load performance skills: perf-preload generates static LCP preload links from traces; perf-ab runs before/after comparisons of production URLs (Milo / MAS PRs, head.html snippets, guarded patches) with real Lighthouse 13.6.0 mobile with DevTools throttling (Slow 4G, 4x CPU), on a verified-US GitHub Actions runner by default or locally with --local, and analyzes DevTools traces",
   "author": {
     "name": "Adobe"
   },

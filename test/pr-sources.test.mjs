@@ -208,3 +208,18 @@ test('PR resolution rejects forks, unsafe mapped paths, and inaccessible PRs wit
     fs.rmSync(f.root, { recursive: true, force: true });
   }
 });
+
+test('resolvePullRequests: an optional token authenticates the API reads only; the 403 hint never contains it', async () => {
+  const f = fixture();
+  const seen = [];
+  const spy = (inner) => async (url, init) => { seen.push({ url, auth: init.headers.Authorization ?? null }); return inner(url, init); };
+  const token = 'ghp_abcdefghijklmnopqrstuvwxyz0123456789';
+  await resolvePullRequests([{ repo: REPO, number: 7095 }], { fetchImpl: spy(apiFor(f)), token });
+  assert.ok(seen.length >= 2 && seen.every((s) => s.auth === `Bearer ${token}` && s.url.startsWith('https://api.github.com/')));
+  seen.length = 0;
+  await resolvePullRequests([{ repo: REPO, number: 7095 }], { fetchImpl: spy(apiFor(f)) });
+  assert.ok(seen.every((s) => s.auth === null), 'no Authorization header without a token');
+  const limited = async () => new Response('{}', { status: 403 });
+  await assert.rejects(resolvePullRequests([{ repo: REPO, number: 7095 }], { fetchImpl: limited }), /HTTP 403; unauthenticated GitHub API requests are rate limited.*GITHUB_TOKEN or GH_TOKEN.*gh auth login/);
+  await assert.rejects(resolvePullRequests([{ repo: REPO, number: 7095 }], { fetchImpl: limited, token }), (e) => /HTTP 403; the GitHub token was rejected or is rate limited/.test(e.message) && !e.message.includes(token));
+});

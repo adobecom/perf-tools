@@ -1,9 +1,8 @@
 #!/usr/bin/env node
-// perf-ab: before/after page-load comparison. Default (and only non-legacy) mode: real Lighthouse 13.6.0 with the
-// PageSpeed Insights mobile profile, run on a GitHub Actions runner whose egress is verified to be in the US,
-// alternating cold runs (fresh Chrome + empty profile per attempt, no warm-ups). The CLI dispatches the perf-ab
-// workflow, waits, and downloads the official reports. The old local iPhone/DevTools runner is available only
-// through the explicit --local-devtools flag.
+// perf-ab: before/after page-load comparison. One measurement: real Lighthouse 13.6.0, mobile profile with real
+// DevTools throttling (Slow 4G + 4x CPU, see lib/pagespeed/profile.mjs), alternating cold runs (fresh Chrome + empty profile per attempt, no warm-ups). Only the location
+// differs: by default the perf-ab GitHub Actions workflow (verified-US egress, fail-closed); with --local the same job
+// runs on this machine, pairs sequentially, and is recorded as local in results.json.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -12,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { parsePriorityRules } from '../lib/pagespeed/transforms.mjs';
 import { validateSpec } from '../lib/pagespeed/spec.mjs';
 import { runRemote } from '../lib/pagespeed/remote.mjs';
+import { runLocal } from '../lib/pagespeed/local.mjs';
 import { loadExperiment, CONFIG_PATH } from '../lib/pagespeed/experiment.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -40,16 +40,19 @@ export function assertConfigPublished(rel, ref, { root = ROOT, git = (args) => e
   if (diff.trim()) throw new Error(`--config ${rel}: local files differ from origin/${ref} (${diff.trim().split('\n').join(', ')}); the workflow reads the committed copy, so commit and push first`);
 }
 
-const LEGACY_FLAG = '--local-devtools';
-const LEGACY_ONLY = ['override', 'override-before', 'pr-local', 'device', 'cpu', 'channel', 'headless', 'settle', 'lcp-wait'];
-
 export const HELP = `perf-ab <pageUrl> [options]
 perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
-  Default mode: PageSpeed Insights mobile via real Lighthouse 13.6.0 (lr-mobile preset: Moto G Power, simulated
-  150 ms RTT / 1638.4 kb/s, CPU x1.2), executed on the adobecom/perf-tools "perf-ab" GitHub Actions workflow with
+  Measurement (always the same): real Lighthouse 13.6.0, mobile (Moto G Power, 412x823 @ 1.75) with real DevTools
+  throttling: Slow 4G (562.5 ms request latency, 1474.56 kb/s down, 675 kb/s up) and 4x CPU slowdown (load wait up to 120 s), applied by Chrome
+  itself, so the trace, the metrics and the audits describe the same throttled load.
+  Default location: GitHub Actions, the adobecom/perf-tools "perf-ab" workflow with
   VERIFIED US egress (fails closed if the egress is non-US or unknown). Runs alternate before/after; every run and
   retry is cold (new Chrome process, empty temporary profile, no warm-ups). Invalid renders are kept as rejected
-  diagnostics and retried fresh. Requires gh authenticated with Actions write access to --repo. No local fallback.
+  diagnostics and retried fresh. Requires gh authenticated with Actions write access to --repo.
+  --local runs the identical Lighthouse job on this machine, with pairs measured sequentially. Set CHROME_PATH or
+  install Chrome in a common macOS/Linux location. A known non-US local egress is allowed but recorded and warned;
+  local results are not comparable with Actions results, even when profileKey matches. A local run authenticates its
+  GitHub API reads (--milo-pr / --mas-pr) with GITHUB_TOKEN, GH_TOKEN or "gh auth token" when available.
 
   -n N dispatches N parallel matrix jobs; each measures ONE complete cold before/after pair on its own runner. Medians
   and the median per-pair delta use complete pairs only; any missing/failed pair makes the result partial (exit 1).
@@ -61,18 +64,21 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
   --config <file>         versioned experiment config in this repository (experiments/*.json): URL, render guards,
                           changes and default run count. The workflow reads the COMMITTED file from --ref; the
                           local copy is only validated. Cannot be combined with a URL or change options.
-  -n, --runs <n>          before/after pairs = parallel jobs, 1..10 (default 3 or the config's runs; -n 1 = smoke)
+  -n, --runs <n>          before/after pairs = parallel jobs, 1..10 (default 3 or the config's runs; -n 1 = smoke; use -n 5 for a full campaign)
   -o, --out <dir>         download dir (default ./traces): results.json, pair<i>/<variant><i>/report.html|
                           report.json|trace.json|devtoolslog.json|run.json, pair<i>/rejected/...
   -b, --before <value> / -a, --after <value>
                           variant values sent as ?<param>=<value><suffix> (e.g. milolibs branches)
   --param <name>          (default milolibs)    --suffix <str>  (default --milo--adobecom)
   --before-query <qs> / --after-query <qs>   extra query params per variant
-  --head-inject <file>    HTML inserted into the after document's <head> (before the first <script>). Hints whose
+  --head-inject <file>    HTML inserted into the after document's <head> (before the first <script>). The injected tags are
+                          then the ONLY preloads of the after page: every rel=preload / rel=modulepreload entry of its
+                          Link response header is unset (other Link entries stay; before is untouched), reported in
+                          results.json hints.linkHeaderStripped / linkHeaderEntries and the console. Hints whose
                           URL carries country/locale params are re-resolved against the US baseline's own requests
                           (unmatched ones are dropped and reported). /experienceedge hints are always dropped.
-  --fetchpriority </path=high|low|auto>   (repeatable) set fetchpriority on matching injected hints AND on the
-                          after document's Link response header entries
+  --fetchpriority </path=high|low|auto>   (repeatable) set fetchpriority on matching injected hints (and, without
+                          --head-inject, on the after document's Link response header entries)
   --patch <file.json>     {"replacements":[{"path":"/libs/utils/utils.js","find":"...","replace":"..."}]}:
                           guarded edits of live sources (after only); each find must match exactly once or the job fails
   --milo-pr <n> / --mas-pr <n>   pin the PR's exact commit, locally read only mapped changed files, and serve them
@@ -81,9 +87,7 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
   --expect-count <selector=n>   render guard (repeatable), e.g. merch-card=19
   --repo <owner/name>     workflow repository (default adobecom/perf-tools)   --ref <branch> (default main)
   --timeout <minutes>     wait limit (default 75)
-
-  Legacy: perf-ab --local-devtools <pageUrl> ... runs the old LOCAL iPhone 16 Pro Max / 4x CPU / DevTools Slow 4G
-  trace runner on this machine (not PageSpeed, not US). It must be requested explicitly; see perf-ab --local-devtools --help.`;
+  --local                 run the same Lighthouse measurement locally (Actions is the default)`;
 
 const fail = (m) => { console.error(`perf-ab: ${m}`); process.exit(1); };
 const gh = (args) => execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 1 << 28 });
@@ -127,11 +131,6 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
 }
 
 export async function main(argv = process.argv.slice(2)) {
-  if (argv.includes(LEGACY_FLAG)) {
-    process.argv = [process.argv[0], process.argv[1], ...argv.filter((a) => a !== LEGACY_FLAG)];
-    await import('../lib/local-devtools-ab.mjs');
-    return;
-  }
   const { values: o, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,
@@ -156,13 +155,12 @@ export async function main(argv = process.argv.slice(2)) {
       repo: { type: 'string', default: 'adobecom/perf-tools' },
       ref: { type: 'string', default: 'main' },
       timeout: { type: 'string', default: '75' },
+      local: { type: 'boolean', default: false },
       help: { type: 'boolean', short: 'h' },
     },
   });
   if (o.help || (!positionals[0] && !o.config)) { console.log(HELP); process.exit(positionals[0] || o.help ? 0 : 1); }
-  const legacy = LEGACY_ONLY.filter((k) => k in o);
-  if (legacy.length) fail(`${legacy.map((k) => `--${k}`).join(', ')} only exist in the legacy local DevTools mode; add ${LEGACY_FLAG} to use it explicitly (it is not PageSpeed and not US)`);
-  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'before-query', 'after-query', 'head-inject', 'fetchpriority', 'patch', 'milo-pr', 'mas-pr', 'expect-title', 'expect-count', 'repo', 'ref', 'timeout', 'help']);
+  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'before-query', 'after-query', 'head-inject', 'fetchpriority', 'patch', 'milo-pr', 'mas-pr', 'expect-title', 'expect-count', 'repo', 'ref', 'timeout', 'local', 'help']);
   const unknown = Object.keys(o).filter((k) => !known.has(k));
   if (unknown.length) fail(`unknown option(s): ${unknown.map((k) => `--${k}`).join(', ')}`);
   if (positionals.length > 1) fail(`unexpected arguments: ${positionals.slice(1).join(' ')}`);
@@ -175,7 +173,7 @@ export async function main(argv = process.argv.slice(2)) {
       const c = resolveConfig(o.config);
       if (o.runs != null && !/^(?:[1-9]|10)$/.test(o.runs)) throw new Error('--runs must be an integer 1..10');
       spec = loadExperiment(c.abs, { runs: o.runs, config: c.rel });
-      assertConfigPublished(c.rel, o.ref);
+      if (!o.local) assertConfigPublished(c.rel, o.ref);
       config = c.rel;
     } else {
       spec = buildSpec(o, positionals[0]);
@@ -186,7 +184,15 @@ export async function main(argv = process.argv.slice(2)) {
   const out = path.resolve(o.out);
   let res;
   try {
-    res = await runRemote({ spec, config, out, repo: o.repo, ref: o.ref, timeoutMs: Number(o.timeout) * 60000 });
+    if (o.local) {
+      const results = await runLocal({ spec, out });
+      if (results.status !== 'ok') {
+        throw new Error(`perf-ab failed: job reported ${results.status}${results.samples ? ` (${results.samples.pairs}/${results.samples.requested} complete pair(s))` : ''}: ${results.error}\n  diagnostics: ${out}`);
+      }
+      res = { results };
+    } else {
+      res = await runRemote({ spec, config, out, repo: o.repo, ref: o.ref, timeoutMs: Number(o.timeout) * 60000 });
+    }
   } catch (e) {
     fail(e.message);
   }
@@ -194,18 +200,25 @@ export async function main(argv = process.argv.slice(2)) {
   const fmt = (k, v) => (v == null ? '-' : k === 'CLS' ? v.toFixed(3) : k === 'performance' ? String(v) : `${Math.round(v)}`);
   const line = (m) => Object.entries(m).map(([k, v]) => `${k}=${fmt(k, v)}`).join('  ');
   const pairs = results.pairs ?? [];
-  console.log(`\nPageSpeed mobile (Lighthouse ${results.lighthouseVersion}, Chrome ${results.chromeVersion}), egress ${results.egress.country}, ${results.samples?.pairs ?? pairs.length}/${results.samples?.requested ?? results.runsPerVariant} complete cold pair(s)`);
+  const place = results.where === 'local'
+    ? `egress ${results.egress?.country ?? 'unknown'} (local; not an Actions run)`
+    : `egress ${results.egress?.country ?? 'unknown'}`;
+  console.log(`\nLighthouse mobile, DevTools throttling (Lighthouse ${results.lighthouseVersion}, Chrome ${results.chromeVersion}), ${place}, ${results.samples?.pairs ?? pairs.length}/${results.samples?.requested ?? results.runsPerVariant} complete cold pair(s)`);
   for (const p of pairs) {
-    const j = p.job ? ` [${p.job.chromeVersion ?? 'Chrome ?'}, attempt ${p.job.runAttempt ?? '?'}]` : '';
+    const j = p.job ? ` [${p.job.chromeVersion ?? 'Chrome ?'}${p.job.runAttempt != null ? `, attempt ${p.job.runAttempt}` : ''}]` : '';
     const bench = (n) => (p.job?.benchmarkIndexes && n in p.job.benchmarkIndexes ? ` [benchmark ${p.job.benchmarkIndexes[n] ?? '?'}]` : '');
     for (const n of ['before', 'after', 'delta']) if (p[n]) console.log(`  pair${p.index} ${n.padEnd(6)} ${line(p[n])}${bench(n)}${n === 'before' || (n === 'after' && !p.before) ? j : ''}`);
   }
   console.log('  medians (complete pairs only; delta = median of per-pair deltas):');
   for (const n of Object.keys(results.medians)) if (results.medians[n]) console.log(`  ${n.padEnd(7)} ${line(results.medians[n])}`);
-  if (results.hints) console.log(`  hints: ${results.hints.usedLinks ?? results.hints.requestedLinks}/${results.hints.requestedLinks} used; contextual ${results.hints.contextual?.length ?? 0}; dropped ${results.hints.dropped?.length ?? 0}`);
+  if (results.hints) {
+    console.log(`  hints: ${results.hints.usedLinks ?? results.hints.requestedLinks}/${results.hints.requestedLinks} used; contextual ${results.hints.contextual?.length ?? 0}; dropped ${results.hints.dropped?.length ?? 0}; Link header preloads unset in after: ${results.hints.linkHeaderStripped ?? 0}`);
+    for (const e of results.hints.linkHeaderEntries ?? []) console.log(`    unset Link: ${e}`);
+  }
   if (results.rejected.length) console.log(`  rejected attempts (kept as diagnostics): ${results.rejected.length}`);
   for (const w of results.warnings ?? []) console.log(`  WARNING (${w.kind}): ${w.message}`);
-  console.log(`  reports: ${out}\n  run: ${res.runUrl}`);
+  console.log(`  reports: ${out}`);
+  if (res.runUrl) console.log(`  run: ${res.runUrl}`);
 }
 
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(new URL(import.meta.url).pathname)) await main();

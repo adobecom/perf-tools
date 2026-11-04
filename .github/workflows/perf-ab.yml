@@ -1,4 +1,4 @@
-# perf-ab default mode: real Lighthouse 13.6.0 (PageSpeed mobile, lr-mobile preset) on GitHub-hosted runners whose
+# perf-ab on Actions (the default location; `perf-ab --local` runs the same job on a developer machine): real Lighthouse 13.6.0 (mobile, real DevTools throttling: Slow 4G + 4x CPU) on GitHub-hosted runners whose
 # egress is verified US before anything is measured. Manual workflow_dispatch only (CLI or "Run workflow"); no schedule.
 #
 # Exactly one of: spec (encoded by the perf-ab CLI), config (repository experiments/**.json) or url (one page,

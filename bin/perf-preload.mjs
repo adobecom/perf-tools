@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-// Preload generator: records cold page-load traces with perf-ab (default: the traces of real Lighthouse 13.6.0
-// PageSpeed-mobile runs on the verified-US GitHub runner), finds the LCP and the resources that finished loading
+// Preload generator: records cold page-load traces with perf-ab (default: Actions; optionally --local), finds the LCP and the resources that finished loading
 // before it, and writes a static <link> snippet for head.html.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -9,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { isLegacyWarmup } from '../lib/cold-runs.mjs';
 import { assertTargetUrl } from '../lib/target.mjs';
+import { BUILT_IN_EXCLUDES, parseExclude, matchExclude, describeRule } from '../lib/preload-rules.mjs';
 
 const { values: o, positionals } = parseArgs({
   allowPositionals: true,
@@ -19,11 +19,8 @@ const { values: o, positionals } = parseArgs({
     'min-runs': { type: 'string' },
     'all-origins': { type: 'boolean', default: false },
     'no-lcp-image': { type: 'boolean', default: false },
-    device: { type: 'string' },
-    cpu: { type: 'string' },
-    channel: { type: 'string' },
-    headless: { type: 'boolean', default: false },
-    'local-devtools': { type: 'boolean', default: false },
+    exclude: { type: 'string', multiple: true, default: [] },
+    local: { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h' },
   },
 });
@@ -32,11 +29,11 @@ if (o.help || (!positionals[0] && !o.from.length)) {
   console.log(`perf-preload <pageUrl> [options]
 perf-preload --from <trace.json|dir> [--from ...] [options]
 
-  Loads <pageUrl> -n times through perf-ab's default mode (real Lighthouse 13.6.0, PageSpeed mobile profile, on the
-  verified-US perf-ab GitHub Actions runner; every load cold in a fresh Chrome process and empty profile, no
-  warm-up) and reads exactly the n accepted Lighthouse traces (traces/after<i>/trace.json). Lighthouse throttling
-  is SIMULATED, so these traces carry observed (unthrottled runner) timings: they are used only to find the LCP
-  and what finished before it, never mixed with Lighthouse's modeled metrics. It finds the LCP in each trace and keeps the scripts,
+  Loads <pageUrl> -n times through perf-ab (real Lighthouse 13.6.0, mobile, real DevTools throttling: Slow 4G and 4x
+  CPU; Actions is the default, --local runs on this machine). Every load is cold in a fresh Chrome process and empty
+  profile, with no warm-up, and exactly the n accepted Lighthouse traces are analyzed. The throttling is applied by
+  Chrome itself, so the trace times (LCP, "finished before LCP") are those of the throttled load. It finds the LCP in
+  each trace and keeps the scripts,
   stylesheets, fonts, GET JSON/HTML data fetches (fetch(), XHR or script as="fetch" preloads, also when Chrome
   records them as type Other) and the LCP image that finished before it. POST, beacons, other requests and any
   /experienceedge or /experienceedge/* path never become preloads. Each URL counts once per trace.
@@ -55,12 +52,22 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
   --min-runs <k>       traces a resource must appear in (default: majority, e.g. 2 of 3)
   --all-origins        keep cross-site resources too (default: same site as the page only)
   --no-lcp-image       do not preload the LCP image (its URL is viewport specific)
-  --local-devtools     LEGACY: record with the old local perf-ab DevTools runner on this machine instead (iPhone 16
-                       Pro Max, 4x CPU, DevTools Slow 4G; not PageSpeed, not US). Explicit opt-in only.
-  --device, --cpu, --channel, --headless
-                       passed to perf-ab, only together with --local-devtools`);
+  --exclude <rule>     (repeatable) never preload a path prefix (/marketingtech) or a host (bfp.adobe.com, subdomains
+                       included), on top of the built-in rules below
+  Built-in rules (always on, listed as "excluded by rule" in the output): /experienceedge/*, /marketingtech/*
+  (any origin) and bfp.adobe.com. The snippet is meant to be the ONLY source of preloads for the page: perf-ab
+  --head-inject unsets every rel=preload/modulepreload entry of the after document's Link response header, so
+  resources that the header preloads today are generated here like any other (marked ^).
+  --local              record with the same Lighthouse job locally (Actions is the default). A known non-US
+                       location is allowed and reported, but local results are not comparable with Actions.`);
   process.exit(positionals[0] || o.from.length ? 0 : 1);
 }
+if (o.local && o.from.length) { console.error('--local applies only when recording a page; it cannot be combined with --from'); process.exit(1); }
+
+let excludeRules;
+try {
+  excludeRules = [...BUILT_IN_EXCLUDES, ...o.exclude.map(parseExclude)];
+} catch (e) { console.error(e.message); process.exit(1); }
 
 const OUT = path.resolve(o.out);
 const traceFiles = [];
@@ -75,7 +82,7 @@ if (o.from.length) {
       // Single-URL outputs measure the page as "after". Paired outputs list pair<i>/<variant><i> dirs.
       const variant = (results.runs ?? []).some((r) => r.variant === 'before') ? 'before' : 'after';
       const runs = (results.runs ?? []).filter((r) => r.variant === variant);
-      console.warn(`${p}: Lighthouse ${results.lighthouseVersion} traces of the ${variant === 'before' ? 'unchanged "before"' : 'measured'} variant, ${runs.length} run(s) (observed runner timings, not Lighthouse's modeled metrics)`);
+      console.warn(`${p}: Lighthouse ${results.lighthouseVersion} traces of the ${variant === 'before' ? 'unchanged "before"' : 'measured'} variant, ${runs.length} run(s) (DevTools-throttled load)`);
       for (const r of runs) {
         const f = path.join(abs, r.dir, 'trace.json');
         if (!fs.existsSync(f)) { console.error(`Missing trace ${f}`); process.exit(1); }
@@ -92,20 +99,13 @@ if (o.from.length) {
     }
   }
 } else {
-  const legacy = o['local-devtools'];
   try {
-    assertTargetUrl(positionals[0], { allowLoopbackFixture: legacy && process.env.PERF_TOOLS_LOOPBACK_FIXTURE === '1' });
+    assertTargetUrl(positionals[0]);
   } catch (e) { console.error(e.message); process.exit(1); }
   const traceDir = path.join(OUT, 'traces');
   fs.rmSync(traceDir, { recursive: true, force: true });
-  const legacyOpts = ['device', 'cpu', 'channel'].filter((k) => o[k] !== undefined).concat(o.headless ? ['headless'] : []);
-  if (!legacy && legacyOpts.length) { console.error(`${legacyOpts.map((k) => `--${k}`).join(', ')} only apply to the legacy local runner; add --local-devtools to use it explicitly`); process.exit(1); }
   const args = [path.join(path.dirname(fileURLToPath(import.meta.url)), 'perf-ab.mjs'), positionals[0], '-n', o.runs, '-o', traceDir];
-  if (legacy) {
-    args.push('--local-devtools');
-    for (const k of ['device', 'cpu', 'channel']) if (o[k] !== undefined) args.push(`--${k}`, o[k]);
-    if (o.headless) args.push('--headless');
-  }
+  if (o.local) args.push('--local');
   try {
     execFileSync(process.execPath, args, { stdio: 'inherit' });
   } catch (e) {
@@ -113,17 +113,18 @@ if (o.from.length) {
     process.exit(1);
   }
   let results = null;
-  if (!legacy) {
-    try { results = JSON.parse(fs.readFileSync(path.join(traceDir, 'results.json'), 'utf8')); } catch (e) { console.error(`perf-ab produced no readable results.json: ${e.message}`); process.exit(1); }
-    if (results.status !== 'ok' || results.egress?.country !== 'US' || !results.profile) { console.error(`perf-ab results are not a verified US Lighthouse run (status ${results.status}); no preloads generated`); process.exit(1); }
-    console.log(`traces: Lighthouse ${results.lighthouseVersion} ${results.profile.name}, US egress, ${results.runsPerVariant} cold run(s); using observed trace timings only`);
-  }
-  // perf-ab saves one cold load per run and no warm-up: default mode lists each accepted run's directory in
-  // results.json (pair<i>/after<i>/ for the paired matrix jobs), legacy mode writes after<i>.json. Read exactly the
+  try { results = JSON.parse(fs.readFileSync(path.join(traceDir, 'results.json'), 'utf8')); } catch (e) { console.error(`perf-ab produced no readable results.json: ${e.message}`); process.exit(1); }
+  const locationOk = o.local
+    ? results.where === 'local' && results.egress?.where === 'local'
+    : results.where !== 'local' && results.egress?.ok === true && results.egress?.country === 'US';
+  if (results.status !== 'ok' || !locationOk || !results.profile) { console.error(`perf-ab results are not a complete ${o.local ? 'local' : 'verified US'} Lighthouse run (status ${results.status}); no preloads generated`); process.exit(1); }
+  const location = o.local ? `local egress ${results.egress.country} (not comparable with Actions)` : 'verified US egress';
+  console.log(`traces: Lighthouse ${results.lighthouseVersion} ${results.profile.name}, ${location}, ${results.runsPerVariant} cold run(s)`);
+  // perf-ab saves one cold load per run and no warm-up. Read exactly the
   // requested runs, never whatever else happens to be in the folder.
   for (let i = 1; i <= Number(o.runs); i += 1) {
     const run = results?.runs?.find((r) => r.variant === 'after' && r.run === i && r.dir);
-    const f = legacy ? path.join(traceDir, `after${i}.json`) : path.join(traceDir, run?.dir ?? `after${i}`, 'trace.json');
+    const f = path.join(traceDir, run?.dir ?? `after${i}`, 'trace.json');
     if (!fs.existsSync(f)) { console.error(`Missing trace ${f}: perf-ab did not record run ${i}`); process.exit(1); }
     traceFiles.push(f);
   }
@@ -136,8 +137,7 @@ const KEEP = new Set(['Script', 'Stylesheet', 'Font']);
 // XHR and script-inserted as="fetch" preloads as resourceType "Other", so the role comes from the initiator's
 // fetchType and the response MIME. Only GET JSON/HTML with a 2xx response qualifies; POST, beacons, pings,
 // navigations, favicons, workers and other "Other" requests never do.
-// Never preloaded, whatever the method, type or MIME: Adobe Experience Platform Edge (analytics/personalization).
-const EXCLUDED_PATH = /^\/experienceedge(\/|$)/;
+// Exclusion rules (built-in and --exclude) live in lib/preload-rules.mjs and are applied after the type checks.
 const DATA_MIME = /^(application\/(.+\+)?json|text\/json|text\/html)$/i;
 let legacyNoMethod = 0;
 function dataRequest(d, res) {
@@ -174,17 +174,21 @@ function analyze(file) {
   // One entry per URL per trace: a page can request the same URL more than once (a script preload plus the
   // consumer fetch), and that must count as one run for --min-runs.
   const byUrl = new Map();
+  const excluded = new Map();
   for (const e of events) {
     if (e.name !== 'ResourceSendRequest' || e.ts < t0 || e.args.data.frame !== frame) continue;
     const d = e.args.data;
     const end = finish.get(d.requestId);
     if (!end || end > lcp.ts || d.url === docUrl || !/^https?:\/\//.test(d.url)) continue;
-    if (EXCLUDED_PATH.test(new URL(d.url).pathname)) continue;
     const isLcpImage = d.url === lcpImage;
     const data = !isLcpImage && dataRequest(d, response.get(d.requestId));
     if (!KEEP.has(d.resourceType) && !isLcpImage && !data) continue;
     if (d.initiator?.type === 'parser' && d.initiator.url === docUrl && !isLcpImage) continue;
+    const rule = matchExclude(excludeRules, d.url);
+    if (rule) { excluded.set(d.url, rule); continue; }
     const jsPreload = !!d.isLinkPreload && d.initiator?.type !== 'parser';
+    // Chrome reports a Link response header preload with initiator type "other", a script-inserted one with "script".
+    const headerPreload = !!d.isLinkPreload && !['parser', 'script'].includes(d.initiator?.type);
     const q = {
       url: d.url,
       type: isLcpImage ? 'LCP image' : data ? 'Fetch' : d.resourceType,
@@ -192,6 +196,7 @@ function analyze(file) {
       consumer: !jsPreload,
       module: modules.has(d.url),
       jsPreload,
+      headerPreload,
       start: (e.ts - t0) / 1000,
       end: (end - t0) / 1000,
     };
@@ -201,8 +206,9 @@ function analyze(file) {
     if (q.start < x.start) Object.assign(x, { start: q.start, end: q.end });
     x.module ||= q.module;
     x.jsPreload ||= q.jsPreload;
+    x.headerPreload ||= q.headerPreload;
   }
-  return { docUrl, lcp: (lcp.ts - t0) / 1000, lcpNode: lcp.args.data.nodeName, lcpImage, reqs: [...byUrl.values()] };
+  return { docUrl, lcp: (lcp.ts - t0) / 1000, lcpNode: lcp.args.data.nodeName, lcpImage, reqs: [...byUrl.values()], excluded };
 }
 
 const runs = traceFiles.map(analyze).filter(Boolean);
@@ -220,6 +226,7 @@ for (const r of runs) for (const q of r.reqs) {
   if (q.consumer && !x.consumer) Object.assign(x, { type: q.type, consumer: true });
   x.module ||= q.module;
   x.jsPreload ||= q.jsPreload;
+  x.headerPreload ||= q.headerPreload;
 }
 if (legacyNoMethod) console.warn(`${legacyNoMethod} Fetch/XHR request(s) without requestMethod (older or synthetic trace) were assumed to be GET`);
 const CONTEXT_PARAM = /^(country|locale|lang|language|geo|region|market)$/i;
@@ -259,10 +266,18 @@ console.log(`\n${page.href}: ${runs.length} traces, LCP ${lcps.join(' / ')} ms (
 console.log(`Resources finished before LCP in >= ${minRuns} traces (median ms):`);
 console.log('start'.padStart(7), 'end'.padStart(7), ' type'.padEnd(18), 'url');
 for (const x of picked) {
-  const type = `${x.type}${x.module ? ' (module)' : ''}${x.jsPreload ? ' *' : ''}${contextual(x.url) ? ' !' : ''}`;
+  const type = `${x.type}${x.module ? ' (module)' : ''}${x.jsPreload && !x.headerPreload ? ' *' : ''}${x.headerPreload ? ' ^' : ''}${contextual(x.url) ? ' !' : ''}`;
   console.log(String(Math.round(x.start)).padStart(7), String(Math.round(x.end)).padStart(7), ` ${type}`.padEnd(18), x.url);
 }
-if (picked.some((x) => x.jsPreload)) console.log('* already preloaded by a script (e.g. preloadLcpCodeFiles); a static tag starts it earlier');
+const excludedByRule = new Map();
+for (const r of runs) for (const [url, rule] of r.excluded) if (!excludedByRule.has(url)) excludedByRule.set(url, rule);
+if (excludedByRule.size) {
+  console.log('Excluded by rule (finished before LCP, never preloaded):');
+  for (const [url, rule] of excludedByRule) console.log(`  ${describeRule(rule)}  ${url}`);
+}
+console.log(`Exclude rules: ${excludeRules.map(describeRule).join(', ')}`);
+if (picked.some((x) => x.jsPreload && !x.headerPreload)) console.log('* already preloaded by a script (e.g. preloadLcpCodeFiles); a static tag starts it earlier');
+if (picked.some((x) => x.headerPreload)) console.log("^ preloaded by the document's Link response header today; perf-ab --head-inject unsets those header entries, so this tag takes over");
 if (picked.some((x) => contextual(x.url))) console.log('! country/locale specific URL: serve this link only to visitors in the matching context, never hardcode it for every geo');
 console.log(`\nSnippet (${picked.length} links): ${snippet}`);
 const rel = path.relative(process.cwd(), snippet);

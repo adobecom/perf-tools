@@ -25,8 +25,8 @@ const m = (performance, LCP) => ({ performance, FCP: 1000, LCP, SI: 2000, TBT: 1
 // ---------- stats ----------
 
 test('stats: profile key covers the whole compared preset, including viewport and mobile', () => {
-  assert.equal(EXPECTED_PROFILE_KEY, 'lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile');
-  for (const [k, v] of [['width', 360], ['height', 640], ['deviceScaleFactor', 2.625], ['mobile', false], ['cpuSlowdownMultiplier', 4], ['rttMs', 40]]) {
+  assert.equal(EXPECTED_PROFILE_KEY, 'lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-load120000-412x823@1.75-mobile');
+  for (const [k, v] of [['width', 360], ['height', 640], ['deviceScaleFactor', 2.625], ['mobile', false], ['cpuSlowdownMultiplier', 1.2], ['rttMs', 40], ['throttlingMethod', 'simulate'], ['requestLatencyMs', 150], ['downloadThroughputKbps', 1638.4], ['uploadThroughputKbps', 750], ['maxWaitForLoad', 45000]]) {
     assert.notEqual(profileKey({ ...EXPECTED, [k]: v }), EXPECTED_PROFILE_KEY, k);
   }
   assert.equal(profileKey(null), null);
@@ -143,11 +143,12 @@ test('aggregate: missing, failed, foreign, non-US, wrong-profile and mislabelled
     pairJob(dir, 6, { profile: { ...EXPECTED, width: 360 } });
     pairJob(dir, 7, { pair: 1 });
     pairJob(dir, 8, { after: { ...m(1, 1), TBT: null } });
+    pairJob(dir, 9, { profile: { ...EXPECTED, throttlingMethod: 'simulate', requestLatencyMs: undefined, cpuSlowdownMultiplier: 1.2 } });
     // pair 3 has no artifact at all
-    const a = aggregatePairs({ pairsDir: dir, expected: 8, requestId: 'req-matrix-1', out });
+    const a = aggregatePairs({ pairsDir: dir, expected: 9, requestId: 'req-matrix-1', out });
     assert.equal(a.status, 'partial');
     assert.equal(a.errorKind, 'rejected-after-retries');
-    assert.deepEqual(a.samples, { requested: 8, pairs: 1, before: 1, after: 1, rejected: 1 });
+    assert.deepEqual(a.samples, { requested: 9, pairs: 1, before: 1, after: 1, rejected: 1 });
     assert.equal(a.medians.delta.performance, 30, 'only pair 1 contributes');
     const err = Object.fromEntries(a.pairs.map((p) => [p.index, p.error ?? null]));
     assert.equal(err[1], null);
@@ -158,6 +159,7 @@ test('aggregate: missing, failed, foreign, non-US, wrong-profile and mislabelled
     assert.match(err[6], /profile mismatch: width=360/);
     assert.match(err[7], /measured pair 1, expected 7/);
     assert.match(err[8], /missing accepted metrics/);
+    assert.match(err[9], /profile mismatch: throttlingMethod=simulate.*never mixed in/, 'former simulated results are refused');
     assert.ok(a.pairs.slice(1).every((p) => p.before === null && p.after === null && p.delta === null));
     assert.ok(fs.existsSync(path.join(out, 'pair2', 'results.json')), 'failed pair diagnostics are kept');
     assert.match(a.error, /pair3: .*artifact missing/);
@@ -166,6 +168,34 @@ test('aggregate: missing, failed, foreign, non-US, wrong-profile and mislabelled
     assert.equal(none.status, 'failed');
     assert.equal(none.errorKind, 'infrastructure');
     assert.deepEqual(none.medians, { before: null, after: null, delta: null });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});
+
+test('aggregate: local and Actions pairs are never mixed; a local aggregate carries its marker and warning', () => {
+  const dir = tmp('perf-ab-agg-in-');
+  const out = tmp('perf-ab-agg-out-');
+  try {
+    pairJob(dir, 1, { egress: { ok: false, country: 'CH', where: 'local', checks: [] }, artifactName: 'pair1' });
+    const resultsFile = path.join(dir, 'pair1', 'results.json');
+    fs.writeFileSync(resultsFile, JSON.stringify({ ...JSON.parse(fs.readFileSync(resultsFile, 'utf8')), where: 'local', mode: 'pagespeed-local' }));
+    const local = aggregatePairs({ pairsDir: dir, expected: 1, requestId: 'req-matrix-1', out, where: 'local' });
+    assert.equal(local.status, 'ok');
+    assert.equal(local.where, 'local');
+    assert.equal(local.egress.country, 'CH');
+    assert.equal(local.profileKey, EXPECTED_PROFILE_KEY);
+    assert.equal(local.pairs[0].job.where, 'local');
+    assert.deepEqual(local.warnings.map((w) => w.kind), ['local-results-not-comparable']);
+    assert.match(local.warnings[0].message, /not comparable with Actions results, even when profileKey matches/);
+    const asActions = aggregatePairs({ pairsDir: dir, expected: 1, requestId: 'req-matrix-1', out: path.join(out, 'a') });
+    assert.equal(asActions.status, 'failed');
+    assert.match(asActions.pairs[0].error, /egress not verified US/);
+    pairJob(dir, 2, { artifactName: 'pair2' });
+    const asLocal = aggregatePairs({ pairsDir: dir, expected: 2, requestId: 'req-matrix-1', out: path.join(out, 'b'), where: 'local' });
+    assert.equal(asLocal.status, 'partial');
+    assert.match(asLocal.pairs[1].error, /local egress marker or country missing/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
     fs.rmSync(out, { recursive: true, force: true });

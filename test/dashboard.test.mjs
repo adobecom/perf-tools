@@ -75,6 +75,10 @@ test('normalizeSummary flags smoke, single-URL, US verification and unknown stat
   assert.equal(us({ country: 'US', verified: 'true' }), false);
   assert.equal(us({ country: 'US' }), false);
   assert.equal(us(undefined), false);
+  const local = core.normalizeSummary({ ...base, where: 'local', egress: { country: 'US', verified: true, where: 'local' } });
+  assert.equal(local.where, 'local');
+  assert.equal(local.egress.country, 'US');
+  assert.equal(local.us, false, 'local runs must never be treated as US-comparable');
 });
 
 test('normalizeSummary keeps unsafe links unlinked and caps text', () => {

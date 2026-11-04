@@ -164,6 +164,10 @@ function normalizeProfile(p) {
     throttlingMethod: str(p.throttlingMethod, 40),
     rttMs: num(p.rttMs),
     throughputKbps: num(p.throughputKbps),
+    requestLatencyMs: num(p.requestLatencyMs),
+    downloadThroughputKbps: num(p.downloadThroughputKbps),
+    uploadThroughputKbps: num(p.uploadThroughputKbps),
+    maxWaitForLoad: num(p.maxWaitForLoad),
     cpuSlowdownMultiplier: num(p.cpuSlowdownMultiplier),
     width: num(p.width),
     height: num(p.height),
@@ -172,7 +176,7 @@ function normalizeProfile(p) {
 }
 
 // US verification: the egress probe confirmed country US, and the aggregated document geo the page itself
-// reported is US or was not reported ('unavailable'). 'non-US' or any other country fails verification.
+// reported is US or was not reported ('unavailable'). Local measurements are never US-verified for dashboard use.
 function isUs(country, verified, documentGeo) {
   if (!verified || country !== 'US') return false;
   return documentGeo == null || /^unavailable$/i.test(documentGeo) || /^US(\b|-|$)/i.test(documentGeo);
@@ -187,6 +191,7 @@ export function normalizeSummary(raw) {
   const status = raw.status === 'ok' || raw.status === 'partial' || raw.status === 'failed' ? raw.status : 'unknown';
   const egress = isObject(raw.egress) ? raw.egress : {};
   const country = str(egress.country, 8)?.toUpperCase() ?? null;
+  const where = raw.where === 'local' || egress.where === 'local' ? 'local' : 'actions';
   const documentGeo = str(egress.documentGeo, 40);
   const s = isObject(raw.samples) ? raw.samples : {};
   const samples = { requested: int(s.requested), before: int(s.before), after: int(s.after), pairs: int(s.pairs), rejected: int(s.rejected) };
@@ -214,8 +219,9 @@ export function normalizeSummary(raw) {
     pageHref: safeExternalUrl(url),
     profileKey: str(raw.profileKey, 200),
     profile: normalizeProfile(raw.profile),
+    where,
     egress: { country, verified: egress.verified === true, documentGeo },
-    us: isUs(country, egress.verified === true, documentGeo),
+    us: where !== 'local' && isUs(country, egress.verified === true, documentGeo),
     samples,
     smoke: samples.requested === 1,
     medians,

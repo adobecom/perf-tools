@@ -6,14 +6,18 @@ import {
 import * as dashboard from '../site/dashboard-core.mjs';
 
 const profile = {
-  name: 'PageSpeed mobile (lr-mobile)',
+  name: 'Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)',
   lighthouseVersion: '13.6.0',
   chromeVersion: '142.0.7444.59',
   formFactor: 'mobile',
-  throttlingMethod: 'simulate',
+  throttlingMethod: 'devtools',
   rttMs: 150,
   throughputKbps: 1638.4,
-  cpuSlowdownMultiplier: 1.2,
+  requestLatencyMs: 562.5,
+  downloadThroughputKbps: 1474.56,
+  uploadThroughputKbps: 675,
+  cpuSlowdownMultiplier: 4,
+  maxWaitForLoad: 120000,
   width: 412,
   height: 823,
   deviceScaleFactor: 1.75,
@@ -45,7 +49,7 @@ function result(overrides = {}) {
     url: 'https://user:secret@www.adobe.com/products.html?api_key=SECRET#frag',
     variants: { before: { url: 'https://www.adobe.com/products.html?token=SECRET' }, after: { url: 'https://www.adobe.com/products.html?q=private' } },
     profile,
-    profileKey: 'lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile',
+    profileKey: 'lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-load120000-412x823@1.75-mobile',
     egress: { ok: true, country: 'US', checks: [{ ip: '192.0.2.1', city: 'private-city', region: 'private-region' }] },
     target: { addresses: ['10.0.0.1'] },
     documentGeo: [{ status: 'US', headers: { 'x-private': 'SECRET' } }],
@@ -157,6 +161,8 @@ test('a successful artifact with the wrong Lighthouse profile is not published a
   const mismatched = normalizeResult(result({ profile: { ...profile, lighthouseVersion: '13.5.0' } }), ghRun(), artifact);
   assert.equal(mismatched.status, 'failed');
   assert.equal(mismatched.errorCode, 'profile-mismatch');
+  const simulated = normalizeResult(result({ profile: { ...profile, throttlingMethod: 'simulate', cpuSlowdownMultiplier: 1.2, requestLatencyMs: undefined } }), ghRun(), artifact);
+  assert.equal(simulated.errorCode, 'profile-mismatch', 'former simulated-throttling results are never published as comparable');
 });
 
 test('public documents contain no raw artifact diagnostics, request secrets, IPs, or edit payloads', () => {

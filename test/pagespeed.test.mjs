@@ -9,10 +9,14 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { brotliCompressSync, brotliDecompressSync, constants } from 'node:zlib';
 import { verifyUsEgress, documentGeo } from '../lib/pagespeed/egress.mjs';
+import { findChromePath, requireChromePath, chromeCandidates } from '../lib/pagespeed/chrome.mjs';
+import { runLocal } from '../lib/pagespeed/local.mjs';
+import { findGithubToken } from '../lib/pagespeed/github-token.mjs';
 import { encodeSpec, decodeSpec, validateSpec, MAX_SPEC_CHARS } from '../lib/pagespeed/spec.mjs';
 import { verifyProfile, lighthouseConfig, EXPECTED } from '../lib/pagespeed/profile.mjs';
+import { CPU_SLOWDOWN_MULTIPLIER } from '../lib/pagespeed/stats.mjs';
 import {
-  injectIntoHead, prioritizeSnippet, prioritizeLinkHeader, applyPatches, resolveContextualHints, parsePriorityRules,
+  injectIntoHead, prioritizeSnippet, prioritizeLinkHeader, stripPreloadLinks, applyPatches, resolveContextualHints, parsePriorityRules,
 } from '../lib/pagespeed/transforms.mjs';
 import { runRemote } from '../lib/pagespeed/remote.mjs';
 import { runJob, makeCert, scanForKeys, extractMetrics, median } from '../lib/pagespeed/job.mjs';
@@ -81,21 +85,27 @@ test('spec: validated, gzip+base64 round trip, size-limited, rejects bad shapes'
 const lhrWith = (over = {}) => ({
   lighthouseVersion: '13.6.0',
   configSettings: {
-    formFactor: 'mobile', throttlingMethod: 'simulate', disableStorageReset: false,
-    throttling: { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 1.2 },
+    formFactor: 'mobile', throttlingMethod: 'devtools', disableStorageReset: false, maxWaitForLoad: 120000,
+    throttling: { rttMs: 150, throughputKbps: 1638.4, requestLatencyMs: 562.5, downloadThroughputKbps: 1474.5600000000002, uploadThroughputKbps: 675, cpuSlowdownMultiplier: 4 },
     screenEmulation: { width: 412, height: 823, deviceScaleFactor: 1.75, mobile: true },
     ...over,
   },
 });
 
-test('profile: the lr-mobile preset is used as-is and verified from the resolved settings', () => {
+test('profile: Lighthouse mobile with DevTools throttling is used as-is and verified from the resolved settings', () => {
   const c = lighthouseConfig();
-  assert.equal(c.settings.throttling.cpuSlowdownMultiplier, 1.2);
-  assert.deepEqual(Object.keys(c.settings.throttling), ['cpuSlowdownMultiplier'], 'RTT/throughput come from the preset defaults, not local values');
+  assert.equal(c.settings.throttlingMethod, 'devtools', 'real throttling, never simulated');
+  assert.deepEqual(c.settings.throttling, { rttMs: 150, throughputKbps: 1638.4, requestLatencyMs: 562.5, downloadThroughputKbps: 1474.5600000000002, uploadThroughputKbps: 675, cpuSlowdownMultiplier: CPU_SLOWDOWN_MULTIPLIER });
+  assert.equal(CPU_SLOWDOWN_MULTIPLIER, 4);
+  assert.equal(c.settings.maxWaitForLoad, 120000, 'heavy pages need more than the default 45 s under real throttling');
   assert.equal(c.settings.disableStorageReset, false);
-  assert.equal(verifyProfile(lhrWith()).cpuSlowdownMultiplier, EXPECTED.cpuSlowdownMultiplier);
-  assert.throws(() => verifyProfile(lhrWith({ throttling: { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 } })), /cpuSlowdownMultiplier=4/);
-  assert.throws(() => verifyProfile(lhrWith({ throttlingMethod: 'devtools' })), /throttlingMethod/);
+  const p = verifyProfile(lhrWith());
+  assert.deepEqual([p.throttlingMethod, p.requestLatencyMs, p.downloadThroughputKbps, p.uploadThroughputKbps, p.cpuSlowdownMultiplier, p.maxWaitForLoad], ['devtools', 562.5, 1474.56, 675, 4, 120000]);
+  assert.throws(() => verifyProfile(lhrWith({ maxWaitForLoad: 45000 })), /maxWaitForLoad=45000 \(expected 120000\)/);
+  assert.equal(EXPECTED.throttlingMethod, 'devtools');
+  assert.throws(() => verifyProfile(lhrWith({ throttling: { rttMs: 150, throughputKbps: 1638.4, requestLatencyMs: 562.5, downloadThroughputKbps: 1474.56, uploadThroughputKbps: 675, cpuSlowdownMultiplier: 1.2 } })), /cpuSlowdownMultiplier=1\.2/);
+  assert.throws(() => verifyProfile(lhrWith({ throttlingMethod: 'simulate' })), /throttlingMethod=simulate/);
+  assert.throws(() => verifyProfile(lhrWith({ throttling: { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 } })), /requestLatencyMs=undefined/);
   assert.throws(() => verifyProfile({ ...lhrWith(), lighthouseVersion: '13.5.0' }), /lighthouseVersion/);
   assert.throws(() => verifyProfile(lhrWith({ disableStorageReset: true })), /not be cold/);
 });
@@ -273,6 +283,105 @@ test('job: non-US or unknown egress fails before any browser is launched; cert i
   }
 });
 
+// ---------- local location ----------
+
+const fakeDns = (hostname, opts, cb) => cb(null, [{ address: '23.192.0.10', family: 4 }]);
+const swissEgress = answers({ ipinfo: { country: 'CH' }, ifconfig: { country_iso: 'CH' }, ipapi: { country: 'CH' } });
+
+test('local egress: a known non-US country is allowed only when asked for and is recorded honestly; unknown still fails', async () => {
+  const r = await verifyUsEgress({ fetchJson: swissEgress, allowNonUs: true });
+  assert.deepEqual([r.ok, r.country], [false, 'CH']);
+  const mixed = await verifyUsEgress({ fetchJson: answers({ ipinfo: { country: 'US' }, ifconfig: { country_iso: 'CH' }, ipapi: new Error('x') }), allowNonUs: true });
+  assert.deepEqual([mixed.ok, mixed.country], [false, null]);
+  await assert.rejects(verifyUsEgress({ fetchJson: async () => { throw new Error('offline'); }, allowNonUs: true }), /country unknown/);
+  await assert.rejects(verifyUsEgress({ fetchJson: swissEgress }), /not US/);
+});
+
+test('job: --local keeps a CH egress as ok=false with a warning, never labels it US, and still launches', async () => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-job-local-'));
+  let launched = 0;
+  try {
+    const r = await runJob({
+      spec: spec(), requestId: 'test-local-1', out, where: 'local', fetchJson: swissEgress, dnsLookup: fakeDns,
+      launchBrowser: async () => { launched += 1; throw new Error('stub browser'); }, log: () => {}, warn: () => {},
+    });
+    assert.ok(launched >= 1, 'local does not stop at a non-US egress');
+    launched = 0;
+    assert.equal(r.where, 'local');
+    assert.equal(r.mode, 'pagespeed-local');
+    assert.deepEqual([r.egress.ok, r.egress.country, r.egress.where], [false, 'CH', 'local']);
+    assert.deepEqual(r.warnings.map((w) => w.kind), ['local-non-us-egress']);
+    assert.match(r.error, /stub browser/);
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+  const failClosed = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-job-local-'));
+  try {
+    for (const where of ['actions', undefined]) {
+      const r = await runJob({ spec: spec(), requestId: 'test-local-2', out: failClosed, where, fetchJson: swissEgress, launchBrowser: async () => { launched += 1; }, log: () => {}, warn: () => {} });
+      assert.equal(r.status, 'failed');
+      assert.match(r.error, /US egress verification failed/);
+      assert.equal(r.where, 'actions');
+    }
+    assert.equal(launched, 0, 'Actions never launches on a non-US egress');
+    const unknown = await runJob({ spec: spec(), requestId: 'test-local-3', out: failClosed, where: 'local', fetchJson: async () => { throw new Error('offline'); }, launchBrowser: async () => { launched += 1; }, log: () => {}, warn: () => {} });
+    assert.match(unknown.error, /country unknown/);
+    assert.equal(launched, 0, 'local does not measure with an unknown egress either');
+    const bad = await runJob({ spec: spec(), requestId: 'test-local-4', out: failClosed, where: 'cloud', fetchJson: swissEgress, log: () => {}, warn: () => {} });
+    assert.match(bad.error, /invalid measurement location/);
+  } finally {
+    fs.rmSync(failClosed, { recursive: true, force: true });
+  }
+});
+
+test('chrome discovery: CHROME_PATH first, then common macOS/Linux paths, otherwise a clear error', () => {
+  const only = (...files) => (f) => files.includes(f);
+  assert.equal(findChromePath({ preferred: '/x/chrome', isExecutable: only('/x/chrome') }), '/x/chrome');
+  assert.throws(() => findChromePath({ preferred: '/x/missing', isExecutable: only() }), /CHROME_PATH does not point to an executable Chrome: \/x\/missing/);
+  const mac = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  assert.equal(findChromePath({ preferred: '', platform: 'darwin', isExecutable: only(mac) }), mac);
+  assert.equal(findChromePath({ preferred: '', platform: 'linux', isExecutable: only('/usr/bin/google-chrome-stable') }), '/usr/bin/google-chrome-stable');
+  assert.ok(chromeCandidates({ platform: 'darwin', home: '/h' }).includes('/h/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'));
+  assert.equal(findChromePath({ preferred: '', platform: 'win32', isExecutable: () => true }), null);
+  assert.throws(() => requireChromePath({ preferred: '', platform: 'linux', isExecutable: only() }), /Chrome was not found\. Set CHROME_PATH/);
+});
+
+test('runLocal: pairs run sequentially through the shared job, then the shared aggregate (local marker, no US label)', async () => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-local-'));
+  const order = [];
+  const base = { names: ['before', 'after'], url: 'https://www.adobe.com/acrobat/plans.html', profile: EXPECTED, chromeVersion: 'Chrome/150', where: 'local', cold: { warmups: 0 }, egress: { ok: false, country: 'CH', where: 'local', checks: [] }, documentGeo: [], rejected: [] };
+  const metrics = (p) => ({ performance: p, FCP: 1000, LCP: 2000, SI: 1500, TBT: 100, CLS: 0.01 });
+  const measurePair = async ({ spec: s, requestId, out: dir, pair, where }) => {
+    order.push(`start${pair}`);
+    await new Promise((r) => { setTimeout(r, 5); });
+    order.push(`end${pair}`);
+    assert.equal(where, 'local');
+    fs.mkdirSync(path.join(dir, `after${pair}`), { recursive: true });
+    const r = { ...base, requestId, status: 'ok', pair, runs: [{ variant: 'before', run: pair, dir: `before${pair}`, metrics: metrics(50) }, { variant: 'after', run: pair, dir: `after${pair}`, metrics: metrics(60) }], runsPerVariant: s.runs };
+    fs.writeFileSync(path.join(dir, 'results.json'), JSON.stringify(r));
+    return r;
+  };
+  const warnings = [];
+  try {
+    fs.mkdirSync(path.join(out, 'pair9'));
+    fs.writeFileSync(path.join(out, 'notes.txt'), 'keep');
+    const results = await runLocal({ spec: spec({ runs: 2 }), out, requestId: 'local-test-1', root: process.cwd(), measurePair, log: () => {}, warn: (m) => warnings.push(m) });
+    assert.deepEqual(order, ['start1', 'end1', 'start2', 'end2']);
+    assert.equal(results.status, 'ok');
+    assert.equal(results.where, 'local');
+    assert.equal(results.mode, 'pagespeed-local-paired');
+    assert.equal(results.egress.country, 'CH');
+    assert.equal(results.medians.delta.performance, 10);
+    assert.deepEqual(results.warnings.map((w) => w.kind), ['local-results-not-comparable']);
+    assert.match(results.warnings[0].message, /not comparable with Actions results/);
+    assert.deepEqual(warnings, [], 'no pair failed');
+    assert.deepEqual(fs.readdirSync(out).sort(), ['notes.txt', 'pair1', 'pair2', 'results.json']);
+    assert.ok(fs.existsSync(path.join(out, 'pair2', 'after2')));
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});
+
 // ---------- remote client ----------
 
 function fakeGh({ conclusion = 'success', results, failAt, files = {} } = {}) {
@@ -359,21 +468,92 @@ test('CLI spec: unchanged URL measures one variant; changes give before=producti
   assert.throws(() => buildSpec(cliOpts({ after: 'x' }), page), /together/);
 });
 
-test('CLI: legacy local DevTools options require the explicit --local-devtools flag; help shows the US default', async () => {
+test('CLI: Actions is the default location, --local opts into the shared Lighthouse job, and legacy flags are gone', async () => {
   const node = process.execPath;
   const cli = path.join(BIN, 'perf-ab.mjs');
-  for (const flag of [['--device', 'Pixel 7'], ['--cpu', '4'], ['--override', 'x'], ['--headless']]) {
-    await assert.rejects(run(node, [cli, 'https://www.adobe.com/', ...flag]), (e) => e.code === 1 && /only exist in the legacy local DevTools mode; add --local-devtools/.test(e.stderr));
+  for (const flag of ['--local-devtools', '--override', '--override-before', '--pr-local', '--device', '--cpu', '--channel', '--headless', '--settle', '--lcp-wait']) {
+    await assert.rejects(run(node, [cli, 'https://www.adobe.com/', flag]), (e) => e.code === 1 && new RegExp(`unknown option\\(s\\): ${flag}`).test(e.stderr));
   }
   await assert.rejects(run(node, [cli, 'https://www.adobe.com/', '--bogus']), (e) => /unknown option\(s\): --bogus/.test(e.stderr));
   const { stdout } = await run(node, [cli, '--help']);
   assert.match(stdout, /Lighthouse 13\.6\.0/);
-  assert.match(stdout, /VERIFIED US egress/);
-  assert.match(stdout, /No local fallback/);
-  const legacy = await run(node, [cli, '--local-devtools', 'https://www.adobe.com/', '--help']);
-  assert.match(legacy.stdout, /LEGACY LOCAL DEVTOOLS MODE \(explicit opt-in; not PageSpeed\/Lighthouse, not US\)/);
+  assert.match(stdout, /DevTools\s+throttling/);
+  assert.match(stdout, /562\.5 ms request latency.*4x CPU/s);
+  assert.doesNotMatch(stdout, /simulat|lr-mobile|PageSpeed Insights/i);
+  assert.match(stdout, /Default location: GitHub Actions/);
+  assert.match(stdout, /--local runs the identical Lighthouse job/);
+  assert.match(stdout, /local results are not comparable with Actions results/);
 });
 
-test('perf-preload: legacy-only capture options require --local-devtools', async () => {
-  await assert.rejects(run(process.execPath, [path.join(BIN, 'perf-preload.mjs'), 'https://www.adobe.com/', '--cpu', '4']), (e) => e.code === 1 && /--local-devtools/.test(e.stderr));
+test('perf-preload: exposes the same local location switch and rejects removed local DevTools options', async () => {
+  const cli = path.join(BIN, 'perf-preload.mjs');
+  const { stdout } = await run(process.execPath, [cli, 'https://www.adobe.com/', '--help']);
+  assert.match(stdout, /Actions is the default/);
+  assert.match(stdout, /--local runs on this machine/);
+  await assert.rejects(run(process.execPath, [cli, 'https://www.adobe.com/', '--cpu', '4']), (e) => e.code === 1 && /Unknown option/.test(e.stderr));
+});
+
+// ---------- Link header preloads ----------
+
+test('stripPreloadLinks: preload and modulepreload entries are unset, everything else stays', () => {
+  const header = '</libs/utils/utils.js>;rel=preload;as=script;crossorigin, </libs/deps/imslib.min.js>; rel="modulepreload", </creativecloud/plans.json>;rel=preload;as=fetch, <https://cdn.example/>; rel=preconnect, <https://www.adobe.com/a>; rel="canonical", </x.css>; rel="preload prefetch"; as=style';
+  const r = stripPreloadLinks(header);
+  assert.deepEqual(r.removed, ['</libs/utils/utils.js>;rel=preload;as=script;crossorigin', '</libs/deps/imslib.min.js>; rel="modulepreload"', '</creativecloud/plans.json>;rel=preload;as=fetch', '</x.css>; rel="preload prefetch"; as=style']);
+  assert.equal(r.value, '<https://cdn.example/>; rel=preconnect, <https://www.adobe.com/a>; rel="canonical", </x.css>; rel="prefetch"; as=style');
+  assert.deepEqual(stripPreloadLinks('</a.js>; rel=preload'), { value: null, removed: ['</a.js>; rel=preload'] });
+  assert.deepEqual(stripPreloadLinks(undefined), { value: null, removed: [] });
+  assert.deepEqual(stripPreloadLinks('<https://x/>; rel=preconnect'), { value: '<https://x/>; rel=preconnect', removed: [] });
+});
+
+// ---------- local: GitHub token and no Actions dispatch ----------
+
+test('local GitHub token: GITHUB_TOKEN, then GH_TOKEN, then `gh auth token`; junk and absence give null', () => {
+  const t1 = 'ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  const t2 = 'gho_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+  const t3 = 'github_pat_cccccccccccccccccccccccccccccc';
+  const never = () => { throw new Error('gh must not be asked'); };
+  assert.equal(findGithubToken({ env: { GITHUB_TOKEN: t1, GH_TOKEN: t2 }, authToken: never }), t1);
+  assert.equal(findGithubToken({ env: { GH_TOKEN: ` ${t2}\n` }, authToken: never }), t2);
+  assert.equal(findGithubToken({ env: {}, authToken: () => `${t3}\n` }), t3);
+  assert.equal(findGithubToken({ env: { GITHUB_TOKEN: 'x y\nInjected: header' }, authToken: () => '' }), null);
+  assert.equal(findGithubToken({ env: {}, authToken: () => { throw new Error('no gh'); } }) ?? null, null);
+});
+
+test('runLocal: PR resolution gets the local token only when a PR is requested; no workflow is ever dispatched', async () => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-local-pr-'));
+  const calls = [];
+  const resolvePrs = async (requests, { token }) => {
+    calls.push({ requests, token });
+    return { localSources: {}, sourcePrs: [] };
+  };
+  const measurePair = async () => ({ status: 'failed', errorKind: 'fatal', error: 'stub' });
+  try {
+    const withPr = spec({ variants: { before: { url: 'https://www.adobe.com/acrobat/plans.html' }, after: { url: 'https://www.adobe.com/acrobat/plans.html', pullRequests: [{ repo: 'adobecom/milo', number: 7095 }] } } });
+    await runLocal({ spec: withPr, out, requestId: 'local-pr-1', resolvePrs, findToken: () => 'tok-secret-value-000000000', measurePair, log: () => {}, warn: () => {} });
+    assert.deepEqual(calls.map((c) => [c.requests, c.token]), [[[{ repo: 'adobecom/milo', number: 7095 }], 'tok-secret-value-000000000']]);
+    calls.length = 0;
+    let asked = 0;
+    await runLocal({ spec: spec(), out, requestId: 'local-pr-2', resolvePrs, findToken: () => { asked += 1; return 'x'; }, measurePair, log: () => {}, warn: () => {} });
+    assert.equal(asked, 0, 'no token lookup without a PR');
+    assert.deepEqual(calls, []);
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+  // CLI level: --local never calls `gh workflow ...` (a stub gh records every call; only `gh auth token` is allowed).
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-stubgh-'));
+  const log = path.join(bin, 'calls.log');
+  try {
+    fs.writeFileSync(path.join(bin, 'gh'), `#!/bin/sh\necho "$@" >> "${log}"\nexit 1\n`, { mode: 0o755 });
+    const outDir = path.join(bin, 'out');
+    const r = await run(process.execPath, [path.join(BIN, 'perf-ab.mjs'), 'https://www.adobe.com/acrobat/plans.html', '--local', '-n', '1', '-o', outDir], {
+      env: { ...process.env, PATH: `${bin}${path.delimiter}${process.env.PATH}`, CHROME_PATH: path.join(bin, 'no-such-chrome'), GITHUB_TOKEN: '', GH_TOKEN: '' },
+    }).catch((e) => e);
+    assert.equal(r.code, 1);
+    assert.match(r.stderr, /CHROME_PATH does not point to an executable Chrome/);
+    const calls = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').filter(Boolean) : [];
+    assert.ok(calls.every((c) => c === 'auth token'), `unexpected gh calls: ${calls.join(' | ')}`);
+    assert.ok(!calls.some((c) => /workflow|run |dispatch/.test(c)));
+  } finally {
+    fs.rmSync(bin, { recursive: true, force: true });
+  }
 });

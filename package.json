@@ -1,7 +1,7 @@
 {
   "name": "perf-tools",
   "version": "0.3.0",
-  "description": "Page-load performance tools: perf-ab before/after comparisons with real Lighthouse 13.6.0 (PageSpeed mobile profile) on a verified-US GitHub Actions runner, and an LCP preload generator",
+  "description": "Page-load performance tools: perf-ab before/after comparisons with real Lighthouse 13.6.0 (mobile, DevTools throttling) on a verified-US GitHub Actions runner or locally with --local, and an LCP preload generator",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -20,7 +20,9 @@
   },
   "dependencies": {
     "lighthouse": "13.6.0",
-    "playwright": "^1.44.1",
     "puppeteer-core": "25.16.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.44.1"
   }
 }

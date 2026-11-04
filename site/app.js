@@ -351,7 +351,8 @@ function renderHistory() {
 function runFlags(r) {
   const flags = [];
   if (r.smoke) flags.push(badge('1-pair smoke', 'warn', 'Single pair: shows the pipeline works, not whether performance changed'));
-  if (!r.us) flags.push(badge('Not US-verified', 'bad', 'Egress was not verified as US; not comparable with US runs'));
+  if (r.where === 'local') flags.push(badge('Local run', 'warn', 'Local results are not comparable with Actions results, even with the same profile key'));
+  else if (!r.us) flags.push(badge('Not US-verified', 'bad', 'Egress was not verified as US; not comparable with US runs'));
   if (r.single) flags.push(badge('Single URL', 'neutral', 'No before variant, so no deltas'));
   return flags;
 }
@@ -500,7 +501,8 @@ function detailHeader(run) {
     statusBadge(run),
     run.smoke ? badge('1-pair smoke', 'warn') : null,
     badge(core.sampleSummary(run), (run.samples.pairs ?? 0) < core.MIN_PAIRS ? 'warn' : 'neutral', 'Complete pairs / requested pairs'),
-    run.us ? badge('US verified', 'ok') : badge(`Not US-verified${run.egress.country ? ` (${run.egress.country})` : ''}`, 'bad'),
+    run.where === 'local' ? badge(`Local run${run.egress.country ? ` (${run.egress.country})` : ''}`, 'warn')
+      : run.us ? badge('US verified', 'ok') : badge(`Not US-verified${run.egress.country ? ` (${run.egress.country})` : ''}`, 'bad'),
     p?.lighthouseVersion ? badge(`Lighthouse ${p.lighthouseVersion}`) : null,
     p?.name ? badge(p.name) : run.profileKey ? badge(run.profileKey) : null,
   ];
@@ -537,7 +539,10 @@ function stateCallouts(run, ready) {
   } else if (run.status === 'unknown') {
     out.push(callout('warn', 'Unrecognized run status', h('p', { text: `The history reports status ${JSON.stringify(run.rawStatus)}; treat the numbers with care.` })));
   }
-  if (!run.us) {
+  if (run.where === 'local') {
+    out.push(callout('warn', 'Local measurement',
+      h('p', { text: `Measured locally from ${run.egress.country ?? 'an unknown country'}. Local results are not comparable with Actions results, even when the profile key matches.` })));
+  } else if (!run.us) {
     const parts = [`egress country ${run.egress.country ?? 'unknown'}`, run.egress.verified ? 'verified' : 'not verified'];
     if (run.egress.documentGeo) parts.push(`document geo ${run.egress.documentGeo}`);
     out.push(callout('bad', 'Not measured from a verified US egress',
@@ -798,7 +803,7 @@ function rejectedSection(run) {
 function comparableSection(run) {
   const { comparable, excluded } = core.comparableRuns(state.history.runs, run);
   const selfOk = run.us && run.status !== 'failed' && run.status !== 'unknown' && run.profileKey;
-  const intro = `Same page and profile key${run.profileKey ? ` (${run.profileKey})` : ''}, verified US egress, not failed. Runs with another profile, region or Lighthouse version are never mixed in.`;
+  const intro = `Same page and profile key${run.profileKey ? ` (${run.profileKey})` : ''}, verified US Actions egress, not failed. Local results and runs with another profile or Lighthouse version are never mixed in.`;
   const notes = [h('p', { class: 'note', text: intro })];
   if (!selfOk) notes.push(h('p', { class: 'note', text: 'This run itself does not meet these conditions, so it is listed for reference only.' }));
   if (excluded) notes.push(h('p', { class: 'note', text: `${excluded} other run${excluded === 1 ? '' : 's'} of this page excluded.` }));
@@ -847,7 +852,9 @@ function provenanceSection(run, detail) {
   const attempts = detail ? [...new Set(detail.pairs.map((x) => x.job?.runAttempt).filter((x) => x != null))] : [];
   const configHref = core.blobUrl(run.github.sha, run.config);
   const viewport = p.width && p.height ? `${p.width}×${p.height}${p.deviceScaleFactor ? ` @ ${p.deviceScaleFactor}×` : ''}` : null;
-  const throttle = [p.throttlingMethod, p.rttMs != null ? `${p.rttMs} ms RTT` : null, core.formatThroughput(p.throughputKbps),
+  const throttle = [p.throttlingMethod, p.requestLatencyMs != null ? `${p.requestLatencyMs} ms request latency` : p.rttMs != null ? `${p.rttMs} ms RTT` : null,
+    p.downloadThroughputKbps != null ? `${core.formatThroughput(p.downloadThroughputKbps)} down` : core.formatThroughput(p.throughputKbps),
+    p.uploadThroughputKbps != null ? `${core.formatThroughput(p.uploadThroughputKbps)} up` : null,
     p.cpuSlowdownMultiplier != null ? `${p.cpuSlowdownMultiplier}× CPU` : null].filter(Boolean).join(' · ');
   return section('Provenance',
     h('dl', { class: 'kv' },
@@ -866,7 +873,7 @@ function provenanceSection(run, detail) {
       kv('Device', [p.formFactor, viewport].filter(Boolean).join(' · ')),
       kv('Throttling', throttle),
       kv('Profile key', run.profileKey ? mono(run.profileKey) : null),
-      kv('Egress', `${run.egress.country ?? 'unknown'} · ${run.egress.verified ? 'verified' : 'not verified'}${run.egress.documentGeo ? ` · document geo ${run.egress.documentGeo}` : ''}`),
+      kv('Egress', `${run.egress.country ?? 'unknown'} · ${run.where === 'local' ? 'local' : run.egress.verified ? 'verified' : 'not verified'}${run.egress.documentGeo ? ` · document geo ${run.egress.documentGeo}` : ''}`),
       kv('Samples', [
         s.requested != null ? `${s.requested} requested` : null,
         s.pairs != null ? `${s.pairs} complete pair${s.pairs === 1 ? '' : 's'}` : null,
