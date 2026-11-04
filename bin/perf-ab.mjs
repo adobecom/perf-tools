@@ -94,7 +94,7 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
                           (iframes may), or the run is rejected. Not a change by itself: with no other change option the
                           URL is measured as-is (INP of the page's own scenario). Max 20 steps; use -n 5 for a campaign.
   --expect-title <regex>  render guard: document title must match
-  --expect-count <selector=n>   render guard (repeatable), e.g. merch-card=19
+  --expect-count <selector=n>   render guard (repeatable), full-DOM count (hidden matches included), e.g. merch-card=19
   --repo <owner/name>     workflow repository (default adobecom/perf-tools)   --ref <branch> (default main)
   --timeout <minutes>     wait limit (default 75)
   --local                 run the same Lighthouse measurement locally (Actions is the default)`;

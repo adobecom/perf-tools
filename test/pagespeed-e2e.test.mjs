@@ -151,7 +151,9 @@ test('runner job: real Lighthouse (mobile, DevTools throttling) through the HTTP
 
     for (const r of results.runs) {
       // Full rendered DOM checked in the measured page itself.
-      assert.deepEqual(r.render, { title: 'Fixture plans', titleOk: true, bodyVisible: true, counts: { '.card': 3 }, countsOk: true });
+      const { measured, ...rendered } = r.render;
+      assert.deepEqual(rendered, { title: 'Fixture plans', titleOk: true, bodyVisible: true, counts: { '.card': 3 }, countsOk: true });
+      assert.deepEqual([measured.source, measured.matchesDevtoolsLog], ['lighthouse-stopInstrumentation', true]);
       for (const f of ['report.html', 'report.json', 'trace.json', 'devtoolslog.json', 'run.json']) assert.ok(fs.existsSync(path.join(out, r.dir, f)), `${r.dir}/${f}`);
       assert.equal(r.firstResponse.protocol, 'h2');
       assert.equal(r.firstResponse.fromDiskCache, false);
