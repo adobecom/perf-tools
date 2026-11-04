@@ -1,0 +1,255 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "41808352023-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-04T09:32:27.000Z",
+  "finishedAt": "2026-11-04T09:35:30.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+  "profile": {
+    "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "cpuSlowdownMultiplier": 1.2,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 1,
+    "before": 1,
+    "after": 1,
+    "pairs": 1,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "performance": 54,
+      "FCP": 832.9981,
+      "LCP": 4545.9981,
+      "SI": 5981.282347400056,
+      "TBT": 1335.9999999999982,
+      "CLS": 0.014893654301697644
+    },
+    "after": {
+      "performance": 57,
+      "FCP": 2051.1417,
+      "LCP": 5166.499399999998,
+      "SI": 5144.983319887517,
+      "TBT": 751,
+      "CLS": 0.001195381738022452
+    },
+    "delta": {
+      "performance": 3,
+      "FCP": 1218.1436,
+      "LCP": 620.5012999999981,
+      "SI": -836.2990275125394,
+      "TBT": -584.9999999999982,
+      "CLS": -0.01369827256367519
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41808352023/attempts/1",
+    "sha": "869a3f21d5769aeb22a549af7bacd926fe78ae4d"
+  },
+  "detailPath": "data/runs/41808352023-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "performance": 54,
+        "FCP": 832.9981,
+        "LCP": 4545.9981,
+        "SI": 5981.282347400056,
+        "TBT": 1335.9999999999982,
+        "CLS": 0.014893654301697644
+      },
+      "after": {
+        "performance": 57,
+        "FCP": 2051.1417,
+        "LCP": 5166.499399999998,
+        "SI": 5144.983319887517,
+        "TBT": 751,
+        "CLS": 0.001195381738022452
+      },
+      "delta": {
+        "performance": 3,
+        "FCP": 1218.1436,
+        "LCP": 620.5012999999981,
+        "SI": -836.2990275125394,
+        "TBT": -584.9999999999982,
+        "CLS": -0.01369827256367519
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.47",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1926,
+          "after": 2459
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "sources"
+    ],
+    "hints": null,
+    "priorityPaths": [],
+    "patchPaths": [],
+    "sourcePaths": [
+      "/libs/utils/utils.js",
+      "/mas/libs/commerce.js",
+      "/mas/libs/mas.js",
+      "/mas/libs/merch-card.js"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/milo",
+        "number": 7095,
+        "baseRef": "stage",
+        "headRef": "MWPW-213916",
+        "baseSha": "21ff01ef84f642ea82f9a2b74c349f53b2b2b2c6",
+        "headSha": "84d74f2875d18c049dd92c0b42d78a5f9e6227c0",
+        "mergeBaseSha": "21ff01ef84f642ea82f9a2b74c349f53b2b2b2c6",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/libs/utils/utils.js",
+            "previousPath": null,
+            "blobSha": "ba8c9b2daeac9bae3fd8cee68aa74d35bd2f5d2f"
+          }
+        ]
+      },
+      {
+        "repo": "adobecom/mas",
+        "number": 1571,
+        "baseRef": "main",
+        "headRef": "MWPW-214359",
+        "baseSha": "bb113f20ad2caa7eb1dba47951354d0832825899",
+        "headSha": "60a0a091c66ab7b777246f5d4943d453325645f4",
+        "mergeBaseSha": "bb113f20ad2caa7eb1dba47951354d0832825899",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/mas/libs/commerce.js",
+            "previousPath": null,
+            "blobSha": "eab259e7ca150ca2deff16eb538b6dd3eaecfd54"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/mas.js",
+            "previousPath": null,
+            "blobSha": "0602df7afa0c2b1d81edc8ced53c081b27db2a76"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/merch-card.js",
+            "previousPath": null,
+            "blobSha": "f6b2f9671c736629f04093dd5b3422b5d4ffe776"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7095,
+        "pair": 1,
+        "expectedMergeBaseSha256": "4946e56e78634fe1170b96fcefe1a3c6c0ef0e9220b3ae48adf4b7d3f07caa1d",
+        "productionSha256": "16e815898083a4ad91c972ef507c73aabe8ede63fff4dc627a3ad7049116dce9",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/mas/libs/commerce.js",
+        "repo": "adobecom/mas",
+        "number": 1571,
+        "pair": 1,
+        "expectedMergeBaseSha256": "49ae6d1e70fa3603b39fd89edf42797610e6fb5489e1064c4a708f9baae2591e",
+        "productionSha256": "49ae6d1e70fa3603b39fd89edf42797610e6fb5489e1064c4a708f9baae2591e",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/mas/libs/mas.js",
+        "repo": "adobecom/mas",
+        "number": 1571,
+        "pair": 1,
+        "expectedMergeBaseSha256": "d54e3fa5bcbe22f2157f3917ff1c509772eb4990475fecee604c4af534a8041c",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card.js",
+        "repo": "adobecom/mas",
+        "number": 1571,
+        "pair": 1,
+        "expectedMergeBaseSha256": "dad737d5b3a89d335c0131ccb153640cf062865b8ada869c85e52608ba7837de",
+        "productionSha256": "dad737d5b3a89d335c0131ccb153640cf062865b8ada869c85e52608ba7837de",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1926,
+        "max": 2459,
+        "ratio": 1.277,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 1926,
+          "after": 2459,
+          "ratio": 1.277
+        }
+      ]
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7095,
+      "pair": 1,
+      "expectedMergeBaseSha256": "4946e56e78634fe1170b96fcefe1a3c6c0ef0e9220b3ae48adf4b7d3f07caa1d",
+      "productionSha256": "16e815898083a4ad91c972ef507c73aabe8ede63fff4dc627a3ad7049116dce9"
+    },
+    {
+      "kind": "production-source-unverified",
+      "path": "/mas/libs/mas.js",
+      "repo": "adobecom/mas",
+      "number": 1571,
+      "pair": 1,
+      "expectedMergeBaseSha256": "d54e3fa5bcbe22f2157f3917ff1c509772eb4990475fecee604c4af534a8041c",
+      "productionSha256": null
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mw1x4fpu-6y37kjjt",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/41808352023/artifacts/13310607533",
+    "expiresAt": "2027-02-02T09:32:29.000Z",
+    "expired": false
+  }
+}

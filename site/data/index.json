@@ -1,7 +1,74 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-03T15:34:55.850Z",
+  "updatedAt": "2026-11-04T09:35:41.985Z",
   "runs": [
+    {
+      "id": "41808352023-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-04T09:32:27.000Z",
+      "finishedAt": "2026-11-04T09:35:30.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/acrobat/plans.html",
+      "profileKey": "lh13.6.0-mobile-simulate-rtt150-tput1638.4-cpu1.2-412x823@1.75-mobile",
+      "profile": {
+        "name": "PageSpeed Insights mobile (Lighthouse lr-mobile preset)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "cpuSlowdownMultiplier": 1.2,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 1,
+        "before": 1,
+        "after": 1,
+        "pairs": 1,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 54,
+          "FCP": 832.9981,
+          "LCP": 4545.9981,
+          "SI": 5981.282347400056,
+          "TBT": 1335.9999999999982,
+          "CLS": 0.014893654301697644
+        },
+        "after": {
+          "performance": 57,
+          "FCP": 2051.1417,
+          "LCP": 5166.499399999998,
+          "SI": 5144.983319887517,
+          "TBT": 751,
+          "CLS": 0.001195381738022452
+        },
+        "delta": {
+          "performance": 3,
+          "FCP": 1218.1436,
+          "LCP": 620.5012999999981,
+          "SI": -836.2990275125394,
+          "TBT": -584.9999999999982,
+          "CLS": -0.01369827256367519
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/41808352023/attempts/1",
+        "sha": "869a3f21d5769aeb22a549af7bacd926fe78ae4d"
+      },
+      "detailPath": "data/runs/41808352023-1.json"
+    },
     {
       "id": "41664678923-1",
       "name": null,
