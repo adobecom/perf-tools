@@ -352,6 +352,11 @@ table.compact th, table.compact td { padding: 6px 10px; }
 .callout[data-tone="bad"] { background: var(--bad-soft); border-color: color-mix(in oklch, var(--bad) 40%, transparent); }
 .callout[data-tone="bad"] .callout-title { color: var(--bad); }
 .error-text { font-family: var(--mono); font-size: 12px; overflow-wrap: anywhere; color: var(--ink); }
+.disclosure { font-size: 12px; color: var(--ink-2); }
+.disclosure summary { width: fit-content; cursor: pointer; }
+.disclosure-content { display: grid; gap: 4px; margin-top: 4px; }
+.disclosure:not([open]) > .disclosure-content { display: none; }
+.disclosure-content p { overflow-wrap: anywhere; }
 
 .block { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; min-width: 0; }
 .block h3 { font-size: 16px; font-weight: 620; letter-spacing: -0.01em; }

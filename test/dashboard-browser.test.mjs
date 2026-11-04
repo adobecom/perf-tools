@@ -52,14 +52,22 @@ function startServer() {
     if (mode === 'badjson' && data === 'index.json') return send(res, 200, '{"schema":"perf-ab/history-v1","runs":[{"id":');
     if (mode === 'missing') return send(res, 404, 'not found', 'text/plain');
     if (mode === 'slow' && data === 'index.json') await slowGate;
+    if (mode === 'warning' && data === 'runs/41700000008-1.json') {
+      const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
+      detail.warnings = [{ kind: 'environment-variability' }];
+      return send(res, 200, JSON.stringify(detail));
+    }
     if (mode === 'warning' && data === 'runs/41700000001-1.json') {
       const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
+      const drift = {
+        kind: 'production-source-drift', path: '/libs/utils/utils.js', repo: 'adobecom/milo', number: 7095,
+        expectedMergeBaseSha256: 'a'.repeat(64), productionSha256: 'b'.repeat(64),
+      };
       detail.warnings = [
         { kind: 'environment-variability', benchmark: { min: 1000, max: 1800, ratio: 1.8, threshold: 1.2 } },
-        {
-          kind: 'production-source-drift', path: '/libs/utils/utils.js', repo: 'adobecom/milo', number: 7095, pair: 1,
-          expectedMergeBaseSha256: 'a'.repeat(64), productionSha256: 'b'.repeat(64),
-        },
+        ...[1, 2, 3].map((pair) => ({ ...drift, pair })),
+        { ...drift, pair: 4, productionSha256: 'c'.repeat(64) },
+        { ...drift, pair: 5, path: '/libs/other.js' },
       ];
       return send(res, 200, JSON.stringify(detail));
     }
@@ -175,7 +183,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.match(smokeRow, /1-pair smoke/);
     assert.match(smokeRow, /1\/1/);
     const detail = await text(page, '#detail');
-    assert.match(detail, /Smoke run: one pair, no performance conclusion/);
+    assert.match(detail, /Smoke: one pair; no conclusion/);
     assert.match(detail, /1\/1 pair/);
     assert.match(detail, /US verified/);
     assert.match(detail, /acrobat-plans-latest/);
@@ -242,7 +250,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.equal(await page.$eval('a.run-link[aria-current="true"]', (a) => a.dataset.run), '41700000001-1');
     const detail = await text(page, '#detail');
     assert.match(detail, /Comparable runs/);
-    assert.match(detail, /3 other runs of this page excluded/);
+    assert.match(detail, /3 other runs excluded/);
     assert.match(detail, /57/);
     await assertSafe(page);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-improvement.png'), fullPage: true });
@@ -266,8 +274,8 @@ describe('history dashboard in a real browser', { skip }, () => {
 
     await open(page, 'populated', '?run=41700000005-1');
     detail = await text(page, '#detail');
-    assert.match(detail, /Partial run3 of 5 requested pairs completed; 2 pairs are incomplete/);
-    assert.match(detail, /2 attempts were rejected and retried/);
+    assert.match(detail, /Partial: 3\/5 pairs2 incomplete; excluded/);
+    assert.match(detail, /2 attempts rejected/);
     assert.match(detail, /2 incomplete pairs are listed but excluded/);
     assert.equal(await page.$$eval('#detail tr.pair-incomplete.pair-start', (t) => t.length), 2);
     assert.match(await text(page, '#sec-rejected-attempts + *'), /after41/);
@@ -287,17 +295,23 @@ describe('history dashboard in a real browser', { skip }, () => {
     await open(page, 'populated', '?run=41700000007-1');
     detail = await text(page, '#detail');
     assert.match(detail, /Not US-verified \(DE\)/);
-    assert.match(detail, /Not measured from a verified US egress/);
+    assert.match(detail, /Not US verified \(DE\); region may affect results/);
     assert.match(detail, /Egress was not verified as US/);
-    assert.match(detail, /This run itself does not meet these conditions/);
+    assert.match(detail, /This run is unverified; shown for reference/);
 
-    await open(page, 'populated', '?run=41700000008-1');
+    await open(page, 'warning', '?run=41700000008-1');
     detail = await text(page, '#detail');
-    assert.match(detail, /Single-URL run/);
+    assert.match(detail, /Single URL; no before\/after comparison/);
+    assert.equal(await page.locator('#detail .plots svg').count(), 6);
+    assert.equal(await page.locator('#detail .legend').innerText(), 'After\nMedian');
+    assert.ok((await page.locator('#detail .plots svg').first().getAttribute('aria-label')).includes('load'));
+    assert.match(detail, /CPU variation affects these timings/);
+    assert.doesNotMatch(detail, /Deltas are indicative|How direction is set/);
+    assert.match(detail, /Per-load numbers/);
     assert.deepEqual(await verdicts(page), []);
 
     await open(page, 'populated', '?run=41700000013-1');
-    assert.match(await text(page, '#detail'), /Unrecognized run status.*"queued"/);
+    assert.match(await text(page, '#detail'), /Unknown status: "queued"/);
     await page.context().close();
   });
 
@@ -306,10 +320,21 @@ describe('history dashboard in a real browser', { skip }, () => {
     await open(page, 'warning', '?run=41700000001-1');
     const detail = await text(page, '#detail');
     assert.match(detail, /Runner environment varied/);
-    assert.match(detail, /Treat them as indicative, not a confirmed gain/);
-    assert.match(detail, /Production source differs from the PR merge base/);
-    assert.match(detail, new RegExp(`Merge-base SHA-256: ${'a'.repeat(64)}`));
-    assert.equal(await page.$eval('#detail a[href="https://github.com/adobecom/milo/pull/7095"]', (a) => a.textContent), 'adobecom/milo#7095');
+    assert.match(detail, /Deltas are indicative, not a confirmed gain/);
+    const warnings = page.locator('#detail .callout').filter({ hasText: 'Production source drift' });
+    assert.equal(await warnings.count(), 3, 'identical drift is grouped; distinct path/hash conditions remain');
+    assert.match(await warnings.nth(0).innerText(), /pairs 1, 2, 3/);
+    assert.equal(await warnings.nth(0).locator('.disclosure-content').isVisible(), false);
+    await warnings.nth(0).locator('summary').click();
+    assert.match(await warnings.nth(0).innerText(), new RegExp(`Merge-base SHA-256: ${'a'.repeat(64)}`));
+    assert.match(await warnings.nth(0).innerText(), /Affected pairs: 1, 2, 3/);
+    await warnings.nth(1).locator('summary').click();
+    assert.match(await warnings.nth(1).innerText(), new RegExp(`Production SHA-256: ${'c'.repeat(64)}`));
+    assert.match(await warnings.nth(2).innerText(), /\/libs\/other.js/);
+    assert.equal(await page.locator('#detail .medians tbody tr').count(), 6);
+    assert.equal(await page.locator('#detail .pairs tr.pair-start').count(), 5);
+    assert.equal(await page.locator('#detail svg.plot-svg').count(), 6);
+    assert.equal(await warnings.nth(0).locator('a').textContent(), 'adobecom/milo#7095');
     await assertSafe(page);
     await page.context().close();
   });
@@ -378,7 +403,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     await page.goBack();
     await settled(page);
     assert.equal(await page.$eval('a.run-link[aria-current="true"]', (a) => a.dataset.run), '41700000005-1');
-    assert.match(await text(page, '#detail'), /Partial run/);
+    assert.match(await text(page, '#detail'), /Partial: 3\/5 pairs/);
     await assertSafe(page);
     await page.context().close();
   });
@@ -436,7 +461,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.equal(await page.$eval('#layout', (l) => l.dataset.view), 'detail');
     assert.equal(await page.isVisible('.history'), false);
     assert.equal(await page.isVisible('#detail .back'), true);
-    assert.match(await text(page, '#detail'), /Smoke run: one pair, no performance conclusion/);
+    assert.match(await text(page, '#detail'), /Smoke: one pair; no conclusion/);
     const detailOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(detailOverflow <= 0, `detail scrolls horizontally by ${detailOverflow}px`);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'mobile-smoke-detail.png'), fullPage: true });

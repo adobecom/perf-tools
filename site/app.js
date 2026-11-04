@@ -104,6 +104,12 @@ function callout(tone, title, ...body) {
     h('p', { class: 'callout-title', text: title }), body.length ? h('div', { class: 'callout-body' }, body) : null);
 }
 
+function disclosure(title, ...children) {
+  return h('details', { class: 'disclosure' },
+    h('summary', { text: title }),
+    h('div', { class: 'disclosure-content' }, children));
+}
+
 function section(title, ...children) {
   const base = `sec-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
   const count = (sectionIds.get(base) ?? 0) + 1;
@@ -521,59 +527,72 @@ function stateCallouts(run, ready) {
   const out = [];
   const s = run.samples;
   if (run.smoke) {
-    out.push(callout('warn', 'Smoke run: one pair, no performance conclusion',
-      h('p', { text: 'A single before/after pair cannot separate a real change from run-to-run noise, and one outlier sample can dominate it. Every direction reading below is inconclusive. Use this run to confirm the pipeline, then run the full pair count before judging the change.' })));
+    out.push(callout('warn', 'Smoke: one pair; no conclusion',
+      disclosure('Why one pair is inconclusive', h('p', { text: 'One before/after pair cannot separate a real change from run-to-run noise. Use at least three pairs before judging performance.' }))));
   } else if (s.pairs != null && s.pairs < core.MIN_PAIRS && run.medians.delta) {
-    out.push(callout('warn', `Only ${s.pairs} complete pair${s.pairs === 1 ? '' : 's'}`,
-      h('p', { text: `A direction is only named with at least ${core.MIN_PAIRS} complete pairs, so every metric is inconclusive.` })));
+    out.push(callout('warn', `Few samples: ${s.pairs} complete pair${s.pairs === 1 ? '' : 's'}`,
+      disclosure('Why direction is inconclusive', h('p', { text: `Direction requires at least ${core.MIN_PAIRS} complete pairs.` }))));
   }
   if (run.status === 'failed') {
     out.push(callout('bad', `Run failed${run.errorKindLabel ? `: ${run.errorKindLabel.toLowerCase()}` : ''}`,
       run.errorCodeLabel ? h('p', {}, h('strong', { text: run.errorCodeLabel }), run.errorCode !== run.errorCodeLabel ? [' ', mono(run.errorCode)] : null) : null,
-      run.error ? h('p', { class: 'error-text', text: run.error }) : h('p', { text: 'The published data has no error message.' }),
-      h('p', { text: 'Numbers from a failed run are not used in comparisons.' })));
+      run.error ? h('p', { class: 'error-text', text: run.error }) : null,
+      disclosure('How failed runs are handled', h('p', { text: 'Failed runs are excluded from comparisons.' }))));
   } else if (run.status === 'partial') {
     const incomplete = ready ? run.incompletePairs : null;
-    out.push(callout('warn', 'Partial run',
-      h('p', { text: `${s.pairs ?? 0} of ${s.requested ?? '?'} requested pairs completed${incomplete ? `; ${incomplete} pair${incomplete === 1 ? ' is' : 's are'} incomplete` : ''}. Medians and direction readings use complete pairs only.` })));
+    out.push(callout('warn', `Partial: ${s.pairs ?? 0}/${s.requested ?? '?'} pairs`,
+      incomplete ? h('p', { text: `${incomplete} incomplete; excluded.` }) : null,
+      disclosure('How partial results are handled', h('p', { text: 'Medians and direction use complete pairs only.' }))));
   } else if (run.status === 'unknown') {
-    out.push(callout('warn', 'Unrecognized run status', h('p', { text: `The history reports status ${JSON.stringify(run.rawStatus)}; treat the numbers with care.` })));
+    out.push(callout('warn', `Unknown status: ${JSON.stringify(run.rawStatus)}`));
   }
   if (run.where === 'local') {
-    out.push(callout('warn', 'Local measurement',
-      h('p', { text: `Measured locally from ${run.egress.country ?? 'an unknown country'}. Local results are not comparable with Actions results, even when the profile key matches.` })));
+    out.push(callout('warn', 'Local measurement; not comparable with Actions results.',
+      disclosure('Egress details', h('p', { text: `Measured locally from ${run.egress.country ?? 'an unknown country'}.` }))));
   } else if (!run.us) {
-    const parts = [`egress country ${run.egress.country ?? 'unknown'}`, run.egress.verified ? 'verified' : 'not verified'];
-    if (run.egress.documentGeo) parts.push(`document geo ${run.egress.documentGeo}`);
-    out.push(callout('bad', 'Not measured from a verified US egress',
-      h('p', { text: `${parts.join(', ')}. Adobe pages vary by region, so these numbers are not comparable with US runs.` })));
+    const region = run.egress.country ?? 'unknown';
+    out.push(callout('bad', `Not US verified (${region}); region may affect results.`,
+      disclosure('Egress details', h('p', { text: `Egress ${region}; ${run.egress.verified ? 'verified' : 'not verified'}${run.egress.documentGeo ? `; document geo ${run.egress.documentGeo}` : ''}.` }))));
   }
   if (s.rejected) {
-    out.push(callout('neutral', `${s.rejected} attempt${s.rejected === 1 ? ' was' : 's were'} rejected and retried`,
-      h('p', { text: ready ? 'Rejected attempts are excluded from all numbers; see Rejected attempts below.' : 'Rejected attempts are excluded from all numbers.' })));
+    out.push(callout('neutral', `${s.rejected} attempt${s.rejected === 1 ? '' : 's'} rejected`,
+      disclosure('Rejected attempts are excluded', ready ? h('p', { text: 'See the rejected-attempt details below.' }) : null)));
   }
   if (run.single) {
-    out.push(callout('neutral', 'Single-URL run', h('p', { text: 'There is no before variant, so there are no deltas or direction readings.' })));
+    out.push(callout('neutral', 'Single URL; no before/after comparison.'));
   }
   const cpu = core.cpuVariability(run.pairs ?? []);
   if (cpu?.varied || run.warnings?.some((w) => w.kind === 'environment-variability')) {
     const benchmarkRange = [cpu?.before, cpu?.after].filter(Boolean)
       .map((range) => `${Math.round(range.min)}–${Math.round(range.max)}`).join(' / ');
     out.push(callout('warn', 'Runner environment varied',
-      h('p', { text: `${benchmarkRange ? `Lighthouse CPU benchmark scores varied across loads (${benchmarkRange}); ` : ''}runner variability can affect Lighthouse deltas. Treat them as indicative, not a confirmed gain.` })));
+      h('p', { text: run.single ? 'CPU variation affects these timings.' : 'Deltas are indicative, not a confirmed gain.' }),
+      benchmarkRange ? disclosure('CPU benchmark ranges', h('p', { text: benchmarkRange })) : null));
   }
+  const sourceWarnings = new Map();
   for (const warning of run.warnings?.filter((w) => w.kind === 'production-source-drift' || w.kind === 'production-source-unverified') ?? []) {
+    const key = [warning.kind, warning.path, warning.repo, warning.number, warning.expectedMergeBaseSha256, warning.productionSha256].join('\0');
+    const group = sourceWarnings.get(key) ?? { ...warning, pairs: [] };
+    if (warning.pair != null) group.pairs.push(warning.pair);
+    sourceWarnings.set(key, group);
+  }
+  for (const warning of sourceWarnings.values()) {
     const prUrl = warning.repo && warning.number ? core.safeExternalUrl(`https://github.com/${warning.repo}/pull/${warning.number}`) : null;
+    const affectedPairs = [...new Set(warning.pairs)].sort((a, b) => a - b);
+    const pairLabel = affectedPairs.length ? ` · pair${affectedPairs.length === 1 ? '' : 's'} ${affectedPairs.join(', ')}` : '';
     out.push(callout(warning.kind === 'production-source-drift' ? 'warn' : 'neutral',
-      warning.kind === 'production-source-drift' ? 'Production source differs from the PR merge base' : 'Production source drift was not checked',
+      `${warning.kind === 'production-source-drift' ? 'Production source drift' : 'Production source unverified'}${pairLabel}`,
       h('div', {},
+        h('p', { text: warning.path }),
         h('p', {}, warning.kind === 'production-source-drift'
-          ? `${warning.path} differs from the pinned merge-base source; the after variant still uses the exact pinned PR head `
-          : `No baseline response for ${warning.path} was observed, so its merge-base drift could not be checked `,
-        prUrl ? extLink(prUrl, `${warning.repo}#${warning.number}`) : `${warning.repo}#${warning.number}`),
-        warning.kind === 'production-source-drift'
-          ? h('p', { class: 'note', text: `Merge-base SHA-256: ${warning.expectedMergeBaseSha256 ?? 'absent'} · production SHA-256: ${warning.productionSha256 ?? 'unavailable'}` })
-          : null)));
+          ? 'Production differs from the pinned PR merge base; the after side uses the pinned head.'
+          : 'No baseline response was observed, so source drift could not be checked.',
+        prUrl ? [' ', extLink(prUrl, `${warning.repo}#${warning.number}`)] : null),
+        disclosure('Source details',
+          h('p', { class: 'mono', text: warning.path }),
+          h('p', { text: `Affected pairs: ${affectedPairs.join(', ') || 'not recorded'}` }),
+          warning.expectedMergeBaseSha256 ? h('p', {}, 'Merge-base SHA-256: ', mono(warning.expectedMergeBaseSha256)) : null,
+          warning.productionSha256 ? h('p', {}, 'Production SHA-256: ', mono(warning.productionSha256)) : null))));
   }
   return out;
 }
@@ -611,9 +630,9 @@ function mediansTable(run, pairs) {
       h('td', { class: 'num pct', 'data-label': 'Δ %', text: core.formatPercent(key, d, m.before?.[key]) || '—' }),
       verdictCell(key, run, pairs));
   });
-  const note = complete == null
-    ? 'Sample counts were not published for this run.'
-    : `Medians over ${complete} complete pair${complete === 1 ? '' : 's'}. Δ is the median of per-pair differences (after − before), not the difference of the medians; Δ % is relative to the before median.`;
+  const note = run.single
+    ? 'Single URL; no paired Δ.'
+    : complete == null ? 'Sample counts unavailable.' : `Δ = median of per-pair (after − before) differences; Δ% vs. before.`;
   return h('div', { class: 'medians-content' },
     h('div', { class: 'table-scroll medians-scroll' }, h('table', { class: 'data medians' },
       h('thead', {}, h('tr', {},
@@ -625,18 +644,24 @@ function mediansTable(run, pairs) {
         h('th', { scope: 'col', text: 'Direction', title: 'Descriptive heuristic, not a statistical significance test' }))),
       h('tbody', {}, rows))),
     h('p', { class: 'note', text: note }),
-    h('p', { class: 'note', text: `Direction is a descriptive heuristic, not a statistical significance test, and carries no confidence level. A metric reads Consistently better or worse only with at least ${core.MIN_PAIRS} complete pairs, a median Δ at or beyond its noise threshold and at least ${Math.round(core.AGREEMENT * 100)}% of pair differences on the median's side; a smaller median Δ reads Within noise and everything else Inconclusive. Noise thresholds: ${noiseThresholds()}. Lower is better except Performance.` }));
+    !run.single ? disclosure('How direction is set',
+      h('p', { class: 'note', text: `Direction is a descriptive heuristic, not a statistical significance test, and carries no confidence level. A metric reads Consistently better or worse only with at least ${core.MIN_PAIRS} complete pairs, a median Δ at or beyond its noise threshold and at least ${Math.round(core.AGREEMENT * 100)}% of pair differences on the median's side; a smaller median Δ reads Within noise and everything else Inconclusive. Noise thresholds: ${noiseThresholds()}. Lower is better except Performance.` })) : null);
 }
 
 // ---------------------------------------------------------------- paired-sample plots
 
 function plotsSection(run) {
   const usable = run.pairs.filter((p) => p.before || p.after);
-  if (!usable.length) return section('Paired samples', h('p', { class: 'note', text: 'No per-pair samples were published for this run.' }));
+  const title = run.single ? 'Samples' : 'Paired samples';
+  if (!usable.length) return section(title, h('p', { class: 'note', text: 'No samples published.' }));
   const legend = h('div', { class: 'legend', 'aria-hidden': 'true' },
-    legendItem('before'), legendItem('after'), legendItem('better'), legendItem('worse'), legendItem('median'));
-  return section('Paired samples',
-    h('p', { class: 'note', text: `Each row is one pair (before and after measured back to back). ${usable.length} pair${usable.length === 1 ? '' : 's'} published; axes span the data and do not start at zero. A connecting line is coloured only when that pair moved beyond the metric's noise threshold.` }),
+    ...(run.single ? [legendItem('after'), legendItem('median', true)] : [
+      legendItem('before'), legendItem('after'), legendItem('better'), legendItem('worse'), legendItem('median'),
+    ]));
+  return section(title,
+    h('p', { class: 'note', text: run.single
+      ? 'Each row is one load; axes fit the samples.'
+      : 'Each row is a cold before/after pair; lines mark changes beyond noise.' }),
     legend,
     h('div', { class: 'plots' }, METRIC_KEYS.map((k) => pairPlot(k, run, usable))));
 }
@@ -645,9 +670,9 @@ function noiseThresholds() {
   return METRIC_KEYS.map((k) => `${METRICS[k].short} ${core.formatNoise(k)}`).join(', ');
 }
 
-function legendItem(kind) {
+function legendItem(kind, single = false) {
   const glyph = svg('svg', { viewBox: '0 0 24 12', width: 24, height: 12, class: 'legend-glyph' });
-  const labels = { before: 'Before', after: 'After', better: 'Pair better beyond noise', worse: 'Pair worse beyond noise', median: 'Median (before, after)' };
+  const labels = { before: 'Before', after: 'After', better: 'Pair better beyond noise', worse: 'Pair worse beyond noise', median: single ? 'Median' : 'Median (before, after)' };
   if (kind === 'before') glyph.append(svg('circle', { cx: 12, cy: 6, r: 4, class: 'dot-before' }));
   if (kind === 'after') glyph.append(svg('circle', { cx: 12, cy: 6, r: 4, class: 'dot-after' }));
   if (kind === 'better' || kind === 'worse') glyph.append(svg('line', { x1: 2, y1: 6, x2: 22, y2: 6, class: `link dir-${kind}` }));
@@ -675,7 +700,9 @@ function pairPlot(key, run, pairs) {
   const H = top + plotH + 24;
   const x = (v) => padL + ((v - lo) / (hi - lo || 1)) * (W - padL - padR);
   const { ticks, step } = core.niceTicks(lo, hi, 4);
-  const label = `${m.label}: ${rows.length} pair${rows.length === 1 ? '' : 's'}; before median ${core.formatMetric(key, medB)}, after median ${core.formatMetric(key, medA)}.`;
+  const label = run.single
+    ? `${m.label}: ${rows.length} load${rows.length === 1 ? '' : 's'}; median ${core.formatMetric(key, medA)}.`
+    : `${m.label}: ${rows.length} pair${rows.length === 1 ? '' : 's'}; before median ${core.formatMetric(key, medB)}, after median ${core.formatMetric(key, medA)}.`;
   const root = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'plot-svg', role: 'img', 'aria-label': label, preserveAspectRatio: 'xMidYMin meet' });
   const grid = svg('g', { class: 'grid' });
   for (const t of ticks) {
@@ -740,10 +767,10 @@ function pairsSection(run) {
       tbody.append(tr);
     });
   }
-  return section('Per-pair numbers',
+  return section(single ? 'Per-load numbers' : 'Per-pair numbers',
     h('div', { class: 'table-scroll' }, h('table', { class: 'data pairs' },
       h('thead', {}, h('tr', {},
-        h('th', { scope: 'col', text: 'Pair' }),
+        h('th', { scope: 'col', text: single ? 'Load' : 'Pair' }),
         h('th', { scope: 'col', text: 'Variant' }),
         METRIC_KEYS.map((k) => h('th', { scope: 'col', class: 'num' }, METRICS[k].short, core.columnUnit(k) ? h('span', { class: 'th-unit', text: core.columnUnit(k) }) : null)),
         h('th', { scope: 'col', text: 'Job' }))),
@@ -761,7 +788,7 @@ function pathList(title, paths) {
 function changesSection(run) {
   const c = run.changes;
   const nothing = !c.kinds.length && !c.hints && !c.priorityPaths.length && !c.patchPaths.length && !c.sourcePaths.length && !c.prSources?.length;
-  if (nothing) return section('Changes', h('p', { class: 'note', text: 'The published data records no change inputs for this run.' }));
+  if (nothing) return section('Changes', h('p', { class: 'note', text: 'No change inputs.' }));
   const hints = c.hints && h('div', { class: 'kv-block' }, h('h4', { text: 'Resource hints' }),
     h('dl', { class: 'stats' },
       [['Requested', c.hints.requested], ['Used', c.hints.used], ['Contextual', c.hints.contextual], ['Dropped', c.hints.dropped]]
@@ -784,7 +811,7 @@ function changesSection(run) {
   return section('Changes',
     c.kinds.length ? h('div', { class: 'badges' }, c.kinds.map((k) => badge(CHANGE_KINDS[k] ?? k))) : null,
     h('div', { class: 'kv-grid' }, hints, priorities, pathList('Patched paths', c.patchPaths), pathList('Source override paths', c.sourcePaths), prSources),
-    h('p', { class: 'note', text: 'Only mapped file names, change status, commit IDs and hashes are published; source code, snippets, headers and credentials stay in the workflow artifact.' }));
+    disclosure('Published metadata', h('p', { class: 'note', text: 'Only mapped paths, change status, commit IDs and hashes are published. Source code, snippets, headers and credentials remain in the private workflow artifact.' })));
 }
 
 function rejectedSection(run) {
@@ -803,11 +830,13 @@ function rejectedSection(run) {
 function comparableSection(run) {
   const { comparable, excluded } = core.comparableRuns(state.history.runs, run);
   const selfOk = run.us && run.status !== 'failed' && run.status !== 'unknown' && run.profileKey;
-  const intro = `Same page and profile key${run.profileKey ? ` (${run.profileKey})` : ''}, verified US Actions egress, not failed. Local results and runs with another profile or Lighthouse version are never mixed in.`;
-  const notes = [h('p', { class: 'note', text: intro })];
-  if (!selfOk) notes.push(h('p', { class: 'note', text: 'This run itself does not meet these conditions, so it is listed for reference only.' }));
-  if (excluded) notes.push(h('p', { class: 'note', text: `${excluded} other run${excluded === 1 ? '' : 's'} of this page excluded.` }));
-  if (!comparable.length) return section('Comparable runs', notes, h('p', { text: 'No other comparable runs of this page are published yet.' }));
+  const notes = [
+    h('p', { class: 'note', text: 'Same page, profile and verified US egress.' }),
+    disclosure('Comparison rules', h('p', { class: 'note', text: 'Failed runs, local runs, and runs with a different page, profile, Lighthouse version or region are excluded.' })),
+    !selfOk ? h('p', { class: 'note', text: 'This run is unverified; shown for reference.' }) : null,
+    excluded ? h('p', { class: 'note', text: `${excluded} other run${excluded === 1 ? '' : 's'} excluded.` }) : null,
+  ];
+  if (!comparable.length) return section('Comparable runs', notes, h('p', { text: 'No comparable runs.' }));
   const rows = [run, ...comparable].sort((a, b) => b.createdAt - a.createdAt).map((r) => {
     const self = r.id === run.id;
     const link = self ? h('span', { text: 'This run' }) : h('a', { 'data-run': r.id }, mono(r.id));
@@ -892,16 +921,16 @@ function artifactSection(run) {
   else if (st === 'expired') {
     body = callout('neutral', 'Artifact expired',
       h('p', {}, name, a.expiresAt != null ? [' expired on ', timeEl(a.expiresAt, core.formatLocalDay(a.expiresAt)), '.'] : ' has expired.'),
-      h('p', { text: 'The raw Lighthouse reports are gone; the published numbers on this page remain.' }));
+      disclosure('About expired reports', h('p', { text: 'Raw Lighthouse reports expire; published numbers remain.' })));
   } else if (st === 'unlinked') {
     body = h('p', {}, name, ' has no published link.', a.expiresAt != null ? [' Expires ', timeEl(a.expiresAt, core.formatLocalDay(a.expiresAt)), '.'] : null);
   } else {
     body = h('p', {}, extLink(a.url, a.name ? `Download ${a.name}` : 'Download artifact'),
       a.expiresAt != null ? [' · expires ', timeEl(a.expiresAt, core.formatLocalDay(a.expiresAt)), ` (${core.formatRelativeDays(a.expiresAt)})`] : null,
-      h('span', { class: 'sub sub-line', text: 'GitHub sign-in required.' }));
+      h('span', { class: 'sub sub-line', text: 'Sign-in required.' }));
   }
   return section('Reports and artifact', body,
-    h('p', { class: 'note', text: 'Raw Lighthouse reports are never published on this site. They live only in the workflow artifact, which GitHub keeps for a limited time.' }));
+    disclosure('Artifact policy', h('p', { class: 'note', text: 'Raw reports are not published; they remain in GitHub Actions for a limited time.' })));
 }
 
 // ---------------------------------------------------------------- wiring
