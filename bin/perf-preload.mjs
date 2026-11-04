@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { isLegacyWarmup } from '../lib/cold-runs.mjs';
 import { assertTargetUrl } from '../lib/target.mjs';
-import { BUILT_IN_EXCLUDES, parseExclude, matchExclude, describeRule } from '../lib/preload-rules.mjs';
+import { BUILT_IN_EXCLUDES, parseExclude, matchExclude, describeRule, isAllowedHost } from '../lib/preload-rules.mjs';
 
 const { values: o, positionals } = parseArgs({
   allowPositionals: true,
@@ -50,7 +50,7 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
                        output dir (results.json) contributes only its accepted runs' trace.json, never rejected/;
                        for a before/after output only the unchanged "before" runs.
   --min-runs <k>       traces a resource must appear in (default: majority, e.g. 2 of 3)
-  --all-origins        keep cross-site resources too (default: same site as the page only)
+  --all-origins        keep all cross-site resources (default: the page's site plus *.typekit.net)
   --no-lcp-image       do not preload the LCP image (its URL is viewport specific)
   --exclude <rule>     (repeatable) never preload a path prefix (/marketingtech) or a host (bfp.adobe.com, subdomains
                        included), on top of the built-in rules below
@@ -233,7 +233,7 @@ const CONTEXT_PARAM = /^(country|locale|lang|language|geo|region|market)$/i;
 const contextual = (url) => [...new URL(url).searchParams.keys()].some((k) => CONTEXT_PARAM.test(k));
 const picked = [...byUrl.values()]
   .filter((x) => x.starts.length >= minRuns)
-  .filter((x) => o['all-origins'] || site(new URL(x.url).hostname) === site(page.hostname))
+  .filter((x) => o['all-origins'] || site(new URL(x.url).hostname) === site(page.hostname) || isAllowedHost(new URL(x.url).hostname))
   .filter((x) => !(o['no-lcp-image'] && x.type === 'LCP image'))
   .map((x) => ({ ...x, start: median(x.starts), end: median(x.ends) }))
   .sort((a, b) => a.start - b.start);

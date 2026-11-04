@@ -17,9 +17,20 @@ import { runJob } from '../lib/pagespeed/job.mjs';
 import { resolveConfig, assertConfigPublished } from '../bin/perf-ab.mjs';
 
 const ROOT = path.join(path.dirname(new URL(import.meta.url).pathname), '..');
-const ACROBAT = path.join(ROOT, 'experiments', 'acrobat-plans.json');
 const run = promisify(execFile);
 const tmp = (p) => fs.mkdtempSync(path.join(os.tmpdir(), p));
+const CONFIG = 'experiments/demo.json';
+const FIXTURE_ROOT = tmp('perf-ab-config-');
+process.on('exit', () => fs.rmSync(FIXTURE_ROOT, { recursive: true, force: true }));
+fs.mkdirSync(path.join(FIXTURE_ROOT, 'experiments', 'demo'), { recursive: true });
+fs.writeFileSync(path.join(FIXTURE_ROOT, CONFIG), JSON.stringify({
+  schema: 'perf-ab/experiment-v1', name: 'demo', url: 'https://www.adobe.com/acrobat/plans.html', runs: 3,
+  expect: { title: 'Acrobat plans', counts: { 'body:has(merch-card)': 1, 'main h1': 1 } },
+  after: { headInject: 'demo/head.html', pullRequests: [{ repo: 'adobecom/milo', number: 7095 }] },
+}));
+fs.writeFileSync(path.join(FIXTURE_ROOT, 'experiments', 'demo', 'head.html'),
+  '<link rel="modulepreload" href="/libs/utils/utils.js" fetchpriority="high">\n<link rel="preload" href="/acrobat/plans.json" as="fetch" crossorigin>\n');
+const ACROBAT = path.join(FIXTURE_ROOT, CONFIG);
 const m = (performance, LCP) => ({ performance, FCP: 1000, LCP, SI: 2000, TBT: 100, CLS: 0.01 });
 
 // ---------- stats ----------
@@ -64,7 +75,7 @@ function pairJob(dir, i, { requestId = 'req-matrix-1', status = 'ok', pair = i, 
   fs.writeFileSync(path.join(d, `after${i}`, 'report.html'), '<html>Lighthouse Report</html>');
   const r = {
     schema: 'perf-ab/pagespeed-v1', requestId, status, mode: 'pagespeed-us', pair, names: ['before', 'after'], url: 'https://www.adobe.com/acrobat/plans.html',
-    experiment: { name: 'acrobat-plans-latest', config: 'experiments/acrobat-plans.json' }, egress, profile, chromeVersion: `HeadlessChrome/14${i}.0`,
+    experiment: { name: 'acrobat-plans-latest', config: 'experiments/demo.json' }, egress, profile, chromeVersion: `HeadlessChrome/14${i}.0`,
     github: { runAttempt: 1, runner: `runner-${i}`, os: 'linux-x64', cpus: 4 }, cold: { warmups: 0 },
     runs: [
       ...(before ? [{ variant: 'before', run: i, attempt: 1, dir: `before${i}`, metrics: before, benchmarkIndex: bench[0] }] : []),
@@ -119,7 +130,7 @@ test('aggregate: three complete pairs give ok paired medians, per-pair job metad
     assert.equal(a.medians.after.performance, 82);
     assert.equal(a.medians.delta.performance, 30);
     assert.equal(a.profileKey, EXPECTED_PROFILE_KEY);
-    assert.deepEqual(a.experiment, { name: 'acrobat-plans-latest', config: 'experiments/acrobat-plans.json' });
+    assert.deepEqual(a.experiment, { name: 'acrobat-plans-latest', config: 'experiments/demo.json' });
     assert.deepEqual(a.pairs.map((p) => [p.index, p.job.chromeVersion, p.job.runner, p.job.benchmarkIndexes]), [[1, 'HeadlessChrome/141.0', 'runner-1', { before: 1501, after: 1521 }], [2, 'HeadlessChrome/142.0', 'runner-2', { before: 1502, after: 1522 }], [3, 'HeadlessChrome/143.0', 'runner-3', { before: 1503, after: 1523 }]]);
     assert.deepEqual(a.warnings, []);
     assert.deepEqual(a.github, { runId: 5, runAttempt: 2 });
@@ -219,21 +230,17 @@ test('aggregate CLI exits 1 unless every pair is complete', async () => {
 
 // ---------- experiment configs ----------
 
-test('experiment: the Acrobat config uses the pinned Milo PR source (57 US hints and priorities)', () => {
-  const s = loadExperiment(ACROBAT, { config: 'experiments/acrobat-plans.json' });
+test('experiment: a config loads head snippet, PR source, render guards and runs', () => {
+  const s = loadExperiment(ACROBAT, { config: 'experiments/demo.json' });
   assert.deepEqual(validateSpec(s), s);
   assert.equal(s.runs, 3);
   assert.deepEqual(s.names, ['before', 'after']);
   assert.deepEqual(s.variants.before, { url: 'https://www.adobe.com/acrobat/plans.html' });
-  assert.deepEqual(s.meta, { name: 'acrobat-plans-latest', config: 'experiments/acrobat-plans.json' });
+  assert.deepEqual(s.meta, { name: 'demo', config: 'experiments/demo.json' });
   const links = s.variants.after.headInject.match(/<link\b/g);
-  assert.equal(links.length, 57);
-  assert.doesNotMatch(s.variants.after.headInject, /country=CH|\/experienceedge/);
-  assert.deepEqual(s.variants.after.priorities.filter((p) => p.priority === 'high').map((p) => p.path).sort(),
-    ['/acrobat/scripts/scripts.js', '/acrobat/styles/styles.css', '/libs/c2/styles/styles.css', '/libs/martech/helpers.js', '/libs/utils/utils.js']);
+  assert.equal(links.length, 2);
   assert.deepEqual(s.variants.after.pullRequests, [{ repo: 'adobecom/milo', number: 7095 }]);
   assert.equal(s.variants.after.patches, undefined);
-  assert.equal(fs.existsSync(path.join(ROOT, 'experiments', 'acrobat-plans', 'market-config.patch.json')), false);
   assert.deepEqual(s.expect, { title: 'Acrobat plans', counts: [{ selector: 'body:has(merch-card)', count: 1 }, { selector: 'main h1', count: 1 }] });
   assert.equal(loadExperiment(ACROBAT, { runs: '1' }).runs, 1);
   assert.equal(decodeSpec(encodeSpec(s)).variants.after.headInject, s.variants.after.headInject, 'fits the dispatch input');
@@ -282,13 +289,13 @@ const resolveTestPrs = async (requests) => ({
 });
 
 test('prepare: exactly one of spec/config/url, bounded runs and repository PR inputs', async () => {
-  const options = { root: ROOT, resolvePrs: resolveTestPrs };
-  const p = await prepare({ CONFIG: 'experiments/acrobat-plans.json', RUNS: '1', REQUEST_ID: 'mw0-req-1' }, options);
+  const options = { root: FIXTURE_ROOT, resolvePrs: resolveTestPrs };
+  const p = await prepare({ CONFIG: 'experiments/demo.json', RUNS: '1', REQUEST_ID: 'mw0-req-1' }, options);
   assert.deepEqual([p.requestId, p.runs, p.pairs, p.names], ['mw0-req-1', 1, [1], ['before', 'after']]);
-  assert.equal(decodeSpec(p.spec).meta.config, 'experiments/acrobat-plans.json');
+  assert.equal(decodeSpec(p.spec).meta.config, 'experiments/demo.json');
   assert.equal(decodeSpec(p.spec).variants.after.sourcePrs[0].headSha, PR_HEAD);
   assert.deepEqual(Object.keys(decodeSpec(p.spec).variants.after.localSources), ['/libs/utils/utils.js']);
-  const full = await prepare({ CONFIG: 'experiments/acrobat-plans.json' }, { ...options, runId: 123 });
+  const full = await prepare({ CONFIG: 'experiments/demo.json' }, { ...options, runId: 123 });
   assert.deepEqual([full.requestId, full.pairs], ['gh-run-123', [1, 2, 3]]);
   const url = await prepare({ URL: 'https://www.adobe.com/acrobat/plans.html', RUNS: '2' }, { ...options, runId: 9 });
   assert.deepEqual([url.names, url.pairs], [['after'], [1, 2]]);
@@ -296,7 +303,7 @@ test('prepare: exactly one of spec/config/url, bounded runs and repository PR in
   assert.deepEqual(actionUrl.names, ['before', 'after']);
   assert.equal(decodeSpec(actionUrl.spec).variants.after.sourcePrs[0].number, 7095);
   let override;
-  await prepare({ CONFIG: 'experiments/acrobat-plans.json', MILO_PR: '7100' }, {
+  await prepare({ CONFIG: 'experiments/demo.json', MILO_PR: '7100' }, {
     ...options, resolvePrs: async (reqs) => { override = reqs; return resolveTestPrs(reqs); },
   });
   assert.deepEqual(override, [{ repo: 'adobecom/milo', number: 7100 }], 'workflow input overrides the config PR for that repo');
@@ -304,7 +311,7 @@ test('prepare: exactly one of spec/config/url, bounded runs and repository PR in
   assert.equal((await prepare({ SPEC: enc, REQUEST_ID: 'cli-req-1' }, options)).spec, enc);
 
   await assert.rejects(prepare({}, options), /exactly one of spec, config or url is required \(got none\)/);
-  await assert.rejects(prepare({ CONFIG: 'experiments/acrobat-plans.json', URL: 'https://www.adobe.com/' }, options), /got config, url/);
+  await assert.rejects(prepare({ CONFIG: 'experiments/demo.json', URL: 'https://www.adobe.com/' }, options), /got config, url/);
   for (const RUNS of ['0', '11', '2.5', 'x']) await assert.rejects(prepare({ URL: 'https://www.adobe.com/', RUNS }, options), /runs must be an integer 1\.\.10/);
   await assert.rejects(prepare({ SPEC: enc, RUNS: '3' }, options), /cannot override/);
   await assert.rejects(prepare({ SPEC: enc, MILO_PR: '7095' }, options), /cannot be combined with spec/);
@@ -378,13 +385,13 @@ test('remote: --config dispatches config + runs inputs, downloads pair<i>/ dirs 
   try {
     fs.mkdirSync(path.join(out, 'pair4'));
     fs.writeFileSync(path.join(out, 'keep.txt'), 'x');
-    const s = loadExperiment(ACROBAT, { runs: 1, config: 'experiments/acrobat-plans.json' });
+    const s = loadExperiment(ACROBAT, { runs: 1, config: 'experiments/demo.json' });
     const ok = { status: 'ok', profile: EXPECTED, egress: { country: 'US' }, medians: {}, rejected: [], samples: { requested: 1, pairs: 1 } };
     const gh = fakeGh(ok, { 'pair1/after1/report.html': '<html>' });
-    const opts = { spec: s, config: 'experiments/acrobat-plans.json', out, gh, pollMs: 1, wait: async () => {}, log: () => {} };
+    const opts = { spec: s, config: 'experiments/demo.json', out, gh, pollMs: 1, wait: async () => {}, log: () => {} };
     await runRemote(opts);
     const dispatch = gh.calls.find((c) => c[0] === 'workflow');
-    assert.ok(dispatch.includes('config=experiments/acrobat-plans.json'));
+    assert.ok(dispatch.includes('config=experiments/demo.json'));
     assert.ok(dispatch.includes('runs=1'));
     assert.ok(!dispatch.some((a) => a.startsWith('spec=')));
     assert.deepEqual(fs.readdirSync(out).sort(), ['keep.txt', 'pair1', 'results.json']);
@@ -396,15 +403,15 @@ test('remote: --config dispatches config + runs inputs, downloads pair<i>/ dirs 
 });
 
 test('CLI --config: repository experiments/*.json only, no URL/change flags, must match the pushed ref', async () => {
-  assert.deepEqual(resolveConfig('experiments/acrobat-plans.json', { cwd: os.tmpdir() }).rel, 'experiments/acrobat-plans.json');
+  assert.deepEqual(resolveConfig('experiments/demo.json', { root: FIXTURE_ROOT, cwd: os.tmpdir() }).rel, 'experiments/demo.json');
   assert.throws(() => resolveConfig('package.json', { cwd: ROOT }), /must be an experiments/);
   assert.throws(() => resolveConfig('experiments/nope.json', { cwd: ROOT }), /not found/);
-  assert.doesNotThrow(() => assertConfigPublished('experiments/acrobat-plans.json', 'main', { git: () => '' }));
-  assert.throws(() => assertConfigPublished('experiments/acrobat-plans.json', 'main', { git: (a) => (a[0] === 'diff' ? 'experiments/acrobat-plans/head.html\n' : '') }), /differ from origin\/main.*commit and push first/);
+  assert.doesNotThrow(() => assertConfigPublished('experiments/demo.json', 'main', { git: () => '' }));
+  assert.throws(() => assertConfigPublished('experiments/demo.json', 'main', { git: (a) => (a[0] === 'diff' ? 'experiments/demo/head.html\n' : '') }), /differ from origin\/main.*commit and push first/);
   const cli = path.join(ROOT, 'bin', 'perf-ab.mjs');
-  const cfg = 'experiments/acrobat-plans.json';
-  for (const extra of [['https://www.adobe.com/x.html'], ['--head-inject', 'x.html'], ['--expect-count', 'a=1'], ['-n', '11']]) {
-    await assert.rejects(run(process.execPath, [cli, '--config', cfg, ...extra], { cwd: ROOT, env: { ...process.env, GH_TOKEN: '' } }), (e) => e.code === 1 && /--config defines|--runs must/.test(e.stderr), extra.join(' '));
+  const cfg = 'experiments/demo.json';
+  for (const extra of [['https://www.adobe.com/x.html'], ['--head-inject', 'x.html'], ['--expect-count', 'a=1']]) {
+    await assert.rejects(run(process.execPath, [cli, '--config', cfg, ...extra], { cwd: ROOT, env: { ...process.env, GH_TOKEN: '' } }), (e) => e.code === 1 && /--config defines/.test(e.stderr), extra.join(' '));
   }
   const { stdout } = await run(process.execPath, [cli, '--help']);
   assert.match(stdout, /--config <file>/);

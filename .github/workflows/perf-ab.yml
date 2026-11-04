@@ -5,6 +5,8 @@
 # unchanged). runs = N gives N parallel matrix jobs; each measures ONE complete cold before/after pair on its own VM.
 # The aggregate job combines complete pairs only (medians + median per-pair delta) into perf-ab-<request>.
 # All inputs reach scripts only through environment variables and are validated by lib/pagespeed/prepare.mjs.
+# A config or spec with "interactions" (declarative steps) adds INP: every cold run is then a Lighthouse user flow
+# (the same navigation, then a timespan replaying the steps); see lib/pagespeed/interactions.mjs.
 name: perf-ab
 run-name: perf-ab ${{ inputs.request_id || inputs.config || inputs.url }}
 
@@ -12,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       config:
-        description: Experiment config in this repository, e.g. experiments/acrobat-plans.json
+        description: Experiment config in this repository, e.g. experiments/<name>.json
         required: false
         type: string
       url:

@@ -19,7 +19,33 @@ const SHOTS = process.env.DASHBOARD_SCREENSHOTS || '';
 const skip = fs.existsSync(chromium.executablePath()) ? false : 'Playwright Chromium is not installed (npx playwright install chromium)';
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
-const MODES = new Set(['populated', 'empty', 'schema', 'badjson', 'missing', 'slow', 'warning']);
+const MODES = new Set(['populated', 'empty', 'schema', 'badjson', 'missing', 'slow', 'warning', 'inp']);
+
+// A synthetic INP run derived from a fixture run: the shared fixtures stay INP-free, so every other mode keeps proving that
+// runs without an interaction scenario show no INP column, row or plot.
+const INP_RUN = '41700000200-1';
+function inpRun() {
+  const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'runs', '41700000001-1.json'), 'utf8'));
+  const inp = [[620, 310], [580, 290], [640, 330], [600, 280], [610, 300]];
+  Object.assign(detail, {
+    id: INP_RUN, name: 'acrobat-plans-inp', config: 'experiments/acrobat-plans-inp.json', createdAt: '2026-11-02T20:00:00Z', detailPath: `data/runs/${INP_RUN}.json`,
+    interactionsKey: 'c'.repeat(64),
+    interactions: [{ action: 'waitFor', label: null }, { action: 'tap', label: 'Open the plans modal' }, { action: 'click', label: 'Pick the Pro plan' }, { action: 'auto', label: null }],
+    medians: {
+      before: { ...detail.medians.before, INP: 610 }, after: { ...detail.medians.after, INP: 300 }, delta: { ...detail.medians.delta, INP: -310 },
+    },
+    pairs: detail.pairs.map((p, i) => ({
+      ...p, before: { ...p.before, INP: inp[i][0] }, after: { ...p.after, INP: inp[i][1] }, delta: { ...p.delta, INP: inp[i][1] - inp[i][0] },
+    })),
+  });
+  return detail;
+}
+function inpIndex() {
+  const index = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'index.json'), 'utf8'));
+  const { schema, pairs, rejectedAttempts, changes, warnings, artifact, interactions, ...summary } = inpRun();
+  index.runs.push(summary);
+  return index;
+}
 
 function inside(base, rel) {
   const file = path.resolve(base, rel);
@@ -51,6 +77,8 @@ function startServer() {
     if (mode === 'schema' && data === 'index.json') return send(res, 200, JSON.stringify({ schema: 'perf-ab/history-v0', runs: [] }));
     if (mode === 'badjson' && data === 'index.json') return send(res, 200, '{"schema":"perf-ab/history-v1","runs":[{"id":');
     if (mode === 'missing') return send(res, 404, 'not found', 'text/plain');
+    if (mode === 'inp' && data === 'index.json') return send(res, 200, JSON.stringify(inpIndex()));
+    if (mode === 'inp' && data === `runs/${INP_RUN}.json`) return send(res, 200, JSON.stringify(inpRun()));
     if (mode === 'slow' && data === 'index.json') await slowGate;
     if (mode === 'warning' && data === 'runs/41700000008-1.json') {
       const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
@@ -254,6 +282,37 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.match(detail, /57/);
     await assertSafe(page);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-improvement.png'), fullPage: true });
+    await page.context().close();
+  });
+
+  test('INP: the column, row, plot and scenario appear only for runs with an interaction scenario', async () => {
+    const page = await newPage();
+    // Runs without a scenario: no INP anywhere.
+    await open(page, 'populated', '?run=41700000001-1');
+    assert.doesNotMatch(await text(page, '#history-body thead'), /INP/);
+    assert.deepEqual(await page.$$eval('#detail table.medians tbody .metric-short', (e) => e.map((x) => x.textContent)), ['Perf', 'FCP', 'LCP', 'SI', 'TBT', 'CLS']);
+    assert.equal(await page.$$eval('#detail svg.plot-svg', (s) => s.length), 6);
+    assert.doesNotMatch(await text(page, '#detail'), /Interaction scenario|INP/);
+
+    // A list containing an INP run gets the column (other rows show a dash); the run's detail gets the row, plot and scenario.
+    await open(page, 'inp', `?run=${INP_RUN}`);
+    assert.match(await text(page, '#history-body thead'), /Δ INP/);
+    assert.match(await text(page, `#history-body tr.run-row:has(a[data-run="${INP_RUN}"])`), /−310 ms/);
+    assert.match(await text(page, '#history-body tr.run-row:has(a[data-run="41700000001-1"])'), /—$/);
+    assert.deepEqual(await page.$$eval('#detail table.medians tbody .metric-short', (e) => e.map((x) => x.textContent)), ['Perf', 'FCP', 'LCP', 'SI', 'TBT', 'CLS', 'INP']);
+    assert.match(await text(page, '#detail table.medians tbody tr:nth-child(7)'), /610 ms300 ms−310 ms/);
+    assert.equal(await page.$eval('#detail table.medians tbody tr:nth-child(7)', (tr) => tr.dataset.verdict), 'better');
+    assert.equal(await page.$$eval('#detail svg.plot-svg', (s) => s.length), 7);
+    assert.match(await text(page, '#detail table.pairs thead'), /INP/);
+    assert.equal(await page.$$eval('#detail table.pairs thead th.num', (t) => t.length), 7);
+    const scenario = await text(page, 'section[aria-labelledby="sec-interaction-scenario"]');
+    assert.match(scenario, /Open the plans modal/);
+    assert.match(scenario, /Pick the Pro plan/);
+    assert.match(scenario, /Auto-discovered in-page interactions\s*auto/);
+    assert.match(scenario, /Scenario key cccccccccccc/);
+    assert.match(await text(page, '#detail'), /INP 40 ms/, 'the noise threshold is listed with the others');
+    await assertSafe(page);
+    if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-inp.png'), fullPage: true });
     await page.context().close();
   });
 

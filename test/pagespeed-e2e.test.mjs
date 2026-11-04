@@ -10,6 +10,7 @@ import http2 from 'node:http2';
 import { brotliCompressSync, constants } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { runJob, makeCert, scanForKeys } from '../lib/pagespeed/job.mjs';
+import { interactionsKey } from '../lib/pagespeed/interactions.mjs';
 
 const CHROME = [process.env.CHROME_PATH, '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable']
   .find((p) => p && fs.existsSync(p));
@@ -100,7 +101,6 @@ test('runner job: real Lighthouse (mobile, DevTools throttling) through the HTTP
           after: {
             url,
             headInject: '<link rel="preload" href="/data.json" as="fetch" crossorigin>',
-            priorities: [{ path: '/app.js', priority: 'high' }],
             patches: [{ path: '/app.js', find: 'const version = "v1";', replace: 'const version = "v2";' }],
             localSources,
             sourcePrs,
@@ -183,7 +183,7 @@ test('runner job: real Lighthouse (mobile, DevTools throttling) through the HTTP
       productionSha256: createHash('sha256').update(productionSource).digest('hex'),
       productionStatus: 200, status: 'matches-merge-base',
     }]);
-    // Change: document + patched module edited and recompressed as Brotli; hints and Link header priority applied.
+    // Change: document + patched module edited and recompressed as Brotli; hints injected.
     assert.deepEqual([...after.editedResponses].sort(), ['/app.js', '/libs/utils/utils.js', '/page']);
     assert.deepEqual(after.sourcePrs, sourcePrs);
     assert.deepEqual(after.servedSources, [{
@@ -286,4 +286,202 @@ test('runner job with where=local: same Lighthouse run, non-US egress and docume
     cert.cleanup();
     fs.rmSync(out, { recursive: true, force: true });
   }
+});
+
+// ---------- INP: interactions replayed in a Lighthouse timespan after the cold navigation ----------
+
+const inpPage = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Fixture inp</title><script type="module" src="/app.js"></script></head>
+<body><main><h1>Plans</h1><p>${'Plan details. '.repeat(20)}</p>
+<button id="buy" style="width:220px;height:64px;font-size:20px">Buy now</button><p id="out">idle</p>
+<a id="leave" href="/other" style="display:block;margin-top:24px">Leave</a></main></body></html>`;
+const INP_APP = `const BLOCK_MS = 300;
+document.getElementById('buy').addEventListener('click', () => {
+  const t = performance.now();
+  while (performance.now() - t < BLOCK_MS);
+  document.getElementById('out').textContent = 'clicked ' + Math.round(performance.now());
+});
+`;
+
+// A page for the pass-partout (auto) scenario: tabs, a toggle, a slow "Show more" button and a modal opener to be found,
+// and a purchase button, a real link, a submit button and a consent banner button that must never be touched. Every
+// click reports itself to the server, which is how the test sees what was (not) exercised.
+const autoPage = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Fixture auto</title><script type="module" src="/app.js"></script></head>
+<body><main><h1>Plans</h1>
+<div role="tablist"><button role="tab" aria-selected="true" id="t1" style="min-height:44px">One</button><button role="tab" aria-selected="false" id="t2" style="min-height:44px">Two</button><button role="tab" aria-selected="false" id="t3" style="min-height:44px">Three</button></div>
+<button id="acc" aria-expanded="false" style="min-height:44px">More details</button>
+<button id="more" style="min-height:44px">Show more</button>
+<button id="buy" style="min-height:44px">Buy now</button>
+<button id="dialog" aria-haspopup="dialog" style="min-height:44px">Open the gallery</button>
+<a id="leave" href="/other" style="display:block;min-height:44px">Learn more</a>
+<form onsubmit="return false"><button type="submit" id="sub" style="min-height:44px">Go</button></form>
+<div id="onetrust-consent-sdk"><button id="accept" style="min-height:44px">Got it</button></div>
+<p id="out">idle</p></main></body></html>`;
+const AUTO_APP = `const BLOCK_MS = 300;
+const hit = (id) => navigator.sendBeacon('/hit/' + id);
+for (const el of document.querySelectorAll('button, a')) {
+  el.addEventListener('click', (e) => {
+    hit(el.id);
+    if (el.id === 'more') { const t = performance.now(); while (performance.now() - t < BLOCK_MS); }
+    if (el.getAttribute('role') === 'tab') {
+      for (const tab of document.querySelectorAll('[role=tab]')) tab.setAttribute('aria-selected', String(tab === el));
+    }
+    if (el.id === 'acc') el.setAttribute('aria-expanded', String(el.getAttribute('aria-expanded') !== 'true'));
+    document.getElementById('out').textContent = 'clicked ' + el.id;
+    if (el.tagName === 'A') e.preventDefault();
+  });
+}
+`;
+
+async function inpFixture(t, { html = inpPage, js = INP_APP, ready = '#buy' } = {}) {
+  const cert = makeCert(HOST);
+  const counts = { documents: 0, hits: {} };
+  const server = http2.createSecureServer({ key: cert.key, cert: cert.cert, allowHTTP1: false });
+  server.on('stream', (stream, h) => {
+    const p = h[':path'];
+    const send = (type, body) => {
+      stream.respond({ ':status': 200, 'content-type': type, 'content-encoding': 'br', 'cache-control': 'max-age=3600', 'server-timing': 'geo; desc=US' });
+      stream.end(br(body));
+    };
+    if (p === '/page') {
+      if (h['sec-fetch-dest'] === 'document') counts.documents += 1;
+      return send('text/html; charset=utf-8', html);
+    }
+    if (p.startsWith('/hit/')) {
+      const id = p.slice('/hit/'.length);
+      counts.hits[id] = (counts.hits[id] ?? 0) + 1;
+      stream.respond({ ':status': 204 });
+      return stream.end();
+    }
+    if (p === '/other') return send('text/html; charset=utf-8', '<!doctype html><title>Other</title><h1>Other page</h1>');
+    if (p === '/app.js') return send('text/javascript', js);
+    stream.respond({ ':status': 404 });
+    return stream.end();
+  });
+  await new Promise((r) => { server.listen(0, '127.0.0.1', r); });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-e2e-inp-'));
+  const jobTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-e2e-inp-tmp-'));
+  const prevTmp = process.env.TMPDIR;
+  process.env.TMPDIR = jobTmp;
+  t.after(() => {
+    if (prevTmp === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = prevTmp;
+    fs.rmSync(jobTmp, { recursive: true, force: true });
+    server.close();
+    cert.cleanup();
+    fs.rmSync(out, { recursive: true, force: true });
+  });
+  const url = `https://${HOST}/page`;
+  const logs = [];
+  const run = (spec, requestId, extra = {}) => runJob({
+    spec: { version: 1, runs: 1, expect: { counts: [{ selector: ready, count: 1 }] }, ...spec },
+    requestId, out: path.join(out, requestId), attempts: 1,
+    fetchJson: async () => ({ country: 'US', country_iso: 'US', country_code: 'US' }),
+    upstreamOrigin: `https://127.0.0.1:${server.address().port}`, upstreamOptions: { rejectUnauthorized: false },
+    dnsLookup: fakeDns, chromePath: CHROME, log: (m) => logs.push(m), warn: (m) => logs.push(`WARN ${m}`), ...extra,
+  });
+  return { url, out, counts, run, logs };
+}
+
+test('INP: interactions run as a timespan after the cold navigation; a patch that shortens the handler lowers INP', { skip: !CHROME && 'no local Chrome', timeout: 300000 }, async (t) => {
+  const { url, out, counts, run, logs } = await inpFixture(t);
+  const interactions = [
+    { action: 'waitFor', selector: '#buy' },
+    { action: 'tap', selector: '#buy', label: 'Buy (tap)' },
+    { action: 'click', selector: '#buy', label: 'Buy (click)', ms: 500 },
+  ];
+  const results = await run({
+    names: ['before', 'after'],
+    variants: { before: { url }, after: { url, patches: [{ path: '/app.js', find: 'const BLOCK_MS = 300;', replace: 'const BLOCK_MS = 30;' }] } },
+    interactions,
+  }, 'e2e-inp-1');
+  assert.equal(results.status, 'ok', `${results.error}\n${logs.join('\n')}`);
+  assert.deepEqual(results.interactions, interactions);
+  assert.equal(results.interactionsKey, interactionsKey(interactions));
+  assert.equal(counts.documents, 2, 'one cold navigation per variant; the interactions never reload the page');
+
+  const [before] = results.runs.filter((r) => r.variant === 'before');
+  const [after] = results.runs.filter((r) => r.variant === 'after');
+  for (const r of [before, after]) {
+    for (const k of ['performance', 'FCP', 'LCP', 'SI', 'TBT', 'CLS', 'INP']) assert.ok(Number.isFinite(r.metrics[k]), `${r.dir} ${k}`);
+    // The navigation step supplies the usual metrics under the same real throttling as the plain path.
+    assert.ok(r.metrics.FCP > 562.5 && r.metrics.LCP > 562.5, `${r.dir} FCP ${r.metrics.FCP} LCP ${r.metrics.LCP} are not throttled`);
+    for (const f of ['report.html', 'report.json', 'trace.json', 'devtoolslog.json', 'run.json', 'flow-report.html',
+      'interaction/report.html', 'interaction/report.json', 'interaction/trace.json', 'interaction/devtoolslog.json']) {
+      assert.ok(fs.existsSync(path.join(out, 'e2e-inp-1', r.dir, f)), `${r.dir}/${f}`);
+    }
+    const nav = JSON.parse(fs.readFileSync(path.join(out, 'e2e-inp-1', r.dir, 'report.json'), 'utf8'));
+    const span = JSON.parse(fs.readFileSync(path.join(out, 'e2e-inp-1', r.dir, 'interaction', 'report.json'), 'utf8'));
+    assert.equal(nav.gatherMode, 'navigation');
+    assert.equal(span.gatherMode, 'timespan');
+    assert.equal(span.audits['interaction-to-next-paint'].numericValue, r.metrics.INP);
+    assert.equal(span.configSettings.throttlingMethod, 'devtools');
+    assert.equal(span.configSettings.throttling.cpuSlowdownMultiplier, 4);
+    assert.equal(span.configSettings.formFactor, 'mobile');
+    assert.equal(r.interaction.steps, 3);
+    assert.equal(r.interaction.interactions, 2, 'the tap and the click are two interactions');
+    const meta = JSON.parse(fs.readFileSync(path.join(out, 'e2e-inp-1', r.dir, 'run.json'), 'utf8'));
+    assert.deepEqual(meta.interaction.steps.map((s) => s.action), ['waitFor', 'tap', 'click']);
+  }
+  // 300 ms of blocking handler before, 30 ms after: INP follows the handler, and the breakdown says why.
+  assert.ok(before.metrics.INP >= 250, `before INP ${before.metrics.INP}`);
+  assert.ok(after.metrics.INP < before.metrics.INP - 150, `after INP ${after.metrics.INP} vs before ${before.metrics.INP}`);
+  assert.ok(before.interaction.slowest.processingTime >= 250, JSON.stringify(before.interaction.slowest));
+  assert.ok([1, 2].includes(before.interaction.slowest.step.index), JSON.stringify(before.interaction.slowest));
+  assert.ok(results.pairs[0].delta.INP < -150);
+  assert.ok(results.medians.delta.INP < -150);
+  assert.ok(Object.values(results.medians.before).every(Number.isFinite) && 'INP' in results.medians.before);
+  assert.deepEqual(scanForKeys(path.join(out, 'e2e-inp-1')), []);
+});
+
+test('INP: a selector that never shows up is rejected with its artifacts kept; leaving the page is fatal', { skip: !CHROME && 'no local Chrome', timeout: 300000 }, async (t) => {
+  const { url, out, run, logs } = await inpFixture(t);
+  const spec = (interactions) => ({ names: ['after'], variants: { after: { url } }, interactions });
+  const missing = await run(spec([{ action: 'waitFor', selector: '#nope', ms: 1000 }, { action: 'tap', selector: '#buy' }]), 'e2e-inp-missing');
+  assert.equal(missing.status, 'failed', logs.join('\n'));
+  assert.equal(missing.errorKind, 'rejected-after-retries');
+  assert.match(missing.error, /interactions\[0\] waitFor #nope: selector did not become visible within 1000 ms/);
+  assert.equal(missing.runs.length, 0, 'a run whose steps could not run never feeds the medians');
+  const dir = path.join(out, 'e2e-inp-missing', missing.rejected[0].dir);
+  for (const f of ['report.json', 'run.json', 'flow-report.html', 'interaction/report.json', 'interaction/trace.json']) assert.ok(fs.existsSync(path.join(dir, f)), f);
+
+  const left = await run(spec([{ action: 'tap', selector: '#leave' }]), 'e2e-inp-left');
+  assert.equal(left.status, 'failed', logs.join('\n'));
+  assert.equal(left.errorKind, 'fatal');
+  assert.match(left.error, /the main frame navigated during the interactions/);
+  assert.equal(left.runs.length, 0);
+});
+
+test('INP auto: the pass-partout finds tabs, toggles, a plain button and a modal opener by itself; before and after exercise the same ones and nothing risky is touched', { skip: !CHROME && 'no local Chrome', timeout: 300000 }, async (t) => {
+  const { url, out, counts, run, logs } = await inpFixture(t, { html: autoPage, js: AUTO_APP, ready: '#more' });
+  const interactions = [{ action: 'auto', max: 5 }];
+  const results = await run({
+    names: ['before', 'after'],
+    variants: { before: { url }, after: { url, patches: [{ path: '/app.js', find: 'const BLOCK_MS = 300;', replace: 'const BLOCK_MS = 30;' }] } },
+    interactions,
+  }, 'e2e-auto-1');
+  assert.equal(results.status, 'ok', `${results.error}\n${logs.join('\n')}`);
+  assert.deepEqual(results.interactions, interactions);
+  assert.equal(results.interactionsKey, interactionsKey(interactions));
+
+  const meta = (variant) => JSON.parse(fs.readFileSync(path.join(out, 'e2e-auto-1', `${variant}1`, 'run.json'), 'utf8'));
+  const targets = (variant) => meta(variant).interaction.steps.filter((s) => s.auto);
+  // Discovery runs before every tap: once tab Two is selected, tab One is a target again and Three is never needed.
+  const expected = ['tab: Two', 'tab: One', 'expandable: More details', 'button: Show more', 'popup: Open the gallery'];
+  assert.deepEqual(targets('before').map((s) => s.label), expected, 'kind order: tabs, toggle, button, then the modal opener last');
+  assert.deepEqual(targets('after').map((s) => s.signature), targets('before').map((s) => s.signature), 'after exercises exactly what before resolved');
+  const [before] = results.runs.filter((r) => r.variant === 'before');
+  const [after] = results.runs.filter((r) => r.variant === 'after');
+  assert.equal(before.interaction.targetsKey, after.interaction.targetsKey);
+  assert.match(before.interaction.targetsKey, /^[a-f0-9]{64}$/);
+  assert.equal(before.interaction.interactions, 5, 'five taps, five interactions');
+
+  // Each target was tapped once in each of the two loads; the purchase button, the link, the submit button and the consent button never.
+  assert.deepEqual(counts.hits, { t2: 2, t1: 2, acc: 2, more: 2, dialog: 2 }, 'each target tapped once per load (before and after)');
+  for (const untouched of ['t3', 'buy', 'leave', 'sub', 'accept']) assert.ok(!(untouched in counts.hits), `${untouched} must never be tapped`);
+
+  assert.ok(before.metrics.INP >= 250, `before INP ${before.metrics.INP}`);
+  assert.ok(after.metrics.INP < before.metrics.INP - 150, `after INP ${after.metrics.INP} vs before ${before.metrics.INP}`);
+  assert.equal(before.interaction.slowest.step.label, 'button: Show more');
+  assert.ok(results.medians.delta.INP < -150);
 });

@@ -8,14 +8,14 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { parsePriorityRules } from '../lib/pagespeed/transforms.mjs';
 import { validateSpec } from '../lib/pagespeed/spec.mjs';
 import { runRemote } from '../lib/pagespeed/remote.mjs';
 import { runLocal } from '../lib/pagespeed/local.mjs';
 import { loadExperiment, CONFIG_PATH } from '../lib/pagespeed/experiment.mjs';
+import { resolveInteractions } from '../lib/pagespeed/interactions.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CHANGE_OPTIONS = ['before', 'after', 'before-query', 'after-query', 'head-inject', 'fetchpriority', 'patch', 'milo-pr', 'mas-pr', 'expect-title', 'expect-count'];
+const CHANGE_OPTIONS = ['before', 'after', 'head-inject', 'patch', 'milo-pr', 'mas-pr', 'interactions', 'expect-title', 'expect-count'];
 
 // --config: the file must be a committed-style experiments/**.json path of this repository (cwd- or repo-relative).
 export function resolveConfig(file, { root = ROOT, cwd = process.cwd() } = {}) {
@@ -66,23 +66,33 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
                           local copy is only validated. Cannot be combined with a URL or change options.
   -n, --runs <n>          before/after pairs = parallel jobs, 1..10 (default 3 or the config's runs; -n 1 = smoke; use -n 5 for a full campaign)
   -o, --out <dir>         download dir (default ./traces): results.json, pair<i>/<variant><i>/report.html|
-                          report.json|trace.json|devtoolslog.json|run.json, pair<i>/rejected/...
+                          report.json|trace.json|devtoolslog.json|run.json (with --interactions also
+                          interaction/report.html|report.json|trace.json|devtoolslog.json and flow-report.html),
+                          pair<i>/rejected/...
   -b, --before <value> / -a, --after <value>
                           variant values sent as ?<param>=<value><suffix> (e.g. milolibs branches)
   --param <name>          (default milolibs)    --suffix <str>  (default --milo--adobecom)
-  --before-query <qs> / --after-query <qs>   extra query params per variant
   --head-inject <file>    HTML inserted into the after document's <head> (before the first <script>). The injected tags are
                           then the ONLY preloads of the after page: every rel=preload / rel=modulepreload entry of its
                           Link response header is unset (other Link entries stay; before is untouched), reported in
                           results.json hints.linkHeaderStripped / linkHeaderEntries and the console. Hints whose
                           URL carries country/locale params are re-resolved against the US baseline's own requests
                           (unmatched ones are dropped and reported). /experienceedge hints are always dropped.
-  --fetchpriority </path=high|low|auto>   (repeatable) set fetchpriority on matching injected hints (and, without
-                          --head-inject, on the after document's Link response header entries)
   --patch <file.json>     {"replacements":[{"path":"/libs/utils/utils.js","find":"...","replace":"..."}]}:
                           guarded edits of live sources (after only); each find must match exactly once or the job fails
   --milo-pr <n> / --mas-pr <n>   pin the PR's exact commit, locally read only mapped changed files, and serve them
                           through the proxy in the after variant. Before remains unchanged production.
+  --interactions <file.json|auto>   adds INP (Interaction to Next Paint) to the same measurement. "auto" is the pass-partout:
+                          it finds the page's own in-page interactions (tabs, expand/collapse toggles, plain buttons, one modal
+                          opener; never links, purchases, sign-in, submits or cookie banners) and taps them, no selectors needed;
+                          before and after exercise the same elements. Otherwise the file is an array of declarative steps
+                          ({"action":"tap|click|type|press|waitFor|scroll|pause|auto","selector":...,
+                          "text":..., "key":..., "ms":..., "label":...}); every cold run then is one Lighthouse user flow:
+                          the usual cold navigation (all usual metrics) followed by a timespan (mobile, same DevTools
+                          throttling) in which the steps run, identically in before and after. Every interaction step must
+                          find its selector, Chrome must register an interaction, and the main frame must not navigate
+                          (iframes may), or the run is rejected. Not a change by itself: with no other change option the
+                          URL is measured as-is (INP of the page's own scenario). Max 20 steps; use -n 5 for a campaign.
   --expect-title <regex>  render guard: document title must match
   --expect-count <selector=n>   render guard (repeatable), e.g. merch-card=19
   --repo <owner/name>     workflow repository (default adobecom/perf-tools)   --ref <branch> (default main)
@@ -94,18 +104,17 @@ const gh = (args) => execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 1 <
 export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'utf8') } = {}) {
   const runs = Number(o.runs ?? 3);
   if (!Number.isInteger(runs) || runs < 1 || runs > 10) throw new Error('--runs must be an integer 1..10');
-  const withQuery = (value, extra) => {
+  const withQuery = (value) => {
     const u = new URL(pageUrl);
     if (value != null) u.searchParams.set(o.param, `${value}${o.suffix}`);
-    for (const [k, v] of new URLSearchParams(extra || '')) u.searchParams.set(k, v);
     return u.href;
   };
   if ((o.before == null) !== (o.after == null)) throw new Error('--before and --after must be given together');
-  const after = { url: withQuery(o.after, o['after-query']) };
-  const before = { url: withQuery(o.before, o['before-query']) };
+  const after = { url: withQuery(o.after) };
+  const before = { url: withQuery(o.before) };
   if (o['head-inject']) after.headInject = readFile(o['head-inject']);
-  const priorities = parsePriorityRules(o.fetchpriority);
-  if (priorities.length) after.priorities = priorities;
+  // Interactions apply to both variants and do not make a change on their own: they add INP to the same measurement.
+  const interactions = o.interactions ? resolveInteractions(o.interactions, readFile, `--interactions ${o.interactions}`) : null;
   if (o.patch) {
     const p = JSON.parse(readFile(o.patch));
     if (!Array.isArray(p.replacements) || !p.replacements.length) throw new Error(`--patch ${o.patch}: expected {"replacements":[{path,find,replace}]}`);
@@ -117,7 +126,7 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
     if (!Number.isInteger(number) || number < 1 || number > 999999) throw new Error(`--${flag} must be a positive PR number`);
     after.pullRequests = [...(after.pullRequests ?? []), { repo, number }];
   }
-  const changed = o.before != null || o['before-query'] || o['after-query'] || after.headInject != null || after.priorities || after.patches || after.sources || after.pullRequests;
+  const changed = o.before != null || after.headInject != null || after.patches || after.sources || after.pullRequests;
   const expect = {};
   if (o['expect-title']) expect.title = o['expect-title'];
   if (o['expect-count'].length) {
@@ -127,7 +136,7 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
       return { selector: m[1], count: Number(m[2]) };
     });
   }
-  return validateSpec({ version: 1, runs, names: changed ? ['before', 'after'] : ['after'], variants: changed ? { before, after } : { after }, expect });
+  return validateSpec({ version: 1, runs, names: changed ? ['before', 'after'] : ['after'], variants: changed ? { before, after } : { after }, expect, ...(interactions ? { interactions } : {}) });
 }
 
 export async function main(argv = process.argv.slice(2)) {
@@ -143,13 +152,11 @@ export async function main(argv = process.argv.slice(2)) {
       after: { type: 'string', short: 'a' },
       param: { type: 'string', default: 'milolibs' },
       suffix: { type: 'string', default: '--milo--adobecom' },
-      'before-query': { type: 'string', default: '' },
-      'after-query': { type: 'string', default: '' },
       'head-inject': { type: 'string' },
-      fetchpriority: { type: 'string', multiple: true, default: [] },
       patch: { type: 'string' },
       'milo-pr': { type: 'string' },
       'mas-pr': { type: 'string' },
+      interactions: { type: 'string' },
       'expect-title': { type: 'string' },
       'expect-count': { type: 'string', multiple: true, default: [] },
       repo: { type: 'string', default: 'adobecom/perf-tools' },
@@ -160,7 +167,7 @@ export async function main(argv = process.argv.slice(2)) {
     },
   });
   if (o.help || (!positionals[0] && !o.config)) { console.log(HELP); process.exit(positionals[0] || o.help ? 0 : 1); }
-  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'before-query', 'after-query', 'head-inject', 'fetchpriority', 'patch', 'milo-pr', 'mas-pr', 'expect-title', 'expect-count', 'repo', 'ref', 'timeout', 'local', 'help']);
+  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'patch', 'milo-pr', 'mas-pr', 'interactions', 'expect-title', 'expect-count', 'repo', 'ref', 'timeout', 'local', 'help']);
   const unknown = Object.keys(o).filter((k) => !known.has(k));
   if (unknown.length) fail(`unknown option(s): ${unknown.map((k) => `--${k}`).join(', ')}`);
   if (positionals.length > 1) fail(`unexpected arguments: ${positionals.slice(1).join(' ')}`);
@@ -209,6 +216,7 @@ export async function main(argv = process.argv.slice(2)) {
     const bench = (n) => (p.job?.benchmarkIndexes && n in p.job.benchmarkIndexes ? ` [benchmark ${p.job.benchmarkIndexes[n] ?? '?'}]` : '');
     for (const n of ['before', 'after', 'delta']) if (p[n]) console.log(`  pair${p.index} ${n.padEnd(6)} ${line(p[n])}${bench(n)}${n === 'before' || (n === 'after' && !p.before) ? j : ''}`);
   }
+  if (results.interactions) console.log(`  interactions: ${results.interactions.length} step(s), key ${String(results.interactionsKey).slice(0, 12)}; INP is the slowest interaction of each run's timespan, in ms`);
   console.log('  medians (complete pairs only; delta = median of per-pair deltas):');
   for (const n of Object.keys(results.medians)) if (results.medians[n]) console.log(`  ${n.padEnd(7)} ${line(results.medians[n])}`);
   if (results.hints) {

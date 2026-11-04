@@ -53,6 +53,11 @@ function generate(...flags) {
   }
 }
 
+test('--exclude typekit.net still removes the allowed typekit hosts; other third parties stay out by default', () => {
+  const out = generate('--exclude', 'typekit.net');
+  assert.ok(!out.some((l) => l.includes('typekit.net') || l.includes('cdn.example.net')));
+});
+
 test('--all-origins: crossorigin follows the consumer request mode, same-origin stylesheets are absolute', () => {
   assert.deepEqual(generate('--all-origins'), [
     '<link rel="modulepreload" href="/acrobat/scripts/scripts.js">',
@@ -69,13 +74,16 @@ test('--all-origins: crossorigin follows the consumer request mode, same-origin 
   ]);
 });
 
-test('same-site only by default; stylesheet preloads never match a relative link[href] lookup', () => {
+test('same site plus *.typekit.net by default; stylesheet preloads never match a relative link[href] lookup', () => {
   const lines = generate();
   assert.deepEqual(lines, [
     '<link rel="modulepreload" href="/acrobat/scripts/scripts.js">',
     '<link rel="preload" href="https://www.adobe.com/libs/c2/styles/styles.css" as="style">',
     '<link rel="preload" href="https://www.adobe.com/acrobat/styles/styles.css?a=1&amp;b=&quot;2&quot;" as="style">',
     '<link rel="modulepreload" href="/libs/utils/utils.js">',
+    '<link rel="preload" href="https://use.typekit.net/vti0xwb.css" as="style">',
+    '<link rel="preload" href="https://p.typekit.net/p.css?s=1&amp;k=vti0xwb&amp;ht=tk" as="style">',
+    '<link rel="preload" href="https://use.typekit.net/af/abc/l?primer=7cdc&amp;fvd=n4&amp;v=3" as="font" crossorigin>',
     '<link rel="preload" href="/acrobat/placeholders.json" as="fetch" crossorigin>',
     '<link rel="preload" href="/acrobat/media_123.png?width=750&amp;format=webp" as="image" fetchpriority="high">',
   ]);

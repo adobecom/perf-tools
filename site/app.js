@@ -384,6 +384,7 @@ function historyDeltaCell(r, key) {
 
 function historyTable(runs) {
   const current = selectedId();
+  const withInp = runs.some(core.hasInp);
   const tbody = h('tbody', {});
   for (const r of runs) {
     const link = h('a', { class: 'run-link', 'data-run': r.id, 'aria-current': r.id === current ? 'true' : null },
@@ -405,7 +406,8 @@ function historyTable(runs) {
         r.status === 'failed' && r.errorKindLabel ? h('span', { class: 'sub sub-line', text: r.errorKindLabel }) : null),
       h('td', { class: 'num cell-pairs', 'data-label': 'Pairs' }, h('span', { text: pairsText(r) }), rejected),
       historyDeltaCell(r, 'LCP'),
-      historyDeltaCell(r, 'performance'));
+      historyDeltaCell(r, 'performance'),
+      withInp ? historyDeltaCell(r, 'INP') : null);
     tr.addEventListener('click', (e) => {
       if (e.target.closest('a, button') || window.getSelection()?.toString()) return;
       selectRun(r.id);
@@ -420,7 +422,8 @@ function historyTable(runs) {
       h('th', { scope: 'col', text: 'Status' }),
       h('th', { scope: 'col', class: 'num', text: 'Pairs', title: 'Complete pairs / requested pairs' }),
       h('th', { scope: 'col', class: 'num', text: 'Δ LCP' }),
-      h('th', { scope: 'col', class: 'num', text: 'Δ Perf' }))),
+      h('th', { scope: 'col', class: 'num', text: 'Δ Perf' }),
+      withInp ? h('th', { scope: 'col', class: 'num', text: 'Δ INP', title: 'Only runs with an interaction scenario have INP' }) : null)),
     tbody);
 }
 
@@ -488,6 +491,7 @@ function renderDetail() {
       plotsSection(run),
       pairsSection(run),
       changesSection(run),
+      interactionsSection(run),
       run.rejectedAttempts.length ? rejectedSection(run) : null,
       comparableSection(run),
       provenanceSection(run, run),
@@ -619,7 +623,8 @@ function verdictCell(key, run, pairs) {
 function mediansTable(run, pairs) {
   const m = run.medians;
   const complete = pairs ? pairs.filter((p) => p.complete).length : run.samples.pairs;
-  const rows = METRIC_KEYS.map((key) => {
+  const keys = core.metricKeysFor(run);
+  const rows = keys.map((key) => {
     const d = m.delta?.[key];
     const verdict = pairs && d != null ? core.runVerdict(run, key, pairs).verdict : 'none';
     return h('tr', { 'data-verdict': verdict },
@@ -645,7 +650,7 @@ function mediansTable(run, pairs) {
       h('tbody', {}, rows))),
     h('p', { class: 'note', text: note }),
     !run.single ? disclosure('How direction is set',
-      h('p', { class: 'note', text: `Direction is a descriptive heuristic, not a statistical significance test, and carries no confidence level. A metric reads Consistently better or worse only with at least ${core.MIN_PAIRS} complete pairs, a median Δ at or beyond its noise threshold and at least ${Math.round(core.AGREEMENT * 100)}% of pair differences on the median's side; a smaller median Δ reads Within noise and everything else Inconclusive. Noise thresholds: ${noiseThresholds()}. Lower is better except Performance.` })) : null);
+      h('p', { class: 'note', text: `Direction is a descriptive heuristic, not a statistical significance test, and carries no confidence level. A metric reads Consistently better or worse only with at least ${core.MIN_PAIRS} complete pairs, a median Δ at or beyond its noise threshold and at least ${Math.round(core.AGREEMENT * 100)}% of pair differences on the median's side; a smaller median Δ reads Within noise and everything else Inconclusive. Noise thresholds: ${noiseThresholds(keys)}. Lower is better except Performance.` })) : null);
 }
 
 // ---------------------------------------------------------------- paired-sample plots
@@ -663,11 +668,11 @@ function plotsSection(run) {
       ? 'Each row is one load; axes fit the samples.'
       : 'Each row is a cold before/after pair; lines mark changes beyond noise.' }),
     legend,
-    h('div', { class: 'plots' }, METRIC_KEYS.map((k) => pairPlot(k, run, usable))));
+    h('div', { class: 'plots' }, core.metricKeysFor(run).map((k) => pairPlot(k, run, usable))));
 }
 
-function noiseThresholds() {
-  return METRIC_KEYS.map((k) => `${METRICS[k].short} ${core.formatNoise(k)}`).join(', ');
+function noiseThresholds(keys = METRIC_KEYS) {
+  return keys.map((k) => `${METRICS[k].short} ${core.formatNoise(k)}`).join(', ');
 }
 
 function legendItem(kind, single = false) {
@@ -748,6 +753,7 @@ function jobText(job) {
 function pairsSection(run) {
   if (!run.pairs.length) return null;
   const single = run.single;
+  const keys = core.metricKeysFor(run);
   const tbody = h('tbody', {});
   for (const p of run.pairs) {
     const variants = single ? [['After', p.after]] : [['Before', p.before], ['After', p.after], ['Δ', p.delta]];
@@ -758,7 +764,7 @@ function pairsSection(run) {
           `#${p.index}`, !p.complete && !single ? h('span', { class: 'sub', text: 'Incomplete' }) : null));
       }
       tr.append(h('th', { scope: 'row', class: 'variant', text: name }));
-      for (const key of METRIC_KEYS) {
+      for (const key of keys) {
         const v = values?.[key];
         const text = name === 'Δ' ? core.formatDelta(key, v, false) : values ? core.formatMetric(key, v, false) : 'missing';
         tr.append(h('td', { class: ['num', !values && 'missing'], text }));
@@ -772,7 +778,7 @@ function pairsSection(run) {
       h('thead', {}, h('tr', {},
         h('th', { scope: 'col', text: single ? 'Load' : 'Pair' }),
         h('th', { scope: 'col', text: 'Variant' }),
-        METRIC_KEYS.map((k) => h('th', { scope: 'col', class: 'num' }, METRICS[k].short, core.columnUnit(k) ? h('span', { class: 'th-unit', text: core.columnUnit(k) }) : null)),
+        keys.map((k) => h('th', { scope: 'col', class: 'num' }, METRICS[k].short, core.columnUnit(k) ? h('span', { class: 'th-unit', text: core.columnUnit(k) }) : null)),
         h('th', { scope: 'col', text: 'Job' }))),
       tbody)),
     run.incompletePairs ? h('p', { class: 'note', text: `${run.incompletePairs} incomplete pair${run.incompletePairs === 1 ? ' is' : 's are'} listed but excluded from medians and direction readings.` }) : null);
@@ -787,16 +793,12 @@ function pathList(title, paths) {
 
 function changesSection(run) {
   const c = run.changes;
-  const nothing = !c.kinds.length && !c.hints && !c.priorityPaths.length && !c.patchPaths.length && !c.sourcePaths.length && !c.prSources?.length;
+  const nothing = !c.kinds.length && !c.hints && !c.patchPaths.length && !c.sourcePaths.length && !c.prSources?.length;
   if (nothing) return section('Changes', h('p', { class: 'note', text: 'No change inputs.' }));
   const hints = c.hints && h('div', { class: 'kv-block' }, h('h4', { text: 'Resource hints' }),
     h('dl', { class: 'stats' },
       [['Requested', c.hints.requested], ['Used', c.hints.used], ['Contextual', c.hints.contextual], ['Dropped', c.hints.dropped]]
         .map(([k, v]) => h('div', {}, h('dt', { text: k }), h('dd', { class: 'num', text: v == null ? '—' : String(v) })))));
-  const priorities = c.priorityPaths.length ? h('div', { class: 'kv-block' }, h('h4', { text: 'Fetch priorities' }),
-    h('div', { class: 'table-scroll' }, h('table', { class: 'data compact' },
-      h('thead', {}, h('tr', {}, h('th', { scope: 'col', text: 'Path' }), h('th', { scope: 'col', text: 'Priority' }))),
-      h('tbody', {}, c.priorityPaths.map((p) => h('tr', {}, h('td', {}, mono(p.path)), h('td', { text: p.priority ?? '—' }))))))) : null;
   const prSources = c.prSources?.length ? h('div', { class: 'kv-block' }, h('h4', { text: 'Pinned pull request sources' }),
     c.prSources.map((pr) => {
       const link = core.safeExternalUrl(`https://github.com/${pr.repo}/pull/${pr.number}`);
@@ -810,8 +812,19 @@ function changesSection(run) {
     })) : null;
   return section('Changes',
     c.kinds.length ? h('div', { class: 'badges' }, c.kinds.map((k) => badge(CHANGE_KINDS[k] ?? k))) : null,
-    h('div', { class: 'kv-grid' }, hints, priorities, pathList('Patched paths', c.patchPaths), pathList('Source override paths', c.sourcePaths), prSources),
+    h('div', { class: 'kv-grid' }, hints, pathList('Patched paths', c.patchPaths), pathList('Source override paths', c.sourcePaths), prSources),
     disclosure('Published metadata', h('p', { class: 'note', text: 'Only mapped paths, change status, commit IDs and hashes are published. Source code, snippets, headers and credentials remain in the private workflow artifact.' })));
+}
+
+function interactionsSection(run) {
+  if (!run.interactionsKey) return null;
+  const steps = run.interactions ?? [];
+  return section('Interaction scenario',
+    h('p', { class: 'note', text: 'INP is the slowest interaction of the timespan that replays these steps after the cold load, identically in before and after. The load metrics above come from the navigation of the same run.' }),
+    steps.length ? h('ol', { class: 'steps' }, steps.map((step) => h('li', {},
+      h('strong', { text: step.label ?? (step.action === 'auto' ? 'Auto-discovered in-page interactions' : step.action) }),
+      step.label || step.action === 'auto' ? [' ', h('span', { class: 'sub', text: step.action })] : null))) : null,
+    h('p', { class: 'note' }, 'Scenario key ', mono(run.interactionsKey.slice(0, 12)), '; only runs with the same key are compared.'));
 }
 
 function rejectedSection(run) {

@@ -16,7 +16,7 @@ import { encodeSpec, decodeSpec, validateSpec, MAX_SPEC_CHARS } from '../lib/pag
 import { verifyProfile, lighthouseConfig, EXPECTED } from '../lib/pagespeed/profile.mjs';
 import { CPU_SLOWDOWN_MULTIPLIER } from '../lib/pagespeed/stats.mjs';
 import {
-  injectIntoHead, prioritizeSnippet, prioritizeLinkHeader, stripPreloadLinks, applyPatches, resolveContextualHints, parsePriorityRules,
+  injectIntoHead, stripPreloadLinks, applyPatches, resolveContextualHints,
 } from '../lib/pagespeed/transforms.mjs';
 import { runRemote } from '../lib/pagespeed/remote.mjs';
 import { runJob, makeCert, scanForKeys, extractMetrics, median } from '../lib/pagespeed/job.mjs';
@@ -112,20 +112,10 @@ test('profile: Lighthouse mobile with DevTools throttling is used as-is and veri
 
 // ---------- transforms ----------
 
-test('head injection goes before the first head script; fetchpriority on hints and Link header entries', () => {
+test('head injection goes before the first head script', () => {
   const r = injectIntoHead('<html><head><meta charset=utf-8><script src=a.js></script></head><body></body></html>', '<link rel=x>');
   assert.match(r.html, /<meta charset=utf-8><link rel=x>\n<script/);
   assert.equal(injectIntoHead('<p>no head</p>', 'x'), null);
-  const rules = parsePriorityRules(['/libs/utils/utils.js=high', '/libs/blocks/merch/merch.js=auto']);
-  assert.throws(() => parsePriorityRules(['utils.js=high']), /Bad --fetchpriority/);
-  const s = prioritizeSnippet('<link rel="modulepreload" href="/libs/utils/utils.js" fetchpriority="low">\n<link rel="modulepreload" href="https://www.adobe.com/libs/blocks/merch/merch.js"/>\n<link rel="preload" href="https://other.example/libs/utils/utils.js" as="script">', rules, 'https://www.adobe.com/acrobat/plans.html');
-  assert.match(s.html, /utils\.js" fetchpriority="high">/);
-  assert.doesNotMatch(s.html, /fetchpriority="low"/);
-  assert.match(s.html, /merch\.js" fetchpriority="auto" \/>/);
-  assert.match(s.html, /other\.example\/libs\/utils\/utils\.js" as="script">/, 'other origins untouched');
-  const h = prioritizeLinkHeader('</libs/utils/utils.js>; rel=modulepreload; fetchpriority=low, </libs/x.css>; rel=preload; as=style', rules, 'https://www.adobe.com/acrobat/plans.html');
-  assert.equal(h.value, '</libs/utils/utils.js>; rel=modulepreload; fetchpriority=high, </libs/x.css>; rel=preload; as=style');
-  assert.deepEqual(h.applied, ['/libs/utils/utils.js']);
 });
 
 test('guarded patches: exactly one match each, otherwise fatal (no partial edit)', () => {
@@ -445,17 +435,16 @@ test('remote: auth, dispatch permission, failed run, failed job, foreign artifac
 
 // ---------- CLI ----------
 
-const cliOpts = (o = {}) => ({ runs: '1', param: 'milolibs', suffix: '--milo--adobecom', 'before-query': '', 'after-query': '', fetchpriority: [], 'expect-count': [], ...o });
+const cliOpts = (o = {}) => ({ runs: '1', param: 'milolibs', suffix: '--milo--adobecom', 'expect-count': [], ...o });
 
 test('CLI spec: unchanged URL measures one variant; changes give before=production / after=changed', () => {
   const page = 'https://www.adobe.com/acrobat/plans.html';
   assert.deepEqual(buildSpec(cliOpts(), page).names, ['after']);
   const files = { 'h.html': '<link rel="preload" href="/x.json" as="fetch" crossorigin>', 'p.json': JSON.stringify({ replacements: [{ path: '/libs/utils/utils.js', find: 'a', replace: 'b' }] }) };
-  const s = buildSpec(cliOpts({ 'head-inject': 'h.html', patch: 'p.json', fetchpriority: ['/libs/utils/utils.js=high'], 'expect-title': 'Acrobat plans', 'expect-count': ['merch-card=19'] }), page, { readFile: (f) => files[f] });
+  const s = buildSpec(cliOpts({ 'head-inject': 'h.html', patch: 'p.json', 'expect-title': 'Acrobat plans', 'expect-count': ['merch-card=19'] }), page, { readFile: (f) => files[f] });
   assert.deepEqual(s.names, ['before', 'after']);
   assert.deepEqual(s.variants.before, { url: page });
   assert.equal(s.variants.after.headInject, files['h.html']);
-  assert.deepEqual(s.variants.after.priorities, [{ path: '/libs/utils/utils.js', priority: 'high' }]);
   assert.deepEqual(s.expect, { title: 'Acrobat plans', counts: [{ selector: 'merch-card', count: 19 }] });
   const b = buildSpec(cliOpts({ before: 'stage', after: 'feat' }), page);
   assert.equal(new URL(b.variants.after.url).searchParams.get('milolibs'), 'feat--milo--adobecom');

@@ -34,7 +34,7 @@ Output:
 
 Existing traces (DevTools exports, perf-ab output, user attachments): `perf-preload --from Trace-1.json --from ./traces -o ./preloads`. Only cold traces taken under the same conditions are comparable. A default perf-ab output directory (with `results.json`, including the paired `pair<i>/` layout) contributes only its accepted runs' `trace.json` and is refused unless `status` is `ok`; for a before/after output only the unchanged "before" runs are used, never the changed "after" page. In other `--from` directories, legacy perf-ab warm-up traces (`before0.json` / `after0.json`) and traces with `metadata.perfAb.warmup: true` are skipped with a warning.
 
-Other flags: `--local`, `--exclude <rule>`, `--no-lcp-image`, `--min-runs <k>`, `--all-origins`. See `perf-preload --help`.
+Other flags: `--local`, `--exclude <rule>`, `--no-lcp-image`, `--min-runs <k>`, `--all-origins` (all third parties; by default only the page's site and `*.typekit.net` are kept). See `perf-preload --help`.
 
 ## 2. Review the list before validating
 

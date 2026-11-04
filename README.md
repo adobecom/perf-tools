@@ -2,7 +2,7 @@
 
 Page-load performance tools, consumed mainly as **agent skills**:
 
-- `perf-ab` compares a live production page (for example `www.adobe.com`) as-is ("before") with the same page plus changes ("after"): an injected `head.html` snippet such as preload links, `fetchpriority` on the injected hints, guarded source patches, Milo / MAS PR files, or branch values. PR source files are read from an isolated checkout of the exact PR commit and served locally through the measuring proxy; the baseline stays production. With no changes it measures one URL.
+- `perf-ab` compares a live production page (for example `www.adobe.com`) as-is ("before") with the same page plus changes ("after"): an injected `head.html` snippet such as preload links (with their own `fetchpriority` attributes), guarded source patches, Milo / MAS PR files, or branch values. PR source files are read from an isolated checkout of the exact PR commit and served locally through the measuring proxy; the baseline stays production. With no changes it measures one URL.
 - `perf-preload` loads a page several times, finds the LCP in each trace and the resources that finished before it, and writes static `<link rel="modulepreload|preload">` tags for `head.html`.
 
 **One measurement: Lighthouse mobile with real DevTools throttling.** `perf-ab` (and `perf-preload`, which records through it) always runs real **Lighthouse 13.6.0** with its mobile preset: emulated Moto G Power (412x823 at 1.75 DPR) and `throttlingMethod: devtools`, i.e. the load itself is throttled by Chrome with Lighthouse's own "Slow 4G" values (request latency 562.5 ms = 150 ms x 3.75, 1474.56 kb/s down, 675 kb/s up) and a 4x CPU slowdown (Lighthouse's default mobile value, one constant, `CPU_SLOWDOWN_MULTIPLIER` in `lib/pagespeed/stats.mjs`). `maxWaitForLoad` is 120 s instead of Lighthouse's 45 s, because heavy pages such as creativecloud/plans do not reach the load event in 45 s under real throttling and every attempt would be rejected (`MAX_WAIT_FOR_LOAD_MS`; part of the profile check and of the `profileKey`). The trace, the metrics and the audits therefore describe the same throttled load; there is no Lantern simulation and no option to go back to it. Throttling is applied inside the browser, so it also covers the traffic that goes through the measuring proxy. Real throttling is more variable than simulation: use `-n 5` pairs for a full campaign. The only choice is *where* it runs:
@@ -10,7 +10,7 @@ Page-load performance tools, consumed mainly as **agent skills**:
 - **GitHub Actions (default).** The CLI dispatches the `perf-ab` workflow of `adobecom/perf-tools` with `gh`, waits and downloads the artifact. Before anything touches the measured site, the job checks its egress with neutral geolocation services and **fails closed** unless every answer is US; the page's own `Server-Timing: geo;desc=XX` is checked as well and a non-US value fails the job. There is no silent fallback to a local run: missing `gh` access, non-US or unknown egress, render failures that outlast the retries, or infrastructure errors end with a non-zero exit and `results.json` `status: "failed"`.
 - **This machine (`--local`).** The identical spec and job code, the same Lighthouse profile and cold-run policy, run on your computer with your Chrome, pairs one after another, then combined by the same aggregator, so the output has the same shape. Use it only when asked for explicitly. A known non-US egress or non-US `Server-Timing: geo` is allowed here but never hidden: `results.json` records `where: "local"`, the real egress country with `egress.ok: false`, `local-non-us-egress` / `local-non-us-document` warnings and a `local-results-not-comparable` warning, and the CLI prints them. An unknown egress still fails. `--local` never dispatches a workflow. Its PR inputs (`--milo-pr` / `--mas-pr`) read the GitHub API from this machine, authenticated with `GITHUB_TOKEN`, `GH_TOKEN` or `gh auth token` when one is available (never logged); without a token the unauthenticated 60 requests/hour limit applies and a 403 says so. Local results are never labeled US and are not comparable with Actions results even when `profileKey` matches (CPU, network and region differ). Country/locale-specific hints are re-resolved against the local baseline, so with a non-US egress they resolve to that country, not to US.
 
-Metrics are Lighthouse's own audits and score (performance, FCP, LCP, SI, TBT, CLS), never DevTools timings converted into scores.
+Metrics are Lighthouse's own audits and score (performance, FCP, LCP, SI, TBT, CLS), never DevTools timings converted into scores. With interaction steps (`--interactions`, see "INP" below) INP (Interaction to Next Paint) is added, from the Lighthouse timespan that replays them.
 
 The "after" changes are applied by a per-run measuring proxy on the runner. It terminates TLS only for the measured host, with a throwaway certificate trusted by that one Chrome process (SPKI exception, no system trust), keeps HTTP/2, and tunnels every other origin untouched. Unchanged responses are forwarded byte-for-byte with their original compression; edited ones are re-compressed with Brotli quality 6, close to production's, so the throttled transfer sizes are realistic. The temporary key never enters the artifact directory and is deleted afterwards; the job also scans the artifact for key material before upload.
 
@@ -18,7 +18,7 @@ Paired matrix: `-n N` dispatches N parallel matrix jobs (`fail-fast: false`). Ea
 
 Cold-run policy: every measured run starts cold. Runs alternate before/after; each run, and each retry of it, launches a new Chrome process with an empty temporary profile (and a fresh proxy), so no HTTP cache, V8 code cache, cookies, storage, service workers, open connections or Chrome DNS cache carry over. There are no warm-up loads; every load is measured and counted. Lighthouse's normal storage reset stays on, and the job rejects a run whose first document response came from a cache. The OS DNS cache and shared CDN / edge caches are outside the browser and are left alone: do not purge them and do not add cache-busting query parameters. Requests that one page load makes for the same resource are part of that load, not prewarming.
 
-A run is accepted only when Lighthouse finished without a runtime error, every metric is a finite number, and the render guard passed (non-hidden body, plus `--expect-title` / `--expect-count` when given). Rejected attempts are kept under `rejected/` as diagnostics and retried with a fresh browser (3 attempts per run); they never count as results.
+A run is accepted only when Lighthouse finished without a runtime error, every metric is a finite number, and the render guard passed (non-hidden body, plus `--expect-title` / `--expect-count` when given). Rejected attempts are kept under `rejected/` as diagnostics and retried with a fresh browser (3 attempts per run); they never count as results. Runs with interaction steps additionally need every step to run and INP to be finite (see "INP" below).
 
 ## Quick start
 
@@ -60,19 +60,18 @@ perf-preload --from Trace-1.json --from Trace-2.json -o ./preloads
 
 ```sh
 # Versioned experiment config (committed and pushed; the workflow reads the copy on --ref, default main)
-perf-ab --config experiments/acrobat-plans.json -n 1 -o ./ab-smoke   # smoke: one pair
-perf-ab --config experiments/acrobat-plans.json -n 5 -o ./ab-full    # full: five pairs, five parallel jobs
+perf-ab --config experiments/<name>.json -n 1 -o ./ab-smoke   # smoke: one pair
+perf-ab --config experiments/<name>.json -n 5 -o ./ab-full    # full: five pairs, five parallel jobs
 
 # One URL as-is
 perf-ab "https://www.adobe.com/acrobat/plans.html" -n 5
 
+# The same plus INP: replay declarative interaction steps (see "INP" below)
+perf-ab "https://www.adobe.com/acrobat/plans.html" --interactions ./plans-tabs.json -n 5
+
 # Smoke test first: one cold before/after pair
 perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html -n 1 \
   --expect-title "Acrobat plans" --expect-count merch-card=19 -o ./ab-smoke
-
-# Injected head snippet with priorities (applied to the injected hints)
-perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html \
-  --fetchpriority /libs/utils/utils.js=high --fetchpriority /libs/deps/mas/commerce.js=auto -n 5
 
 # Guarded source patch of live files (each "find" must match exactly once, or the job fails)
 perf-ab "https://www.adobe.com/acrobat/plans.html" --patch ./market-config.json -n 5
@@ -91,12 +90,12 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 -n 5 --local
 
 The manual `perf-ab` GitHub Actions form also has optional **Milo PR** and **MAS PR** number fields. Choose a versioned config or enter a URL, then optionally set either PR number. A supplied workflow PR number overrides that repository's PR reference in the config; an omitted number leaves the config value unchanged. With a URL, a PR input creates a production-before / PR-after pair. Do not combine PR number fields with the CLI `spec` input. The workflow accepts only same-repository PRs from `adobecom/milo` and `adobecom/mas`; it resolves the head, base and merge-base once in `prepare`, pins the diff for every matrix job, and does not execute code from the source checkout. Added, removed and renamed mapped files are handled explicitly; non-mapped test and documentation changes are not served.
 
-For a one-pair Acrobat smoke run from **Actions → perf-ab → Run workflow**, select `main`, set `config` to `experiments/acrobat-plans.json`, optionally set `milo_pr` to `7095` (it overrides the config's PR for that run), leave `mas_pr` empty, and set `runs` to `1`.
+For a one-pair smoke run from **Actions → perf-ab → Run workflow**, select `main`, set `config` to `experiments/<name>.json`, optionally set `milo_pr` / `mas_pr` (they override the config's PR for that repository for that run), and set `runs` to `1`.
 
 Output (`-o`, default `./traces`), downloaded from the workflow artifact `perf-ab-<request id>`:
 - `results.json` (aggregate, `mode: "pagespeed-us-paired"` on Actions, `"pagespeed-local-paired"` with `--local`, plus `where: "actions" | "local"`): `status` (`ok` / `partial` / `failed`) and `errorKind`, `samples` (`requested`, `pairs`, `before`, `after`, `rejected`), `medians` (`before`, `after`, `delta` = median per-pair delta), `pairs[]` (per-pair metrics, delta and `job`: runner, Chrome version, per-variant `benchmarkIndexes`, run attempt), `warnings[]` (e.g. `environment-variability`), `profile` and `profileKey`, `egress`, `experiment` (config name and path, when used), `github` (run URL, SHA), hint report.
 - `pair<i>/results.json`: that job's own result (egress checks, resolved Lighthouse profile, Lighthouse and Chrome versions, cold-run flags, per-run metrics, rejected attempts).
-- `pair<i>/<variant><i>/`: `report.html` and `report.json` (the official Lighthouse reports), `trace.json`, `devtoolslog.json`, `run.json` (render check, first document response, proxy request log with original and served compressed sizes, document geo).
+- `pair<i>/<variant><i>/`: `report.html` and `report.json` (the official Lighthouse reports), `trace.json`, `devtoolslog.json`, `run.json` (render check, first document response, proxy request log with original and served compressed sizes, document geo). With `--interactions` also `interaction/` (the timespan's report, trace and DevTools log) and `flow-report.html`.
 - `pair<i>/rejected/<variant><i>-attempt<k>/`: the same for rejected attempts.
 
 Any earlier results, run and pair folders and `rejected/` in `-o` are removed before the download, so nothing stale is mixed in.
@@ -115,30 +114,77 @@ To reset the published history, set `site/data/history-policy.json` to `{"schema
 
 ### Experiment configs (`--config`)
 
-A reviewed optimization can be stored as a versioned config, so the same changes can be re-run from the CLI or the Actions form. `experiments/acrobat-plans.json` holds the latest approved Acrobat plans optimizations: 57 static hints, the CSS/JS priorities, and the mapped `utils.js` source from [adobecom/milo#7095](https://github.com/adobecom/milo/pull/7095), pinned to the PR commit resolved when the campaign starts.
+A reviewed optimization can be stored as a versioned config, so the same changes can be re-run from the CLI or the Actions form. A config holds a URL, render guards, an injected `head.html` snippet (with its own `fetchpriority` attributes) and pinned Milo / MAS PR references. Example `experiments/<name>.json`:
 
 ```json
 {
   "schema": "perf-ab/experiment-v1",
-  "name": "acrobat-plans-latest",
+  "name": "acrobat-plans",
   "url": "https://www.adobe.com/acrobat/plans.html",
   "runs": 3,
   "expect": { "title": "Acrobat plans", "counts": { "body:has(merch-card)": 1 } },
   "after": {
-    "headInject": "acrobat-plans/head.html",
-    "priorities": { "/libs/utils/utils.js": "high" },
+    "headInject": "<name>/head.html",
     "pullRequests": [{ "repo": "adobecom/milo", "number": 7095 }]
   }
 }
 ```
 
-File references (`headInject`, `patches`) are relative to the config and must stay inside its directory (no `..` or absolute paths); `pullRequests` accepts only same-repository Milo and MAS PR references and maps `libs/**` to `/libs/**` and `web-components/dist/**` to `/mas/libs/**`. The workflow resolves exact base/head/merge-base SHAs and the PR diff once before matrix fan-out. Only mapped changed files are read from an isolated local object checkout; source checkouts are never used as executable workspaces and branch URLs are never fetched in the measured page load. Production remains the unchanged before control. The result records mapped-file and commit provenance, plus a warning when a baseline source differs from the pinned PR merge base. `after.sources` remains available for explicitly configured HTTPS overrides; unknown fields are rejected, and `/experienceedge` hints are refused. Hints with country/locale parameters are re-resolved against the US baseline at run time, as with `--head-inject`. Commit and push a config before using it: the workflow reads the committed copy, and the CLI refuses to dispatch when the local file differs from `origin/<ref>`.
+`interactions` (inline steps or a file reference, see "INP" below) applies to both variants. File references (`headInject`, `patches`, `interactions`) are relative to the config and must stay inside its directory (no `..` or absolute paths); `pullRequests` accepts only same-repository Milo and MAS PR references and maps `libs/**` to `/libs/**` and `web-components/dist/**` to `/mas/libs/**`. The workflow resolves exact base/head/merge-base SHAs and the PR diff once before matrix fan-out. Only mapped changed files are read from an isolated local object checkout; source checkouts are never used as executable workspaces and branch URLs are never fetched in the measured page load. Production remains the unchanged before control. The result records mapped-file and commit provenance, plus a warning when a baseline source differs from the pinned PR merge base. `after.sources` remains available for explicitly configured HTTPS overrides; unknown fields are rejected, and `/experienceedge` hints are refused. Hints with country/locale parameters are re-resolved against the US baseline at run time, as with `--head-inject`. Commit and push a config before using it: the workflow reads the committed copy, and the CLI refuses to dispatch when the local file differs from `origin/<ref>`.
+
+### INP (`--interactions`)
+
+Lighthouse navigation mode has no user input, so it cannot report **INP** (Interaction to Next Paint); TBT is only a load-time proxy. With interaction steps, every cold run becomes one Lighthouse **user flow** instead of a single navigation: the cold navigation (same config, profile check and cold guarantees as above, so performance, FCP, LCP, SI, TBT and CLS are exactly the usual ones), the render check, then one **timespan** in which the steps run (same mobile emulation and DevTools throttling, with touch emulation on for `tap`). INP is Lighthouse's own `interaction-to-next-paint` audit of that timespan: the slowest interaction, in ms (Lighthouse only reports it with real, unsimulated throttling, which perf-ab always uses). Requests without interaction steps keep the unchanged navigation path.
+
+**Pass-partout: `--interactions auto`.** When you have no page-specific selectors (or want the same scenario on any page), `auto` finds the page's own in-page interactions by itself: tabs that are not selected, expand/collapse toggles (`aria-expanded`, `<details>`), plain buttons and one modal opener (`aria-haspopup="dialog"`, Milo `a.modal` / `data-modal-*`), including inside open shadow roots. Discovery runs again before every tap, so it follows the page as earlier taps change it (switching a tab hides the other panels' toggles and shows new ones). Per step it taps at most `max` targets (default 4), spread over the kinds (at most `ceil(max / kinds)` of each, tabs, toggles, buttons in that order) and the modal opener last, so its overlay never covers the others. It is conservative: it never taps a link that goes somewhere (an `<a>` with a real `href`), a `submit`/`reset` button or a button inside a form, consent/cookie banners, or a button whose name says buy, cart, checkout, order, pay, subscribe, sign in/up/out, log in/out, register, submit, send, delete, remove, cancel, download, install, upgrade, contact, call, chat, accept, reject, agree or decline; it needs no selectors, and an `exclude` list (CSS selectors, up to 10) removes anything else, e.g. an element that navigates. `auto` can be one step of a larger scenario (for example `waitFor` the page's main block first) and takes `max`, `kinds` (a subset of `tab`, `expandable`, `button`, `popup`), `exclude`, `scope` (a CSS selector to stay inside, default the whole body), `ms` and `label`. Before and after exercise **the same elements**: within a pair the "after" load taps exactly the sequence (kind, role, name, occurrence) its "before" load tapped, and the run is rejected, retried cold and failing clearly after 3 attempts when one of them does not exist there. The scenario key identifies the rule set (its options and the discovery version), not the elements, so each run records the elements it tapped (`run.json` `interaction.steps[].label` / `signature`, `results.json` `runs[].interaction.targetsKey`); when different pairs of one request resolved different elements (a page that varies between loads), the aggregate adds an `interaction-targets-differ` warning (each delta still compares the same elements, but the pairs are not replicates; pin the scenario with explicit steps for a stable campaign). `auto` is a way to get a first INP reading on any page; an explicit scenario remains the tool for a reviewed, repeatable campaign.
+
+```sh
+perf-ab "https://www.adobe.com/acrobat/plans.html" --interactions auto -n 5            # INP of whatever the page offers, no selectors
+perf-ab --config experiments/<name>.json -n 1 --local                                   # a config with "interactions": "auto"
+```
+
+The steps are declarative and identical for before and after (no arbitrary code). Pass a JSON file with `--interactions <file.json>`, or set `interactions` in a config (inline array, a relative file reference like the other file references, or the word `auto`):
+
+```json
+[
+  { "action": "waitFor", "selector": "button#tab-compare-plans-2" },
+  { "action": "tap", "selector": "button#tab-compare-plans-2", "label": "Business tab" },
+  { "action": "press", "key": "Escape", "ms": 500 }
+]
+```
+
+| action | fields | meaning |
+| --- | --- | --- |
+| `tap` | `selector`, `ms`? | touch tap on the visible element (`ms` = settle pause afterwards, default 1000) |
+| `click` | `selector`, `ms`? | mouse click on the visible element |
+| `type` | `selector`, `text`, `ms`? | focuses the element (no extra tap) and types key by key (50 ms apart; every character is its own interaction) |
+| `press` | `key`, `selector`?, `ms`? | key press (`Enter`, `ArrowDown`, a character); `selector` is focused first |
+| `waitFor` | `selector`, `ms`? | wait until visible (`ms` = timeout, default 30 s, max 60 s) |
+| `scroll` | `selector`?, `ms`? | scroll the element into view, or one viewport down (`ms` = settle pause, default 500) |
+| `pause` | `ms` | wait 1 ms to 10 s |
+| `auto` | `max`?, `kinds`?, `exclude`?, `scope`?, `ms`? | find and tap the page's own tabs, toggles, safe buttons and a modal opener (see above) |
+
+`tap`, `click`, `type`, `press` and `auto` are the interactions INP measures; the others only prepare them. Selectors are CSS (Puppeteer selectors such as `::-p-text(Buy now)` also work), up to 300 characters; at most 20 steps; every field is bounded and unknown fields are refused; at least one interaction step is required. `label` (up to 80 characters) names a step in the dashboard; selectors, typed text and keys are never published.
+
+A run is accepted only when every interaction step finds its selector visible (else the run is rejected and retried cold, and fails clearly after 3 attempts), Chrome registered an interaction (INP is finite), and the **main frame did not navigate** and no new tab opened during the steps (a scenario that leaves the page, such as a CTA that goes to checkout, is invalid and fails without retries; iframes, e.g. a commerce modal, may navigate). The Lighthouse profile is verified on the navigation and on the timespan. Interactions alone are not a change: without other options the URL is measured as-is (INP of the page's own scenario); with any change option both variants replay the same steps.
+
+`results.json` gains `interactions` (the steps) and `interactionsKey` (sha256 of the steps without labels): runs with different keys are never combined (the aggregate refuses a pair with another scenario) or compared (the dashboard's comparable-runs list). INP gets medians and a median paired delta like the other metrics, from complete pairs only; a pair without a finite INP is incomplete. Per run, `run.json` and `pair<i>/results.json` record `interaction`: the steps that ran, the number of interactions Chrome saw and a breakdown of the slowest one (input delay, processing time, presentation delay, and its step when unambiguous); diagnostics only, never used for medians.
+
+Extra files per run next to the navigation's `report.html` / `report.json` / `trace.json` / `devtoolslog.json`: `interaction/report.html`, `interaction/report.json`, `interaction/trace.json`, `interaction/devtoolslog.json` (the timespan) and `flow-report.html` (the Lighthouse flow report with both steps).
+
+Lab INP under 4x CPU throttling is noisy, and with fewer than 50 interactions INP is the single worst one, so keep scenarios short and representative and use `-n 5` for a campaign. The dashboard reads a median INP change under 40 ms as within noise (`NOISE.INP` in `site/dashboard-core.mjs`, an assumption that is easy to tune). Example: `experiments/acrobat-plans-inp.json` (the Acrobat plans tab switches).
+
+```sh
+perf-ab "https://www.adobe.com/acrobat/plans.html" --interactions ./plans-tabs.json -n 5            # INP of this page's explicit scenario, as-is
+perf-ab "https://www.adobe.com/acrobat/plans.html" --interactions ./plans-tabs.json --milo-pr 7062 -n 5   # the same steps, before/after a PR
+perf-ab --config experiments/acrobat-plans-inp.json -n 1 -o ./inp-smoke --local                      # smoke: one pair
+```
 
 ### Testing preload links (`--head-inject`)
 
 The snippet is inserted into the "after" document before the first `<script>` in `<head>`; "before" is the unmodified live page.
 
-**The snippet is the only source of preloads for the "after" page.** Whenever `--head-inject` (or a config's `headInject`) is applied, on Actions and with `--local`, every `rel=preload` / `rel=modulepreload` entry of the after document's `Link` response header is unset; other `Link` entries (preconnect, canonical, ...) stay and the before document is never touched. The comparison is therefore production headers + HTML against the snippet alone. `results.json` `hints.linkHeaderStripped` and `hints.linkHeaderEntries` record how many entries were removed and which, `hints.perPair[].linkHeaderStripped` repeats the count per job, and the console prints both. Without `--head-inject` nothing is unset. Hints whose URL carries country/locale parameters (for example MAS `/mas/io/fragment?...&country=CH`) are re-resolved against the requests of the first US baseline run of the same job; hints with no matching US request are dropped and reported, and `/experienceedge` hints are always dropped. `--fetchpriority` sets the priority on matching injected tags; since the header preloads are unset together with `--head-inject`, it only edits `Link` header entries when no snippet is injected.
+**The snippet is the only source of preloads for the "after" page.** Whenever `--head-inject` (or a config's `headInject`) is applied, on Actions and with `--local`, every `rel=preload` / `rel=modulepreload` entry of the after document's `Link` response header is unset; other `Link` entries (preconnect, canonical, ...) stay and the before document is never touched. The comparison is therefore production headers + HTML against the snippet alone. `results.json` `hints.linkHeaderStripped` and `hints.linkHeaderEntries` record how many entries were removed and which, `hints.perPair[].linkHeaderStripped` repeats the count per job, and the console prints both. Without `--head-inject` nothing is unset. Hints whose URL carries country/locale parameters (for example MAS `/mas/io/fragment?...&country=CH`) are re-resolved against the requests of the first US baseline run of the same job; hints with no matching US request are dropped and reported, and `/experienceedge` hints are always dropped.
 
 `perf-preload` writes the snippet as static tags, sorted by start time in the recorded traces. For example:
 

@@ -57,7 +57,7 @@ function result(overrides = {}) {
     runs: [],
     samples: { requested: 3, before: 200, after: 200, pairs: 200, rejected: 0 },
     medians: { before: metrics(4500), after: metrics(4300), delta: { performance: 0, FCP: 0, LCP: -18, SI: 0, TBT: 0, CLS: 0 } },
-    edits: { after: { headInject: true, priorities: [{ path: '/libs/a.js', priority: 'high' }], patches: [{ path: '/libs/a.js', find: 'PRIVATE_FIND', replace: 'PRIVATE_REPLACE' }], sources: { '/libs/b.js': 'https://secret.adobe.com/?api_key=SECRET' } } },
+    edits: { after: { headInject: true, patches: [{ path: '/libs/a.js', find: 'PRIVATE_FIND', replace: 'PRIVATE_REPLACE' }], sources: { '/libs/b.js': 'https://secret.adobe.com/?api_key=SECRET' } } },
     hints: { requestedLinks: 57, perPair: [{ pair: 1, usedLinks: 57, contextual: 0, dropped: 0 }, { pair: 2, usedLinks: 57, contextual: 0, dropped: 0 }, { pair: 3, usedLinks: 57, contextual: 0, dropped: 0 }], contextual: ['https://private.example/?api_key=SECRET'] },
     rejected: [{ variant: 'after', run: 2, attempt: 1, reason: 'failed https://www.adobe.com/?secret=SECRET', kind: 'runtime' }],
     ...overrides,
@@ -244,5 +244,5 @@ test('re-sanitizing a published detail is idempotent and preserves per-pair hint
     { pair: 2, used: 57, contextual: 2, dropped: 0 },
     { pair: 3, used: 57, contextual: 2, dropped: 0 },
   ]);
-  assert.deepEqual(once.changes.kinds, ['headInject', 'priorities', 'patches', 'sources', 'query']);
+  assert.deepEqual(once.changes.kinds, ['headInject', 'patches', 'sources', 'query']);
 });

@@ -7,6 +7,9 @@ export const REPO_URL = 'https://github.com/adobecom/perf-tools';
 export const WORKFLOW_URL = `${REPO_URL}/actions/workflows/perf-ab.yml`;
 
 export const METRIC_KEYS = ['performance', 'FCP', 'LCP', 'SI', 'TBT', 'CLS'];
+// INP only exists for runs with an interactions scenario (it needs real interactions); see metricKeysFor.
+export const INP_KEY = 'INP';
+export const ALL_METRIC_KEYS = [...METRIC_KEYS, INP_KEY];
 // Raw units from the contract: performance is a 0-100 score, CLS is unitless, timings are milliseconds.
 // `step` is the display resolution in raw units; smaller differences render as no change.
 export const METRICS = {
@@ -16,6 +19,7 @@ export const METRICS = {
   SI: { key: 'SI', short: 'SI', label: 'Speed Index', unit: 's', better: 'lower', step: 10 },
   TBT: { key: 'TBT', short: 'TBT', label: 'Total Blocking Time', unit: 'ms', better: 'lower', step: 1 },
   CLS: { key: 'CLS', short: 'CLS', label: 'Cumulative Layout Shift', unit: '', better: 'lower', step: 0.001 },
+  INP: { key: 'INP', short: 'INP', label: 'Interaction to Next Paint', unit: 'ms', better: 'lower', step: 1 },
 };
 
 export const STATUS = {
@@ -48,7 +52,6 @@ const ERROR_CODE = /^[a-z0-9][a-z0-9-]{0,39}$/;
 export const CHANGE_KINDS = {
   query: 'Query parameters',
   headInject: 'Injected head snippet',
-  priorities: 'Fetch priorities',
   patches: 'Source patches',
   sources: 'Pinned PR source files',
 };
@@ -60,8 +63,9 @@ export const MIN_PAIRS = 3;
 export const AGREEMENT = 0.8;
 
 // Practical noise thresholds in raw units, kept separate from the display resolution (`step`). They follow
-// the perf-ab guidance that a few score points or FCP/LCP differences under ~100 ms are noise.
-export const NOISE = { performance: 3, FCP: 100, LCP: 100, SI: 100, TBT: 50, CLS: 0.01 };
+// the perf-ab guidance that a few score points or FCP/LCP differences under ~100 ms are noise. INP is an assumption:
+// lab INP under 4x CPU throttling moves by a few tens of ms between identical cold loads, so 40 ms is the floor.
+export const NOISE = { performance: 3, FCP: 100, LCP: 100, SI: 100, TBT: 50, CLS: 0.01, INP: 40 };
 
 export class SchemaError extends Error {
   constructor(message) {
@@ -151,7 +155,19 @@ function metricMap(v) {
     out[k] = num(v[k]);
     if (out[k] != null) any = true;
   }
+  if (num(v.INP) != null) {
+    out.INP = v.INP;
+    any = true;
+  }
   return any ? out : null;
+}
+
+const SHA256 = /^[a-f0-9]{64}$/i;
+
+// Interaction scenario steps as published: an action and an optional label, nothing else.
+function normalizeSteps(v) {
+  if (!Array.isArray(v)) return [];
+  return v.slice(0, 20).filter((s) => isObject(s) && str(s.action, 20)).map((s) => ({ action: str(s.action, 20), label: str(s.label, 80) }));
 }
 
 function normalizeProfile(p) {
@@ -219,6 +235,7 @@ export function normalizeSummary(raw) {
     pageHref: safeExternalUrl(url),
     profileKey: str(raw.profileKey, 200),
     profile: normalizeProfile(raw.profile),
+    interactionsKey: typeof raw.interactionsKey === 'string' && SHA256.test(raw.interactionsKey) ? raw.interactionsKey.toLowerCase() : null,
     where,
     egress: { country, verified: egress.verified === true, documentGeo },
     us: where !== 'local' && isUs(country, egress.verified === true, documentGeo),
@@ -261,7 +278,8 @@ function normalizePair(raw, i) {
   const after = metricMap(raw.after);
   let delta = metricMap(raw.delta);
   if (!delta && before && after) {
-    delta = Object.fromEntries(METRIC_KEYS.map((k) => [k, before[k] != null && after[k] != null ? after[k] - before[k] : null]));
+    delta = Object.fromEntries(ALL_METRIC_KEYS.filter((k) => k !== INP_KEY || (before[k] != null && after[k] != null))
+      .map((k) => [k, before[k] != null && after[k] != null ? after[k] - before[k] : null]));
   }
   const job = isObject(raw.job) ? raw.job : null;
   const bench = [raw.benchmark, job?.benchmark, job?.benchmarkIndexes].find(isObject);
@@ -323,6 +341,7 @@ export function parseRun(json, expectedId) {
   }) : [];
   return {
     ...summary,
+    interactions: summary.interactionsKey ? normalizeSteps(json.interactions) : [],
     pairs,
     incompletePairs: summary.single ? 0 : pairs.filter((p) => !p.complete).length,
     rejectedAttempts: Array.isArray(json.rejectedAttempts) ? json.rejectedAttempts.filter(isObject).slice(0, 200).map((r) => ({
@@ -336,8 +355,6 @@ export function parseRun(json, expectedId) {
           pair: int(p.pair), used: int(p.used), contextual: int(p.contextual), dropped: int(p.dropped),
         })) : [],
       },
-      priorityPaths: Array.isArray(c.priorityPaths) ? c.priorityPaths.filter(isObject).slice(0, 100)
-        .map((p) => ({ path: str(p.path, 300), priority: str(p.priority, 20) })).filter((p) => p.path) : [],
       patchPaths: strList(c.patchPaths, 100),
       sourcePaths: strList(c.sourcePaths, 100),
       prSources: Array.isArray(c.prSources) ? c.prSources.slice(0, 20).filter(isObject).map((pr) => {
@@ -411,6 +428,12 @@ export function serializeState({ q = '', status = '', profile = '', from = '', t
   return s ? `?${s}` : '';
 }
 
+// A run (or summary) has INP when it replayed an interactions scenario or published an INP median.
+export const hasInp = (run) => !!run && (!!run.interactionsKey || run.medians?.after?.INP != null || run.medians?.delta?.INP != null);
+
+// The metrics to show for one run, or for a list of runs when any of them has INP.
+export const metricKeysFor = (runOrRuns) => ((Array.isArray(runOrRuns) ? runOrRuns.some(hasInp) : hasInp(runOrRuns)) ? ALL_METRIC_KEYS : METRIC_KEYS);
+
 export const hasFilters = (f) => !!(f.q || f.status || f.profile || f.from || f.to);
 
 export function applyFilters(runs, f, timeZone) {
@@ -445,7 +468,9 @@ export function profileOptions(runs) {
 // Lighthouse version), verified US, not failed and with after medians. Everything else is counted as excluded.
 export function comparableRuns(runs, run) {
   const samePage = runs.filter((r) => r.id !== run.id && r.url && r.url === run.url);
-  const comparable = samePage.filter((r) => r.profileKey && r.profileKey === run.profileKey && r.us && r.status !== 'failed' && r.status !== 'unknown' && r.medians.after);
+  // The same interaction scenario too: INP of different steps (or none) is a different measurement.
+  const comparable = samePage.filter((r) => r.profileKey && r.profileKey === run.profileKey && (r.interactionsKey ?? null) === (run.interactionsKey ?? null)
+    && r.us && r.status !== 'failed' && r.status !== 'unknown' && r.medians.after);
   return { comparable, excluded: samePage.length - comparable.length };
 }
 
