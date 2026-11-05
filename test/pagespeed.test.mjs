@@ -85,7 +85,7 @@ test('spec: validated, gzip+base64 round trip, size-limited, rejects bad shapes'
 const lhrWith = (over = {}) => ({
   lighthouseVersion: '13.6.0',
   configSettings: {
-    formFactor: 'mobile', throttlingMethod: 'devtools', disableStorageReset: false, maxWaitForLoad: 120000,
+    formFactor: 'mobile', throttlingMethod: 'devtools', disableStorageReset: false,
     throttling: { rttMs: 150, throughputKbps: 1638.4, requestLatencyMs: 562.5, downloadThroughputKbps: 1474.5600000000002, uploadThroughputKbps: 675, cpuSlowdownMultiplier: 4 },
     screenEmulation: { width: 412, height: 823, deviceScaleFactor: 1.75, mobile: true },
     ...over,
@@ -97,11 +97,10 @@ test('profile: Lighthouse mobile with DevTools throttling is used as-is and veri
   assert.equal(c.settings.throttlingMethod, 'devtools', 'real throttling, never simulated');
   assert.deepEqual(c.settings.throttling, { rttMs: 150, throughputKbps: 1638.4, requestLatencyMs: 562.5, downloadThroughputKbps: 1474.5600000000002, uploadThroughputKbps: 675, cpuSlowdownMultiplier: CPU_SLOWDOWN_MULTIPLIER });
   assert.equal(CPU_SLOWDOWN_MULTIPLIER, 4);
-  assert.equal(c.settings.maxWaitForLoad, 120000, 'heavy pages need more than the default 45 s under real throttling');
+  assert.equal(c.settings.maxWaitForLoad, undefined, 'Lighthouse default wait; no override');
   assert.equal(c.settings.disableStorageReset, false);
   const p = verifyProfile(lhrWith());
-  assert.deepEqual([p.throttlingMethod, p.requestLatencyMs, p.downloadThroughputKbps, p.uploadThroughputKbps, p.cpuSlowdownMultiplier, p.maxWaitForLoad], ['devtools', 562.5, 1474.56, 675, 4, 120000]);
-  assert.throws(() => verifyProfile(lhrWith({ maxWaitForLoad: 45000 })), /maxWaitForLoad=45000 \(expected 120000\)/);
+  assert.deepEqual([p.throttlingMethod, p.requestLatencyMs, p.downloadThroughputKbps, p.uploadThroughputKbps, p.cpuSlowdownMultiplier], ['devtools', 562.5, 1474.56, 675, 4]);
   assert.equal(EXPECTED.throttlingMethod, 'devtools');
   assert.throws(() => verifyProfile(lhrWith({ throttling: { rttMs: 150, throughputKbps: 1638.4, requestLatencyMs: 562.5, downloadThroughputKbps: 1474.56, uploadThroughputKbps: 675, cpuSlowdownMultiplier: 1.2 } })), /cpuSlowdownMultiplier=1\.2/);
   assert.throws(() => verifyProfile(lhrWith({ throttlingMethod: 'simulate' })), /throttlingMethod=simulate/);

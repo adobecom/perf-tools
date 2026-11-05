@@ -77,9 +77,9 @@ test('published run artifact repair changes only the link metadata and remains i
     profile: {
       name: 'Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)', lighthouseVersion: '13.6.0', chromeVersion: '142.0.7444.59',
       formFactor: 'mobile', throttlingMethod: 'devtools', rttMs: 150, throughputKbps: 1638.4,
-      requestLatencyMs: 562.5, downloadThroughputKbps: 1474.56, uploadThroughputKbps: 675, cpuSlowdownMultiplier: 4, maxWaitForLoad: 120000, width: 412, height: 823, deviceScaleFactor: 1.75,
+      requestLatencyMs: 562.5, downloadThroughputKbps: 1474.56, uploadThroughputKbps: 675, cpuSlowdownMultiplier: 4, width: 412, height: 823, deviceScaleFactor: 1.75,
     },
-    profileKey: 'lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-load120000-412x823@1.75-mobile',
+    profileKey: 'lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile',
     egress: { ok: true, country: 'US' },
     documentGeo: [],
     pairs: [1, 2, 3].map((index) => ({ index, before: metrics, after: { ...metrics, LCP: 3900 }, job: {} })),
