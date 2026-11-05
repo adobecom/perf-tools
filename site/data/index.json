@@ -1,7 +1,202 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-05T22:42:04.811Z",
+  "updatedAt": "2026-11-05T22:46:10.678Z",
   "runs": [
+    {
+      "id": "42123808561-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-05T22:42:54.000Z",
+      "finishedAt": "2026-11-05T22:45:59.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/creativecloud/plans.html",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 3,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "FCP": 7224.163,
+          "LCP": 7224.163,
+          "SI": 11508,
+          "CLS": 0.02192678961839356
+        },
+        "after": {
+          "FCP": 5053.498,
+          "LCP": 5053.498,
+          "SI": 9323,
+          "CLS": 0.02192678961839356
+        },
+        "delta": {
+          "FCP": -2170.665,
+          "LCP": -2170.665,
+          "SI": -2185,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42123808561/attempts/1",
+        "sha": "b2fd77bdc232ead6434b6b143f12ad070b588e0c"
+      },
+      "detailPath": "data/runs/42123808561-1.json"
+    },
+    {
+      "id": "42123797755-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-05T22:42:49.000Z",
+      "finishedAt": "2026-11-05T22:46:06.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/creativecloud/pro/plans.html",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 3,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "FCP": 6313.925,
+          "LCP": 6313.925,
+          "SI": 6985,
+          "CLS": 0.0002218164561780198
+        },
+        "after": {
+          "FCP": 5316.409,
+          "LCP": 5316.409,
+          "SI": 6020,
+          "CLS": 0.0002218164561780198
+        },
+        "delta": {
+          "FCP": -1260.3249999999998,
+          "LCP": -1260.3249999999998,
+          "SI": -1259,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42123797755/attempts/1",
+        "sha": "b2fd77bdc232ead6434b6b143f12ad070b588e0c"
+      },
+      "detailPath": "data/runs/42123797755-1.json"
+    },
+    {
+      "id": "42123791030-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-05T22:42:46.000Z",
+      "finishedAt": "2026-11-05T22:46:02.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/acrobat/plans.html",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 3,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "FCP": 4804.11,
+          "LCP": 4860.898,
+          "SI": 7081,
+          "CLS": 0.001218951304257111
+        },
+        "after": {
+          "FCP": 3648.943,
+          "LCP": 3745.514,
+          "SI": 6107,
+          "CLS": 0.001218951304257111
+        },
+        "delta": {
+          "FCP": -1085.2519999999995,
+          "LCP": -1045.4560000000001,
+          "SI": -974,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42123791030/attempts/1",
+        "sha": "b2fd77bdc232ead6434b6b143f12ad070b588e0c"
+      },
+      "detailPath": "data/runs/42123791030-1.json"
+    },
     {
       "id": "42123323046-1",
       "name": null,
