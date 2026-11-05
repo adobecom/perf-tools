@@ -487,8 +487,8 @@ function renderDetail() {
   } else {
     add(inner, [
       section('Medians', mediansTable(run, run.pairs)),
-      plotsSection(run),
       pairsSection(run),
+      plotsSection(run),
       changesSection(run),
       interactionsSection(run),
       provenanceSection(run, run),
