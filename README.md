@@ -18,7 +18,7 @@ Paired matrix: `-n N` dispatches N parallel matrix jobs (`fail-fast: false`). Ea
 
 Cold-run policy: every measured run starts cold. Runs alternate before/after; each run launches a new Chrome process with an empty temporary profile (and a fresh proxy), so no HTTP cache, V8 code cache, cookies, storage, service workers, open connections or Chrome DNS cache carry over. There are no warm-up loads; every load is measured and counted. Lighthouse's normal storage reset stays on, and the job rejects a run whose first document response came from a cache. The OS DNS cache and shared CDN / edge caches are outside the browser and are left alone: do not purge them and do not add cache-busting query parameters. Requests that one page load makes for the same resource are part of that load, not prewarming.
 
-A run is accepted only when Lighthouse finished without a runtime error and every metric is a finite number. A failed run is not retried: it fails and the error is reported (rejected attempts are kept under `rejected/` as diagnostics). Runs with interaction steps additionally need every step to run and INP to be finite (see "INP" below).
+A run is accepted only when Lighthouse finished without a runtime error and FCP, LCP, Speed Index and CLS are finite numbers (the performance score and TBT are reported when Lighthouse can compute them; on pages that never reach a quiet network it cannot). A failed run is not retried: it fails and the error is reported (rejected attempts are kept under `rejected/` as diagnostics). Runs with interaction steps additionally need every step to run and INP to be finite (see "INP" below).
 
 ## Quick start
 
