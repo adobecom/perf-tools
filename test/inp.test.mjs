@@ -163,11 +163,12 @@ test('interactions runner: a selector that never shows up is rejected (retryable
 // ---------- metrics ----------
 
 test('metric keys: INP is required only for runs with interactions', () => {
-  assert.deepEqual(metricKeys(), METRIC_KEYS);
-  assert.deepEqual(metricKeys({ interactions: null }), METRIC_KEYS);
-  assert.deepEqual(metricKeys({ interactions: [] }), METRIC_KEYS);
-  assert.deepEqual(metricKeys({ interactions: steps() }), ALL_METRIC_KEYS);
-  assert.deepEqual(metricKeys({ interactions: true }), [...METRIC_KEYS, 'INP']);
+  const REQUIRED = ['FCP', 'LCP', 'SI', 'CLS'];
+  assert.deepEqual(metricKeys(), REQUIRED);
+  assert.deepEqual(metricKeys({ interactions: null }), REQUIRED);
+  assert.deepEqual(metricKeys({ interactions: [] }), REQUIRED);
+  assert.deepEqual(metricKeys({ interactions: steps() }), [...REQUIRED, 'INP']);
+  assert.deepEqual(metricKeys({ interactions: true }), [...REQUIRED, 'INP']);
   const keys = metricKeys({ interactions: steps() });
   assert.ok(hasMetrics(m(1000, 200)), 'INP is ignored without interactions');
   assert.ok(hasMetrics(m(1000, 200), keys));
