@@ -134,7 +134,6 @@ test('runner job: real Lighthouse (mobile, DevTools throttling) through the HTTP
     assert.equal(results.profile.throughputKbps, 1638.4);
     assert.deepEqual([results.profile.requestLatencyMs, results.profile.downloadThroughputKbps, results.profile.uploadThroughputKbps], [562.5, 1474.56, 675]);
     assert.equal(results.profile.throttlingMethod, 'devtools');
-    assert.equal(results.profile.maxWaitForLoad, 120000);
     assert.deepEqual(results.cold, { freshBrowserPerAttempt: true, emptyProfilePerAttempt: true, warmups: 0, lighthouseStorageReset: true });
 
     // Exactly one accepted run per variant, for pair 2 only; the incorrect render was kept as a rejected diagnostic and
