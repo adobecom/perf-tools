@@ -336,7 +336,6 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.match(detail, /2 attempts rejected/);
     assert.match(detail, /2 incomplete pairs are listed but excluded/);
     assert.equal(await page.$$eval('#detail tr.pair-incomplete.pair-start', (t) => t.length), 2);
-    assert.match(await text(page, '#sec-rejected-attempts + *'), /after41/);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-partial.png'), fullPage: true });
 
     await open(page, 'populated', '?run=41700000006-1');

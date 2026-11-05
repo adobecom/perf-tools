@@ -491,7 +491,6 @@ function renderDetail() {
       pairsSection(run),
       changesSection(run),
       interactionsSection(run),
-      run.rejectedAttempts.length ? rejectedSection(run) : null,
       provenanceSection(run, run),
       artifactSection(run)]);
   }
@@ -806,19 +805,6 @@ function interactionsSection(run) {
       h('strong', { text: step.label ?? (step.action === 'auto' ? 'Auto-discovered in-page interactions' : step.action) }),
       step.label || step.action === 'auto' ? [' ', h('span', { class: 'sub', text: step.action })] : null))) : null,
     h('p', { class: 'note' }, 'Scenario key ', mono(run.interactionsKey.slice(0, 12)), '; only runs with the same key are compared.'));
-}
-
-function rejectedSection(run) {
-  return section('Rejected attempts',
-    h('div', { class: 'table-scroll' }, h('table', { class: 'data compact' },
-      h('thead', {}, h('tr', {},
-        h('th', { scope: 'col', text: 'Variant' }), h('th', { scope: 'col', class: 'num', text: 'Run' }),
-        h('th', { scope: 'col', class: 'num', text: 'Attempt' }), h('th', { scope: 'col', text: 'Reason' }))),
-      h('tbody', {}, run.rejectedAttempts.map((r) => h('tr', {},
-        h('td', { text: r.variant ?? '—' }),
-        h('td', { class: 'num', text: r.run == null ? '—' : String(r.run) }),
-        h('td', { class: 'num', text: r.attempt == null ? '—' : String(r.attempt) }),
-        h('td', { class: 'error-text', text: r.reason ?? '—' })))))));
 }
 
 function kv(label, ...value) {
