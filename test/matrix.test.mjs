@@ -47,8 +47,7 @@ test('stats: medians and the median per-pair delta use complete pairs only', () 
   assert.equal(median([4, 1, 2, 3]), 2.5);
   assert.equal(median([]), null);
   assert.throws(() => median([1, null]), /non-finite/);
-  assert.ok(hasMetrics({ ...m(50, 4000), TBT: null }), 'TBT is optional');
-  assert.ok(!hasMetrics({ ...m(50, 4000), LCP: null }));
+  assert.ok(!hasMetrics({ ...m(50, 4000), TBT: null }));
   const pairs = [
     { before: m(50, 4000), after: m(80, 3000) },
     { before: m(60, 5000), after: m(70, 3500) },
@@ -152,7 +151,7 @@ test('aggregate: missing, failed, foreign, non-US and mislabelled pairs never co
     pairJob(dir, 4, { requestId: 'someone-else-1' });
     pairJob(dir, 5, { egress: { ok: false, country: null } });
     pairJob(dir, 7, { pair: 1 });
-    pairJob(dir, 8, { after: { ...m(1, 1), LCP: null } });
+    pairJob(dir, 8, { after: { ...m(1, 1), TBT: null } });
     // pair 3 has no artifact at all
     const a = aggregatePairs({ pairsDir: dir, expected: 9, requestId: 'req-matrix-1', out });
     assert.equal(a.status, 'partial');

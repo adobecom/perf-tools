@@ -223,7 +223,7 @@ const fullLhr = () => ({
   audits: Object.fromEntries([['first-contentful-paint', 1800], ['largest-contentful-paint', 5200], ['speed-index', 4000], ['total-blocking-time', 300], ['cumulative-layout-shift', 0]].map(([k, v]) => [k, { numericValue: v }])),
 });
 
-test('metrics: a run is accepted only when every required metric is a finite number (audit errors without runtimeError reject)', () => {
+test('metrics: a run is accepted only when every metric is a finite number (audit errors without runtimeError reject)', () => {
   assert.deepEqual(extractMetrics(fullLhr()), { performance: 42, FCP: 1800, LCP: 5200, SI: 4000, TBT: 300, CLS: 0 });
   const lcpErr = fullLhr();
   lcpErr.audits['largest-contentful-paint'] = { score: null, numericValue: undefined, errorMessage: 'NO_LCP' };
@@ -231,7 +231,7 @@ test('metrics: a run is accepted only when every required metric is a finite num
   const noScore = fullLhr();
   noScore.categories.performance.score = null;
   delete noScore.audits['total-blocking-time'];
-  assert.deepEqual(extractMetrics(noScore), { performance: null, FCP: 1800, LCP: 5200, SI: 4000, TBT: null, CLS: 0 }, 'score and TBT are optional (no TTI)');
+  assert.throws(() => extractMetrics(noScore), /performance, TBT/);
   const nan = fullLhr();
   nan.audits['speed-index'].numericValue = NaN;
   assert.throws(() => extractMetrics(nan), /SI/);
