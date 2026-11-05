@@ -43,7 +43,7 @@ export function assertConfigPublished(rel, ref, { root = ROOT, git = (args) => e
 export const HELP = `perf-ab <pageUrl> [options]
 perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
   Measurement (always the same): real Lighthouse 13.6.0, mobile (Moto G Power, 412x823 @ 1.75) with real DevTools
-  throttling: Slow 4G (562.5 ms request latency, 1474.56 kb/s down, 675 kb/s up) and 4x CPU slowdown (load wait up to 120 s), applied by Chrome
+  throttling: Slow 4G (562.5 ms request latency, 1474.56 kb/s down, 675 kb/s up) and 4x CPU slowdown, applied by Chrome
   itself, so the trace, the metrics and the audits describe the same throttled load.
   Default location: GitHub Actions, the adobecom/perf-tools "perf-ab" workflow with
   VERIFIED US egress (fails closed if the egress is non-US or unknown). Runs alternate before/after; every run and

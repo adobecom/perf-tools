@@ -25,8 +25,8 @@ const m = (performance, LCP) => ({ performance, FCP: 1000, LCP, SI: 2000, TBT: 1
 // ---------- stats ----------
 
 test('stats: profile key covers the whole compared preset, including viewport and mobile', () => {
-  assert.equal(EXPECTED_PROFILE_KEY, 'lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-load120000-412x823@1.75-mobile');
-  for (const [k, v] of [['width', 360], ['height', 640], ['deviceScaleFactor', 2.625], ['mobile', false], ['cpuSlowdownMultiplier', 1.2], ['rttMs', 40], ['throttlingMethod', 'simulate'], ['requestLatencyMs', 150], ['downloadThroughputKbps', 1638.4], ['uploadThroughputKbps', 750], ['maxWaitForLoad', 45000]]) {
+  assert.equal(EXPECTED_PROFILE_KEY, 'lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile');
+  for (const [k, v] of [['width', 360], ['height', 640], ['deviceScaleFactor', 2.625], ['mobile', false], ['cpuSlowdownMultiplier', 1.2], ['rttMs', 40], ['throttlingMethod', 'simulate'], ['requestLatencyMs', 150], ['downloadThroughputKbps', 1638.4], ['uploadThroughputKbps', 750]]) {
     assert.notEqual(profileKey({ ...EXPECTED, [k]: v }), EXPECTED_PROFILE_KEY, k);
   }
   assert.equal(profileKey(null), null);
