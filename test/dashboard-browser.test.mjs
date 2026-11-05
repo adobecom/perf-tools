@@ -332,7 +332,7 @@ describe('history dashboard in a real browser', { skip }, () => {
 
     await open(page, 'populated', '?run=41700000005-1');
     detail = await text(page, '#detail');
-    assert.match(detail, /Partial: 3\/5 pairs2 incomplete; excluded/);
+    assert.match(detail, /3\/5 pairs complete; 2 excluded/);
     assert.match(detail, /2 attempts rejected/);
     assert.match(detail, /2 incomplete pairs are listed but excluded/);
     assert.equal(await page.$$eval('#detail tr.pair-incomplete.pair-start', (t) => t.length), 2);
@@ -371,25 +371,19 @@ describe('history dashboard in a real browser', { skip }, () => {
     await page.context().close();
   });
 
-  test('production source drift warnings are grouped and expandable', async () => {
+  test('production source drift is listed in a single warnings callout', async () => {
     const page = await newPage();
     await open(page, 'warning', '?run=41700000001-1');
     const detail = await text(page, '#detail');
     assert.doesNotMatch(detail, /Runner environment varied/);
     const warnings = page.locator('#detail .callout').filter({ hasText: 'Production source drift' });
-    assert.equal(await warnings.count(), 3, 'identical drift is grouped; distinct path/hash conditions remain');
-    assert.match(await warnings.nth(0).innerText(), /pairs 1, 2, 3/);
-    assert.equal(await warnings.nth(0).locator('.disclosure-content').isVisible(), false);
-    await warnings.nth(0).locator('summary').click();
-    assert.match(await warnings.nth(0).innerText(), new RegExp(`Merge-base SHA-256: ${'a'.repeat(64)}`));
-    assert.match(await warnings.nth(0).innerText(), /Affected pairs: 1, 2, 3/);
-    await warnings.nth(1).locator('summary').click();
-    assert.match(await warnings.nth(1).innerText(), new RegExp(`Production SHA-256: ${'c'.repeat(64)}`));
-    assert.match(await warnings.nth(2).innerText(), /\/libs\/other.js/);
+    assert.equal(await warnings.count(), 1);
+    assert.match(await warnings.innerText(), /\/libs\/utils\/utils.js \(pairs 1, 2, 3, 4\)/);
+    assert.match(await warnings.innerText(), /\/libs\/other.js/);
     assert.equal(await page.locator('#detail .medians tbody tr').count(), 6);
     assert.equal(await page.locator('#detail .pairs tr.pair-start').count(), 5);
     assert.equal(await page.locator('#detail svg.plot-svg').count(), 6);
-    assert.equal(await warnings.nth(0).locator('a').textContent(), 'adobecom/milo#7095');
+    assert.equal(await warnings.locator('a').first().textContent(), 'adobecom/milo#7095');
     await assertSafe(page);
     await page.context().close();
   });
@@ -458,7 +452,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     await page.goBack();
     await settled(page);
     assert.equal(await page.$eval('a.run-link[aria-current="true"]', (a) => a.dataset.run), '41700000005-1');
-    assert.match(await text(page, '#detail'), /Partial: 3\/5 pairs/);
+    assert.match(await text(page, '#detail'), /3\/5 pairs complete/);
     await assertSafe(page);
     await page.context().close();
   });

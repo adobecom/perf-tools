@@ -495,6 +495,7 @@ function renderDetail() {
       provenanceSection(run, run),
       artifactSection(run)]);
   }
+  add(inner, [warningsCallout(run, ready)]);
   d.replaceChildren(inner);
 }
 
@@ -540,11 +541,6 @@ function stateCallouts(run, ready) {
       run.errorCodeLabel ? h('p', {}, h('strong', { text: run.errorCodeLabel }), run.errorCode !== run.errorCodeLabel ? [' ', mono(run.errorCode)] : null) : null,
       run.error ? h('p', { class: 'error-text', text: run.error }) : null,
       disclosure('How failed runs are handled', h('p', { text: 'Failed runs are excluded from comparisons.' }))));
-  } else if (run.status === 'partial') {
-    const incomplete = ready ? run.incompletePairs : null;
-    out.push(callout('warn', `Partial: ${s.pairs ?? 0}/${s.requested ?? '?'} pairs`,
-      incomplete ? h('p', { text: `${incomplete} incomplete; excluded.` }) : null,
-      disclosure('How partial results are handled', h('p', { text: 'Medians and direction use complete pairs only.' }))));
   } else if (run.status === 'unknown') {
     out.push(callout('warn', `Unknown status: ${JSON.stringify(run.rawStatus)}`));
   }
@@ -556,36 +552,34 @@ function stateCallouts(run, ready) {
     out.push(callout('bad', `Not US verified (${region}); region may affect results.`,
       disclosure('Egress details', h('p', { text: `Egress ${region}; ${run.egress.verified ? 'verified' : 'not verified'}${run.egress.documentGeo ? `; document geo ${run.egress.documentGeo}` : ''}.` }))));
   }
-  if (s.rejected) {
-    out.push(callout('neutral', `${s.rejected} attempt${s.rejected === 1 ? '' : 's'} rejected`,
-      disclosure('Rejected attempts are excluded', ready ? h('p', { text: 'See the rejected-attempt details below.' }) : null)));
-  }
   if (run.single) {
     out.push(callout('neutral', 'Single URL; no before/after comparison.'));
   }
-  const sourceWarnings = new Map();
-  for (const warning of run.warnings?.filter((w) => w.kind === 'production-source-drift') ?? []) {
-    const key = [warning.kind, warning.path, warning.repo, warning.number, warning.expectedMergeBaseSha256, warning.productionSha256].join('\0');
-    const group = sourceWarnings.get(key) ?? { ...warning, pairs: [] };
-    if (warning.pair != null) group.pairs.push(warning.pair);
-    sourceWarnings.set(key, group);
-  }
-  for (const warning of sourceWarnings.values()) {
-    const prUrl = warning.repo && warning.number ? core.safeExternalUrl(`https://github.com/${warning.repo}/pull/${warning.number}`) : null;
-    const affectedPairs = [...new Set(warning.pairs)].sort((a, b) => a - b);
-    const pairLabel = affectedPairs.length ? ` · pair${affectedPairs.length === 1 ? '' : 's'} ${affectedPairs.join(', ')}` : '';
-    out.push(callout('warn', `Production source drift${pairLabel}`,
-      h('div', {},
-        h('p', { text: warning.path }),
-        h('p', {}, 'Production differs from the pinned PR merge base; the after side uses the pinned head.',
-        prUrl ? [' ', extLink(prUrl, `${warning.repo}#${warning.number}`)] : null),
-        disclosure('Source details',
-          h('p', { class: 'mono', text: warning.path }),
-          h('p', { text: `Affected pairs: ${affectedPairs.join(', ') || 'not recorded'}` }),
-          warning.expectedMergeBaseSha256 ? h('p', {}, 'Merge-base SHA-256: ', mono(warning.expectedMergeBaseSha256)) : null,
-          warning.productionSha256 ? h('p', {}, 'Production SHA-256: ', mono(warning.productionSha256)) : null))));
-  }
   return out;
+}
+
+function warningsCallout(run, ready) {
+  const s = run.samples;
+  const items = [];
+  if (run.status === 'partial') {
+    const incomplete = ready ? run.incompletePairs : null;
+    items.push(h('li', { text: `${s.pairs ?? 0}/${s.requested ?? '?'} pairs complete${incomplete ? `; ${incomplete} excluded` : ''}` }));
+  }
+  if (s.rejected) items.push(h('li', { text: `${s.rejected} attempt${s.rejected === 1 ? '' : 's'} rejected` }));
+  const drift = new Map();
+  for (const w of run.warnings?.filter((x) => x.kind === 'production-source-drift') ?? []) {
+    const key = [w.path, w.repo, w.number].join('\0');
+    const group = drift.get(key) ?? { ...w, pairs: new Set() };
+    if (w.pair != null) group.pairs.add(w.pair);
+    drift.set(key, group);
+  }
+  for (const w of drift.values()) {
+    const prUrl = w.repo && w.number ? core.safeExternalUrl(`https://github.com/${w.repo}/pull/${w.number}`) : null;
+    const pairs = [...w.pairs].sort((a, b) => a - b);
+    items.push(h('li', {}, `Production source drift: ${w.path}${pairs.length ? ` (pair${pairs.length === 1 ? '' : 's'} ${pairs.join(', ')})` : ''}`,
+      prUrl ? [' ', extLink(prUrl, `${w.repo}#${w.number}`)] : null));
+  }
+  return items.length ? callout('warn', 'Warnings', h('ul', {}, items)) : null;
 }
 
 function verdictDetail(key, c) {
