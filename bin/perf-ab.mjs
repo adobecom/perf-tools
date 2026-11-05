@@ -15,7 +15,7 @@ import { loadExperiment, CONFIG_PATH } from '../lib/pagespeed/experiment.mjs';
 import { resolveInteractions } from '../lib/pagespeed/interactions.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CHANGE_OPTIONS = ['before', 'after', 'head-inject', 'patch', 'milo-pr', 'mas-pr', 'interactions', 'expect-title', 'expect-count'];
+const CHANGE_OPTIONS = ['before', 'after', 'head-inject', 'patch', 'milo-pr', 'mas-pr', 'interactions'];
 
 // --config: the file must be a committed-style experiments/**.json path of this repository (cwd- or repo-relative).
 export function resolveConfig(file, { root = ROOT, cwd = process.cwd() } = {}) {
@@ -46,11 +46,11 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
   throttling: Slow 4G (562.5 ms request latency, 1474.56 kb/s down, 675 kb/s up) and 4x CPU slowdown, applied by Chrome
   itself, so the trace, the metrics and the audits describe the same throttled load.
   Default location: GitHub Actions, the adobecom/perf-tools "perf-ab" workflow with
-  VERIFIED US egress (fails closed if the egress is non-US or unknown). Runs alternate before/after; every run and
-  retry is cold (new Chrome process, empty temporary profile, no warm-ups). Invalid renders are kept as rejected
-  diagnostics and retried fresh. Requires gh authenticated with Actions write access to --repo.
+  VERIFIED US egress (fails closed if the egress is non-US or unknown). Runs alternate before/after; every
+  run is cold (new Chrome process, empty temporary profile, no warm-ups). A failed run is not retried: it fails and
+  the error is reported (the attempt is kept as a rejected diagnostic). Requires gh authenticated with Actions write access to --repo.
   --local runs the identical Lighthouse job on this machine, with pairs measured sequentially. Set CHROME_PATH or
-  install Chrome in a common macOS/Linux location. A known non-US local egress is allowed but recorded and warned;
+  install Chrome in a common macOS/Linux location. A local run does no egress check;
   local results are not comparable with Actions results, even when profileKey matches. A local run authenticates its
   GitHub API reads (--milo-pr / --mas-pr) with GITHUB_TOKEN, GH_TOKEN or "gh auth token" when available.
 
@@ -61,7 +61,7 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
   production page and "after" is the page with the changes applied by the runner's measuring proxy (HTTP/2 kept,
   real compressed sizes; unchanged responses are byte-identical).
 
-  --config <file>         versioned experiment config in this repository (experiments/*.json): URL, render guards,
+  --config <file>         versioned experiment config in this repository (experiments/*.json): URL,
                           changes and default run count. The workflow reads the COMMITTED file from --ref; the
                           local copy is only validated. Cannot be combined with a URL or change options.
   -n, --runs <n>          before/after pairs = parallel jobs, 1..10 (default 3 or the config's runs; -n 1 = smoke; use -n 5 for a full campaign)
@@ -93,8 +93,6 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
                           find its selector, Chrome must register an interaction, and the main frame must not navigate
                           (iframes may), or the run is rejected. Not a change by itself: with no other change option the
                           URL is measured as-is (INP of the page's own scenario). Max 20 steps; use -n 5 for a campaign.
-  --expect-title <regex>  render guard: document title must match
-  --expect-count <selector=n>   render guard (repeatable), full-DOM count (hidden matches included), e.g. merch-card=19
   --repo <owner/name>     workflow repository (default adobecom/perf-tools)   --ref <branch> (default main)
   --timeout <minutes>     wait limit (default 75)
   --local                 run the same Lighthouse measurement locally (Actions is the default)`;
@@ -127,16 +125,7 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
     after.pullRequests = [...(after.pullRequests ?? []), { repo, number }];
   }
   const changed = o.before != null || after.headInject != null || after.patches || after.sources || after.pullRequests;
-  const expect = {};
-  if (o['expect-title']) expect.title = o['expect-title'];
-  if (o['expect-count'].length) {
-    expect.counts = o['expect-count'].map((x) => {
-      const m = /^(.+)=(\d+)$/.exec(x);
-      if (!m) throw new Error(`Bad --expect-count "${x}", expected <selector>=<n>`);
-      return { selector: m[1], count: Number(m[2]) };
-    });
-  }
-  return validateSpec({ version: 1, runs, names: changed ? ['before', 'after'] : ['after'], variants: changed ? { before, after } : { after }, expect, ...(interactions ? { interactions } : {}) });
+  return validateSpec({ version: 1, runs, names: changed ? ['before', 'after'] : ['after'], variants: changed ? { before, after } : { after }, ...(interactions ? { interactions } : {}) });
 }
 
 export async function main(argv = process.argv.slice(2)) {
@@ -157,8 +146,6 @@ export async function main(argv = process.argv.slice(2)) {
       'milo-pr': { type: 'string' },
       'mas-pr': { type: 'string' },
       interactions: { type: 'string' },
-      'expect-title': { type: 'string' },
-      'expect-count': { type: 'string', multiple: true, default: [] },
       repo: { type: 'string', default: 'adobecom/perf-tools' },
       ref: { type: 'string', default: 'main' },
       timeout: { type: 'string', default: '75' },
@@ -167,7 +154,7 @@ export async function main(argv = process.argv.slice(2)) {
     },
   });
   if (o.help || (!positionals[0] && !o.config)) { console.log(HELP); process.exit(positionals[0] || o.help ? 0 : 1); }
-  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'patch', 'milo-pr', 'mas-pr', 'interactions', 'expect-title', 'expect-count', 'repo', 'ref', 'timeout', 'local', 'help']);
+  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'patch', 'milo-pr', 'mas-pr', 'interactions', 'repo', 'ref', 'timeout', 'local', 'help']);
   const unknown = Object.keys(o).filter((k) => !known.has(k));
   if (unknown.length) fail(`unknown option(s): ${unknown.map((k) => `--${k}`).join(', ')}`);
   if (positionals.length > 1) fail(`unexpected arguments: ${positionals.slice(1).join(' ')}`);
@@ -208,7 +195,7 @@ export async function main(argv = process.argv.slice(2)) {
   const line = (m) => Object.entries(m).map(([k, v]) => `${k}=${fmt(k, v)}`).join('  ');
   const pairs = results.pairs ?? [];
   const place = results.where === 'local'
-    ? `egress ${results.egress?.country ?? 'unknown'} (local; not an Actions run)`
+    ? 'local; not an Actions run'
     : `egress ${results.egress?.country ?? 'unknown'}`;
   console.log(`\nLighthouse mobile, DevTools throttling (Lighthouse ${results.lighthouseVersion}, Chrome ${results.chromeVersion}), ${place}, ${results.samples?.pairs ?? pairs.length}/${results.samples?.requested ?? results.runsPerVariant} complete cold pair(s)`);
   for (const p of pairs) {

@@ -118,7 +118,7 @@ if (o.from.length) {
     ? results.where === 'local' && results.egress?.where === 'local'
     : results.where !== 'local' && results.egress?.ok === true && results.egress?.country === 'US';
   if (results.status !== 'ok' || !locationOk || !results.profile) { console.error(`perf-ab results are not a complete ${o.local ? 'local' : 'verified US'} Lighthouse run (status ${results.status}); no preloads generated`); process.exit(1); }
-  const location = o.local ? `local egress ${results.egress.country} (not comparable with Actions)` : 'verified US egress';
+  const location = o.local ? 'local (not comparable with Actions)' : 'verified US egress';
   console.log(`traces: Lighthouse ${results.lighthouseVersion} ${results.profile.name}, ${location}, ${results.runsPerVariant} cold run(s)`);
   // perf-ab saves one cold load per run and no warm-up. Read exactly the
   // requested runs, never whatever else happens to be in the folder.

@@ -25,7 +25,6 @@ process.on('exit', () => fs.rmSync(FIXTURE_ROOT, { recursive: true, force: true 
 fs.mkdirSync(path.join(FIXTURE_ROOT, 'experiments', 'demo'), { recursive: true });
 fs.writeFileSync(path.join(FIXTURE_ROOT, CONFIG), JSON.stringify({
   schema: 'perf-ab/experiment-v1', name: 'demo', url: 'https://www.adobe.com/acrobat/plans.html', runs: 3,
-  expect: { title: 'Acrobat plans', counts: { 'body:has(merch-card)': 1, 'main h1': 1 } },
   after: { headInject: 'demo/head.html', pullRequests: [{ repo: 'adobecom/milo', number: 7095 }] },
 }));
 fs.writeFileSync(path.join(FIXTURE_ROOT, 'experiments', 'demo', 'head.html'),
@@ -143,7 +142,7 @@ test('aggregate: three complete pairs give ok paired medians, per-pair job metad
   }
 });
 
-test('aggregate: missing, failed, foreign, non-US, wrong-profile and mislabelled pairs never count; result is partial/failed', () => {
+test('aggregate: missing, failed, foreign, non-US and mislabelled pairs never count; result is partial/failed', () => {
   const dir = tmp('perf-ab-agg-in-');
   const out = tmp('perf-ab-agg-out-');
   try {
@@ -151,10 +150,8 @@ test('aggregate: missing, failed, foreign, non-US, wrong-profile and mislabelled
     pairJob(dir, 2, { status: 'failed', after: null });
     pairJob(dir, 4, { requestId: 'someone-else-1' });
     pairJob(dir, 5, { egress: { ok: false, country: null } });
-    pairJob(dir, 6, { profile: { ...EXPECTED, width: 360 } });
     pairJob(dir, 7, { pair: 1 });
     pairJob(dir, 8, { after: { ...m(1, 1), TBT: null } });
-    pairJob(dir, 9, { profile: { ...EXPECTED, throttlingMethod: 'simulate', requestLatencyMs: undefined, cpuSlowdownMultiplier: 1.2 } });
     // pair 3 has no artifact at all
     const a = aggregatePairs({ pairsDir: dir, expected: 9, requestId: 'req-matrix-1', out });
     assert.equal(a.status, 'partial');
@@ -167,10 +164,8 @@ test('aggregate: missing, failed, foreign, non-US, wrong-profile and mislabelled
     assert.match(err[3], /artifact missing/);
     assert.match(err[4], /belong to request someone-else-1/);
     assert.match(err[5], /egress not verified US/);
-    assert.match(err[6], /profile mismatch: width=360/);
     assert.match(err[7], /measured pair 1, expected 7/);
     assert.match(err[8], /missing accepted metrics/);
-    assert.match(err[9], /profile mismatch: throttlingMethod=simulate.*never mixed in/, 'former simulated results are refused');
     assert.ok(a.pairs.slice(1).every((p) => p.before === null && p.after === null && p.delta === null));
     assert.ok(fs.existsSync(path.join(out, 'pair2', 'results.json')), 'failed pair diagnostics are kept');
     assert.match(a.error, /pair3: .*artifact missing/);
@@ -206,7 +201,7 @@ test('aggregate: local and Actions pairs are never mixed; a local aggregate carr
     pairJob(dir, 2, { artifactName: 'pair2' });
     const asLocal = aggregatePairs({ pairsDir: dir, expected: 2, requestId: 'req-matrix-1', out: path.join(out, 'b'), where: 'local' });
     assert.equal(asLocal.status, 'partial');
-    assert.match(asLocal.pairs[1].error, /local egress marker or country missing/);
+    assert.match(asLocal.pairs[1].error, /local marker missing/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
     fs.rmSync(out, { recursive: true, force: true });
@@ -230,7 +225,7 @@ test('aggregate CLI exits 1 unless every pair is complete', async () => {
 
 // ---------- experiment configs ----------
 
-test('experiment: a config loads head snippet, PR source, render guards and runs', () => {
+test('experiment: a config loads head snippet, PR source and runs', () => {
   const s = loadExperiment(ACROBAT, { config: 'experiments/demo.json' });
   assert.deepEqual(validateSpec(s), s);
   assert.equal(s.runs, 3);
@@ -241,7 +236,6 @@ test('experiment: a config loads head snippet, PR source, render guards and runs
   assert.equal(links.length, 2);
   assert.deepEqual(s.variants.after.pullRequests, [{ repo: 'adobecom/milo', number: 7095 }]);
   assert.equal(s.variants.after.patches, undefined);
-  assert.deepEqual(s.expect, { title: 'Acrobat plans', counts: [{ selector: 'body:has(merch-card)', count: 1 }, { selector: 'main h1', count: 1 }] });
   assert.equal(loadExperiment(ACROBAT, { runs: '1' }).runs, 1);
   assert.equal(decodeSpec(encodeSpec(s)).variants.after.headInject, s.variants.after.headInject, 'fits the dispatch input');
 });
@@ -410,7 +404,7 @@ test('CLI --config: repository experiments/*.json only, no URL/change flags, mus
   assert.throws(() => assertConfigPublished('experiments/demo.json', 'main', { git: (a) => (a[0] === 'diff' ? 'experiments/demo/head.html\n' : '') }), /differ from origin\/main.*commit and push first/);
   const cli = path.join(ROOT, 'bin', 'perf-ab.mjs');
   const cfg = 'experiments/demo.json';
-  for (const extra of [['https://www.adobe.com/x.html'], ['--head-inject', 'x.html'], ['--expect-count', 'a=1']]) {
+  for (const extra of [['https://www.adobe.com/x.html'], ['--head-inject', 'x.html'], ['--milo-pr', '1']]) {
     await assert.rejects(run(process.execPath, [cli, '--config', cfg, ...extra], { cwd: ROOT, env: { ...process.env, GH_TOKEN: '' } }), (e) => e.code === 1 && /--config defines/.test(e.stderr), extra.join(' '));
   }
   const { stdout } = await run(process.execPath, [cli, '--help']);

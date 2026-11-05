@@ -13,7 +13,7 @@ import { findChromePath, requireChromePath, chromeCandidates } from '../lib/page
 import { runLocal } from '../lib/pagespeed/local.mjs';
 import { findGithubToken } from '../lib/pagespeed/github-token.mjs';
 import { encodeSpec, decodeSpec, validateSpec, MAX_SPEC_CHARS } from '../lib/pagespeed/spec.mjs';
-import { verifyProfile, lighthouseConfig, EXPECTED } from '../lib/pagespeed/profile.mjs';
+import { resolvedProfile, lighthouseConfig, EXPECTED } from '../lib/pagespeed/profile.mjs';
 import { CPU_SLOWDOWN_MULTIPLIER } from '../lib/pagespeed/stats.mjs';
 import {
   injectIntoHead, stripPreloadLinks, applyPatches, resolveContextualHints,
@@ -99,14 +99,9 @@ test('profile: Lighthouse mobile with DevTools throttling is used as-is and veri
   assert.equal(CPU_SLOWDOWN_MULTIPLIER, 4);
   assert.equal(c.settings.maxWaitForLoad, undefined, 'Lighthouse default wait; no override');
   assert.equal(c.settings.disableStorageReset, false);
-  const p = verifyProfile(lhrWith());
+  const p = resolvedProfile(lhrWith());
   assert.deepEqual([p.throttlingMethod, p.requestLatencyMs, p.downloadThroughputKbps, p.uploadThroughputKbps, p.cpuSlowdownMultiplier], ['devtools', 562.5, 1474.56, 675, 4]);
   assert.equal(EXPECTED.throttlingMethod, 'devtools');
-  assert.throws(() => verifyProfile(lhrWith({ throttling: { rttMs: 150, throughputKbps: 1638.4, requestLatencyMs: 562.5, downloadThroughputKbps: 1474.56, uploadThroughputKbps: 675, cpuSlowdownMultiplier: 1.2 } })), /cpuSlowdownMultiplier=1\.2/);
-  assert.throws(() => verifyProfile(lhrWith({ throttlingMethod: 'simulate' })), /throttlingMethod=simulate/);
-  assert.throws(() => verifyProfile(lhrWith({ throttling: { rttMs: 150, throughputKbps: 1638.4, cpuSlowdownMultiplier: 4 } })), /requestLatencyMs=undefined/);
-  assert.throws(() => verifyProfile({ ...lhrWith(), lighthouseVersion: '13.5.0' }), /lighthouseVersion/);
-  assert.throws(() => verifyProfile(lhrWith({ disableStorageReset: true })), /not be cold/);
 });
 
 // ---------- transforms ----------
@@ -286,7 +281,7 @@ test('local egress: a known non-US country is allowed only when asked for and is
   await assert.rejects(verifyUsEgress({ fetchJson: swissEgress }), /not US/);
 });
 
-test('job: --local keeps a CH egress as ok=false with a warning, never labels it US, and still launches', async () => {
+test('job: --local does no egress check, records no country, adds no egress warning and launches', async () => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-job-local-'));
   let launched = 0;
   try {
@@ -298,8 +293,8 @@ test('job: --local keeps a CH egress as ok=false with a warning, never labels it
     launched = 0;
     assert.equal(r.where, 'local');
     assert.equal(r.mode, 'pagespeed-local');
-    assert.deepEqual([r.egress.ok, r.egress.country, r.egress.where], [false, 'CH', 'local']);
-    assert.deepEqual(r.warnings.map((w) => w.kind), ['local-non-us-egress']);
+    assert.deepEqual([r.egress.ok, r.egress.country, r.egress.where], [null, null, 'local']);
+    assert.deepEqual(r.warnings.map((w) => w.kind), []);
     assert.match(r.error, /stub browser/);
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
@@ -313,9 +308,6 @@ test('job: --local keeps a CH egress as ok=false with a warning, never labels it
       assert.equal(r.where, 'actions');
     }
     assert.equal(launched, 0, 'Actions never launches on a non-US egress');
-    const unknown = await runJob({ spec: spec(), requestId: 'test-local-3', out: failClosed, where: 'local', fetchJson: async () => { throw new Error('offline'); }, launchBrowser: async () => { launched += 1; }, log: () => {}, warn: () => {} });
-    assert.match(unknown.error, /country unknown/);
-    assert.equal(launched, 0, 'local does not measure with an unknown egress either');
     const bad = await runJob({ spec: spec(), requestId: 'test-local-4', out: failClosed, where: 'cloud', fetchJson: swissEgress, log: () => {}, warn: () => {} });
     assert.match(bad.error, /invalid measurement location/);
   } finally {
@@ -434,17 +426,16 @@ test('remote: auth, dispatch permission, failed run, failed job, foreign artifac
 
 // ---------- CLI ----------
 
-const cliOpts = (o = {}) => ({ runs: '1', param: 'milolibs', suffix: '--milo--adobecom', 'expect-count': [], ...o });
+const cliOpts = (o = {}) => ({ runs: '1', param: 'milolibs', suffix: '--milo--adobecom', ...o });
 
 test('CLI spec: unchanged URL measures one variant; changes give before=production / after=changed', () => {
   const page = 'https://www.adobe.com/acrobat/plans.html';
   assert.deepEqual(buildSpec(cliOpts(), page).names, ['after']);
   const files = { 'h.html': '<link rel="preload" href="/x.json" as="fetch" crossorigin>', 'p.json': JSON.stringify({ replacements: [{ path: '/libs/utils/utils.js', find: 'a', replace: 'b' }] }) };
-  const s = buildSpec(cliOpts({ 'head-inject': 'h.html', patch: 'p.json', 'expect-title': 'Acrobat plans', 'expect-count': ['merch-card=19'] }), page, { readFile: (f) => files[f] });
+  const s = buildSpec(cliOpts({ 'head-inject': 'h.html', patch: 'p.json' }), page, { readFile: (f) => files[f] });
   assert.deepEqual(s.names, ['before', 'after']);
   assert.deepEqual(s.variants.before, { url: page });
   assert.equal(s.variants.after.headInject, files['h.html']);
-  assert.deepEqual(s.expect, { title: 'Acrobat plans', counts: [{ selector: 'merch-card', count: 19 }] });
   const b = buildSpec(cliOpts({ before: 'stage', after: 'feat' }), page);
   assert.equal(new URL(b.variants.after.url).searchParams.get('milolibs'), 'feat--milo--adobecom');
   const pr = buildSpec(cliOpts({ 'milo-pr': '7095' }), page);
