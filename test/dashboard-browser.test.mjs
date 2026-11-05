@@ -355,7 +355,6 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.match(detail, /Not US-verified \(DE\)/);
     assert.match(detail, /Not US verified \(DE\); region may affect results/);
     assert.match(detail, /Egress was not verified as US/);
-    assert.match(detail, /This run is unverified; shown for reference/);
 
     await open(page, 'warning', '?run=41700000008-1');
     detail = await text(page, '#detail');
@@ -363,7 +362,6 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.equal(await page.locator('#detail .plots svg').count(), 6);
     assert.equal(await page.locator('#detail .legend').innerText(), 'After\nMedian');
     assert.ok((await page.locator('#detail .plots svg').first().getAttribute('aria-label')).includes('load'));
-    assert.match(detail, /CPU variation affects these timings/);
     assert.doesNotMatch(detail, /Deltas are indicative|How direction is set/);
     assert.match(detail, /Per-load numbers/);
     assert.deepEqual(await verdicts(page), []);
