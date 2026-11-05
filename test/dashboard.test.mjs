@@ -230,18 +230,6 @@ test('local date filters handle UTC midnight and daylight-saving transitions', (
   assert.deepEqual(filter('2026-03-08', '2026-03-08', 'Asia/Tokyo'), ['before-midnight', 'after-midnight', 'after-dst-jump']);
 });
 
-test('comparableRuns never mixes profiles, regions or failed runs', () => {
-  const { runs } = history();
-  const run = runs.find((r) => r.id === '41700000001-1');
-  const { comparable, excluded } = core.comparableRuns(runs, run);
-  const ids = comparable.map((r) => r.id).sort();
-  assert.deepEqual(ids, ['41500000009-1', '41700000002-1', '41700000003-2', '41700000005-1']);
-  assert.ok(!ids.includes('41400000010-1'), 'older Lighthouse profile is excluded');
-  assert.ok(!ids.includes('41700000007-1'), 'non-US run is excluded');
-  assert.ok(!ids.includes('41700000006-1'), 'failed run is excluded');
-  assert.equal(excluded, 3);
-});
-
 test('formatting: units, U+2212 minus, display resolution, local timestamps and percentages', () => {
   assert.equal(core.formatMetric('LCP', 2512), `2.51${NBSP}s`);
   assert.equal(core.formatMetric('TBT', 1836), `1,836${NBSP}ms`);

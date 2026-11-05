@@ -483,7 +483,6 @@ function renderDetail() {
         h('p', { text: 'The summary below comes from the history index; direction readings need per-pair data.' }),
         summary.detailPath ? h('button', { type: 'button', class: 'btn', text: 'Retry', on: { click: () => { state.details.delete(id); renderDetail(); } } }) : null),
       section('Medians', mediansTable(run, null)),
-      comparableSection(run),
       provenanceSection(run, null)]);
   } else {
     add(inner, [
@@ -493,7 +492,6 @@ function renderDetail() {
       changesSection(run),
       interactionsSection(run),
       run.rejectedAttempts.length ? rejectedSection(run) : null,
-      comparableSection(run),
       provenanceSection(run, run),
       artifactSection(run)]);
   }
@@ -565,16 +563,8 @@ function stateCallouts(run, ready) {
   if (run.single) {
     out.push(callout('neutral', 'Single URL; no before/after comparison.'));
   }
-  const cpu = core.cpuVariability(run.pairs ?? []);
-  if (cpu?.varied || run.warnings?.some((w) => w.kind === 'environment-variability')) {
-    const benchmarkRange = [cpu?.before, cpu?.after].filter(Boolean)
-      .map((range) => `${Math.round(range.min)}–${Math.round(range.max)}`).join(' / ');
-    out.push(callout('warn', 'Runner environment varied',
-      h('p', { text: run.single ? 'CPU variation affects these timings.' : 'Deltas are indicative, not a confirmed gain.' }),
-      benchmarkRange ? disclosure('CPU benchmark ranges', h('p', { text: benchmarkRange })) : null));
-  }
   const sourceWarnings = new Map();
-  for (const warning of run.warnings?.filter((w) => w.kind === 'production-source-drift' || w.kind === 'production-source-unverified') ?? []) {
+  for (const warning of run.warnings?.filter((w) => w.kind === 'production-source-drift') ?? []) {
     const key = [warning.kind, warning.path, warning.repo, warning.number, warning.expectedMergeBaseSha256, warning.productionSha256].join('\0');
     const group = sourceWarnings.get(key) ?? { ...warning, pairs: [] };
     if (warning.pair != null) group.pairs.push(warning.pair);
@@ -584,13 +574,10 @@ function stateCallouts(run, ready) {
     const prUrl = warning.repo && warning.number ? core.safeExternalUrl(`https://github.com/${warning.repo}/pull/${warning.number}`) : null;
     const affectedPairs = [...new Set(warning.pairs)].sort((a, b) => a - b);
     const pairLabel = affectedPairs.length ? ` · pair${affectedPairs.length === 1 ? '' : 's'} ${affectedPairs.join(', ')}` : '';
-    out.push(callout(warning.kind === 'production-source-drift' ? 'warn' : 'neutral',
-      `${warning.kind === 'production-source-drift' ? 'Production source drift' : 'Production source unverified'}${pairLabel}`,
+    out.push(callout('warn', `Production source drift${pairLabel}`,
       h('div', {},
         h('p', { text: warning.path }),
-        h('p', {}, warning.kind === 'production-source-drift'
-          ? 'Production differs from the pinned PR merge base; the after side uses the pinned head.'
-          : 'No baseline response was observed, so source drift could not be checked.',
+        h('p', {}, 'Production differs from the pinned PR merge base; the after side uses the pinned head.',
         prUrl ? [' ', extLink(prUrl, `${warning.repo}#${warning.number}`)] : null),
         disclosure('Source details',
           h('p', { class: 'mono', text: warning.path }),
@@ -838,47 +825,6 @@ function rejectedSection(run) {
         h('td', { class: 'num', text: r.run == null ? '—' : String(r.run) }),
         h('td', { class: 'num', text: r.attempt == null ? '—' : String(r.attempt) }),
         h('td', { class: 'error-text', text: r.reason ?? '—' })))))));
-}
-
-function comparableSection(run) {
-  const { comparable, excluded } = core.comparableRuns(state.history.runs, run);
-  const selfOk = run.us && run.status !== 'failed' && run.status !== 'unknown' && run.profileKey;
-  const notes = [
-    h('p', { class: 'note', text: 'Same page, profile and verified US egress.' }),
-    disclosure('Comparison rules', h('p', { class: 'note', text: 'Failed runs, local runs, and runs with a different page, profile, Lighthouse version or region are excluded.' })),
-    !selfOk ? h('p', { class: 'note', text: 'This run is unverified; shown for reference.' }) : null,
-    excluded ? h('p', { class: 'note', text: `${excluded} other run${excluded === 1 ? '' : 's'} excluded.` }) : null,
-  ];
-  if (!comparable.length) return section('Comparable runs', notes, h('p', { text: 'No comparable runs.' }));
-  const rows = [run, ...comparable].sort((a, b) => b.createdAt - a.createdAt).map((r) => {
-    const self = r.id === run.id;
-    const link = self ? h('span', { text: 'This run' }) : h('a', { 'data-run': r.id }, mono(r.id));
-    if (!self) {
-      link.href = runHref(r.id);
-      link.addEventListener('click', (e) => {
-        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-        e.preventDefault();
-        selectRun(r.id);
-      });
-    }
-    return h('tr', { class: self ? 'is-self' : null },
-      h('td', {}, timeEl(r.createdAt, core.formatLocalDay(r.createdAt))),
-      h('td', {}, link),
-      h('td', {}, statusBadge(r)),
-      h('td', { class: ['num', (r.samples.pairs ?? 0) < core.MIN_PAIRS && 'weak'], text: pairsText(r) }),
-      h('td', { class: 'num', text: core.formatMetric('LCP', r.medians.after?.LCP) }),
-      h('td', { class: 'num', text: core.formatDelta('LCP', r.medians.delta?.LCP) }),
-      h('td', { class: 'num', text: core.formatMetric('performance', r.medians.after?.performance) }),
-      h('td', { class: 'num', text: core.formatDelta('performance', r.medians.delta?.performance) }));
-  });
-  return section('Comparable runs', notes,
-    h('div', { class: 'table-scroll' }, h('table', { class: 'data compact' },
-      h('thead', {}, h('tr', {},
-        h('th', { scope: 'col', text: 'Date' }), h('th', { scope: 'col', text: 'Run' }), h('th', { scope: 'col', text: 'Status' }),
-        h('th', { scope: 'col', class: 'num', text: 'Pairs' }),
-        h('th', { scope: 'col', class: 'num', text: 'LCP after' }), h('th', { scope: 'col', class: 'num', text: 'Δ LCP' }),
-        h('th', { scope: 'col', class: 'num', text: 'Perf after' }), h('th', { scope: 'col', class: 'num', text: 'Δ Perf' }))),
-      h('tbody', {}, rows))));
 }
 
 function kv(label, ...value) {

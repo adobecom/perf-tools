@@ -431,6 +431,10 @@ table.compact th, table.compact td { padding: 6px 10px; }
 .stats { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 4px 20px; justify-content: start; }
 .stats dt { color: var(--ink-3); font-size: 12px; }
 .stats dd { text-align: left; font-size: 16px; font-weight: 600; }
+.source-provenance .stats { grid-template-columns: minmax(0, 1fr); }
+.source-provenance .stats > div { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.source-provenance .stats dt { min-width: 84px; }
+.source-provenance .stats dd { font-size: 14px; overflow-wrap: anywhere; }
 
 .kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .kv > div { display: contents; }
@@ -439,8 +443,6 @@ table.compact th, table.compact td { padding: 6px 10px; }
 .kv dt { color: var(--ink-2); font-size: 13px; background: var(--surface-2); }
 .kv dd { min-width: 0; overflow-wrap: anywhere; }
 
-tr.is-self > * { background: var(--accent-soft); }
-tr.is-self .weak, tr.is-self .sub { color: var(--ink-2); }
 
 .noscript { padding: 24px; }
 

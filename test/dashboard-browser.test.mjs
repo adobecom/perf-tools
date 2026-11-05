@@ -277,8 +277,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.ok(await page.$$eval('#detail svg.plot-svg line.link.dir-better', (l) => l.length) >= 5);
     assert.equal(await page.$eval('a.run-link[aria-current="true"]', (a) => a.dataset.run), '41700000001-1');
     const detail = await text(page, '#detail');
-    assert.match(detail, /Comparable runs/);
-    assert.match(detail, /3 other runs excluded/);
+    assert.doesNotMatch(detail, /Comparable runs/);
     assert.match(detail, /57/);
     await assertSafe(page);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-improvement.png'), fullPage: true });
@@ -374,12 +373,11 @@ describe('history dashboard in a real browser', { skip }, () => {
     await page.context().close();
   });
 
-  test('published runner-variability warnings are visible without asserting a gain', async () => {
+  test('production source drift warnings are grouped and expandable', async () => {
     const page = await newPage();
     await open(page, 'warning', '?run=41700000001-1');
     const detail = await text(page, '#detail');
-    assert.match(detail, /Runner environment varied/);
-    assert.match(detail, /Deltas are indicative, not a confirmed gain/);
+    assert.doesNotMatch(detail, /Runner environment varied/);
     const warnings = page.locator('#detail .callout').filter({ hasText: 'Production source drift' });
     assert.equal(await warnings.count(), 3, 'identical drift is grouped; distinct path/hash conditions remain');
     assert.match(await warnings.nth(0).innerText(), /pairs 1, 2, 3/);

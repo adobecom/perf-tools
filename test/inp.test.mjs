@@ -470,14 +470,8 @@ test('dashboard model: INP is an ms metric shown only for runs with a scenario, 
   assert.deepEqual(dashboard.metricKeysFor([plain, plain]), dashboard.METRIC_KEYS);
   assert.deepEqual(dashboard.metricKeysFor([plain, run]), dashboard.ALL_METRIC_KEYS, 'a list shows the column when any run has INP');
 
-  // Only the same scenario is comparable: INP of other steps (or none) is a different measurement.
-  const mk = (id, key) => dashboard.normalizeSummary({ ...summaryFromDetail(normalizeResult(rawInp(), ghRun(Number(id.split('-')[0])), null)), ...(key ? { interactionsKey: key } : {}), ...(key === false ? {} : {}) });
-  const base = mk('41700000100-1');
-  const sameKey = mk('41700000102-1');
-  const otherKey = mk('41700000103-1', 'a'.repeat(64));
+  const base = dashboard.normalizeSummary({ ...summaryFromDetail(normalizeResult(rawInp(), ghRun(41700000100), null)) });
   const noKey = dashboard.normalizeSummary({ ...summaryFromDetail(normalizeResult(rawInp({ interactions: undefined, pairs: rawInp().pairs.map((p) => ({ ...p, before: m(4000), after: m(3900) })) }), ghRun(41700000104), null)) });
-  const { comparable } = dashboard.comparableRuns([base, sameKey, otherKey, noKey], base);
-  assert.deepEqual(comparable.map((r) => r.id), ['41700000102-1']);
   assert.equal(dashboard.hasInp(base), true);
   assert.equal(dashboard.hasInp(noKey), false);
 });

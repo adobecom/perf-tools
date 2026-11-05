@@ -464,16 +464,6 @@ export function profileOptions(runs) {
   return [...map].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label));
 }
 
-// Runs whose numbers may be compared with `run`: same page, same profile key (which pins model, region and
-// Lighthouse version), verified US, not failed and with after medians. Everything else is counted as excluded.
-export function comparableRuns(runs, run) {
-  const samePage = runs.filter((r) => r.id !== run.id && r.url && r.url === run.url);
-  // The same interaction scenario too: INP of different steps (or none) is a different measurement.
-  const comparable = samePage.filter((r) => r.profileKey && r.profileKey === run.profileKey && (r.interactionsKey ?? null) === (run.interactionsKey ?? null)
-    && r.us && r.status !== 'failed' && r.status !== 'unknown' && r.medians.after);
-  return { comparable, excluded: samePage.length - comparable.length };
-}
-
 // ---------------------------------------------------------------- verdicts
 
 // Sign at display resolution: only decides whether a delta prints as ±0.
