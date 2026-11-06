@@ -1,7 +1,139 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-06T17:58:14.435Z",
+  "updatedAt": "2026-11-06T18:01:34.798Z",
   "runs": [
+    {
+      "id": "42265419793-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-06T17:51:20.000Z",
+      "finishedAt": "2026-11-06T18:00:10.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/products/firefly/plans.html",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 5,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "FCP": 3863.186,
+          "LCP": 3863.186,
+          "SI": 7547,
+          "CLS": 0.003830924287170421
+        },
+        "after": {
+          "performance": 49,
+          "FCP": 3529.701,
+          "LCP": 3529.701,
+          "SI": 7028,
+          "TBT": 2512.451,
+          "CLS": 0.003830924287170421
+        },
+        "delta": {
+          "FCP": -333.4850000000001,
+          "LCP": -333.4850000000001,
+          "SI": -496,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42265419793/attempts/1",
+        "sha": "b1682db39e3bca7f1b3bf14a6840d9f22d0f0b7d"
+      },
+      "detailPath": "data/runs/42265419793-1.json"
+    },
+    {
+      "id": "42265407359-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-06T17:51:15.000Z",
+      "finishedAt": "2026-11-06T17:59:27.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/creativecloud/pro/plans.html",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 5,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "FCP": 6120.911,
+          "LCP": 6120.911,
+          "SI": 6854,
+          "CLS": 0.0002218164561780198
+        },
+        "after": {
+          "FCP": 5889.164,
+          "LCP": 5889.164,
+          "SI": 6634,
+          "CLS": 0.0002218164561780198
+        },
+        "delta": {
+          "FCP": -173.1909999999998,
+          "LCP": -173.1909999999998,
+          "SI": -184,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42265407359/attempts/1",
+        "sha": "b1682db39e3bca7f1b3bf14a6840d9f22d0f0b7d"
+      },
+      "detailPath": "data/runs/42265407359-1.json"
+    },
     {
       "id": "42265395282-1",
       "name": null,
