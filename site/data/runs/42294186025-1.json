@@ -1,0 +1,125 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42294186025-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-06T21:08:05.000Z",
+  "finishedAt": "2026-11-06T21:11:07.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 1,
+    "before": 1,
+    "after": 1,
+    "pairs": 1,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 4544.316,
+      "LCP": 4624.256,
+      "SI": 6959,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "after": {
+      "FCP": 4603.227,
+      "LCP": 4696.132,
+      "SI": 6277,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "delta": {
+      "FCP": 58.91100000000006,
+      "LCP": 71.8759999999993,
+      "SI": -682,
+      "CLS": 0,
+      "performance": null,
+      "TBT": null
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42294186025/attempts/1",
+    "sha": "f5d2fa961b18bd6919c6c103c2222f7347f1dbbe"
+  },
+  "detailPath": "data/runs/42294186025-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "FCP": 4544.316,
+        "LCP": 4624.256,
+        "SI": 6959,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4603.227,
+        "LCP": 4696.132,
+        "SI": 6277,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 58.91100000000006,
+        "LCP": 71.8759999999993,
+        "SI": -682,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2309.5,
+          "after": 2303
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "patches"
+    ],
+    "hints": null,
+    "patchPaths": [
+      "/acrobat/scripts/scripts.js"
+    ],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [],
+  "artifact": {
+    "name": "perf-ab-mw5gupvt-wlktqwvh",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42294186025/artifacts/13541401353",
+    "expiresAt": "2027-02-04T21:08:07.000Z",
+    "expired": false
+  }
+}

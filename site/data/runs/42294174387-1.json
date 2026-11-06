@@ -1,0 +1,70 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42294174387-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-06T21:08:01.000Z",
+  "finishedAt": "2026-11-06T21:11:04.000Z",
+  "status": "failed",
+  "conclusion": "failure",
+  "errorCode": "artifact-invalid",
+  "url": null,
+  "profileKey": null,
+  "profile": null,
+  "egress": {
+    "country": null,
+    "verified": false,
+    "documentGeo": "unavailable"
+  },
+  "samples": {
+    "requested": 1,
+    "before": 0,
+    "after": 0,
+    "pairs": 0,
+    "rejected": 0
+  },
+  "medians": {
+    "before": null,
+    "after": null,
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42294174387/attempts/1",
+    "sha": "f5d2fa961b18bd6919c6c103c2222f7347f1dbbe"
+  },
+  "detailPath": "data/runs/42294174387-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": null,
+        "chromeVersion": null,
+        "egressCountry": null,
+        "benchmarkIndexes": {
+          "before": null,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [],
+  "artifact": {
+    "name": "perf-ab-mw5gum0d-yup1ikjz",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42294174387/artifacts/13541335989",
+    "expiresAt": "2027-02-04T21:08:02.000Z",
+    "expired": false
+  }
+}
