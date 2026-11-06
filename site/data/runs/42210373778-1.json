@@ -1,0 +1,148 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42210373778-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-06T11:27:22.000Z",
+  "finishedAt": "2026-11-06T11:30:06.000Z",
+  "status": "failed",
+  "conclusion": "failure",
+  "errorCode": "profile-mismatch",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": null,
+  "profile": null,
+  "egress": {
+    "country": null,
+    "verified": false,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 3,
+    "before": 0,
+    "after": 0,
+    "pairs": 0,
+    "rejected": 3
+  },
+  "medians": {
+    "before": null,
+    "after": null,
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42210373778/attempts/1",
+    "sha": "4968b6963313e6fd4f4e6b75ad2d20a4e4340bc8"
+  },
+  "detailPath": "data/runs/42210373778-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1920.5,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2361,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 3075,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [
+    {
+      "variant": "after",
+      "run": 1,
+      "attempt": 1,
+      "reason": "lighthouse-failed"
+    },
+    {
+      "variant": "after",
+      "run": 2,
+      "attempt": 1,
+      "reason": "lighthouse-failed"
+    },
+    {
+      "variant": "after",
+      "run": 3,
+      "attempt": 1,
+      "reason": "lighthouse-failed"
+    }
+  ],
+  "changes": {
+    "kinds": [
+      "headInject"
+    ],
+    "hints": {
+      "requested": 11,
+      "used": 11,
+      "contextual": 0,
+      "dropped": 0,
+      "pairs": [
+        {
+          "pair": 1,
+          "used": 11,
+          "contextual": 0,
+          "dropped": 0
+        },
+        {
+          "pair": 2,
+          "used": 11,
+          "contextual": 0,
+          "dropped": 0
+        },
+        {
+          "pair": 3,
+          "used": 11,
+          "contextual": 0,
+          "dropped": 0
+        }
+      ]
+    },
+    "patchPaths": [],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [],
+  "artifact": {
+    "name": "perf-ab-mw4w3wcu-s2bxretm",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42210373778/artifacts/13498189477",
+    "expiresAt": "2027-02-04T11:27:23.000Z",
+    "expired": false
+  }
+}

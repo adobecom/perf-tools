@@ -1,7 +1,77 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-06T11:26:21.037Z",
+  "updatedAt": "2026-11-06T11:30:07.341Z",
   "runs": [
+    {
+      "id": "42210373791-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-06T11:27:22.000Z",
+      "finishedAt": "2026-11-06T11:29:55.000Z",
+      "status": "failed",
+      "conclusion": "failure",
+      "errorCode": "profile-mismatch",
+      "url": "https://www.adobe.com/acrobat/plans.html",
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 3
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42210373791/attempts/1",
+        "sha": "4968b6963313e6fd4f4e6b75ad2d20a4e4340bc8"
+      },
+      "detailPath": "data/runs/42210373791-1.json"
+    },
+    {
+      "id": "42210373778-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-06T11:27:22.000Z",
+      "finishedAt": "2026-11-06T11:30:06.000Z",
+      "status": "failed",
+      "conclusion": "failure",
+      "errorCode": "profile-mismatch",
+      "url": "https://www.adobe.com/acrobat/plans.html",
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 3,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 3
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42210373778/attempts/1",
+        "sha": "4968b6963313e6fd4f4e6b75ad2d20a4e4340bc8"
+      },
+      "detailPath": "data/runs/42210373778-1.json"
+    },
     {
       "id": "42209979307-1",
       "name": null,
