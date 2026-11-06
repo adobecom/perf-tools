@@ -75,6 +75,19 @@ test('spec: validated, gzip+base64 round trip, size-limited, rejects bad shapes'
   assert.throws(() => validateSpec({ ...s, variants: { ...s.variants, before: { url: 'https://other.adobe.com/' } } }), /same host/);
   assert.throws(() => validateSpec({ ...s, variants: { before: { url: 'https://www.adobe.com.evil.example/' }, after: { url: 'https://www.adobe.com.evil.example/' } } }), /not a \*\.adobe\.com/);
   assert.throws(() => validateSpec({ ...s, variants: { ...s.variants, after: { ...s.variants.after, patches: [{ path: '/x.js', find: '', replace: '' }] } } }), /patches/);
+  const withAfter = (after) => ({ ...s, variants: { ...s.variants, after: { ...s.variants.after, ...after } } });
+  for (const [after, pattern] of [
+    [{ sources: { '/libs/a.js': 'https://main--milo--adobecom.aem.live/libs/a.js?access_token=SECRET' } }, /sources \/libs\/a\.js must not carry credentials \(parameter "access_token"/],
+    [{ sources: { '/libs/a.js': 'https://cdn.example/a.js?X-Amz-Signature=SECRET' } }, /parameter "X-Amz-Signature"/],
+    [{ sources: { '/libs/a.js': 'https://user:SECRET@cdn.example/a.js' } }, /sources \/libs\/a\.js must not contain credentials\/userinfo/],
+    [{ sources: { '/libs/a.js': 'https://cdn.example/a.js#token=SECRET' } }, /parameter "token"/],
+  ]) {
+    assert.throws(() => validateSpec(withAfter(after)), (e) => pattern.test(e.message) && !e.message.includes('SECRET'), JSON.stringify(after));
+  }
+  for (const url of ['https://www.adobe.com/?api_key=SECRET', 'https://user:SECRET@www.adobe.com/']) {
+    assert.throws(() => validateSpec({ ...s, variants: { before: { url }, after: { ...s.variants.after, url } } }), (e) => /before page URL must not/.test(e.message) && !e.message.includes('SECRET'), url);
+  }
+  validateSpec(withAfter({ sources: { '/libs/a.js': 'https://main--milo--adobecom.aem.live/libs/a.js?ref=main&key=x' } }));
   assert.throws(() => decodeSpec('not-a-spec'), /cannot decode/);
   const random = Array.from({ length: 60000 }, () => Math.random().toString(36)).join('');
   assert.throws(() => encodeSpec(spec({ variants: { ...s.variants, after: { ...s.variants.after, headInject: random } } })), new RegExp(`> ${MAX_SPEC_CHARS}`));

@@ -62,6 +62,10 @@ test('interactions: every documented action validates; bad shapes name the offen
   bad({ action: 'tap', selector: 'a\nb' }, /control characters/);
   bad({ action: 'tap', selector: '   ' }, /non-empty string/);
   bad({ action: 'tap', selector: 'x', label: 'l'.repeat(81) }, /label is longer than 80/);
+  for (const selector of ['input[type=password]', '#login-pwd', '[autocomplete="one-time-code"]', '#otp', '.passcode']) {
+    bad({ action: 'type', selector, text: 'hunter2' }, /must not type into a password or one-time-code field/);
+  }
+  validateInteractions([{ action: 'type', selector: '#search', text: 'photoshop' }, { action: 'tap', selector: '.spotprice' }]);
   bad(null, /\[1\] must be an object/);
   assert.throws(() => validateInteractions('tap'), /must be an array/);
   assert.throws(() => validateInteractions([]), /at least one step/);
@@ -94,14 +98,14 @@ test('interactions: scenario files are an array or {"interactions": [...]} and e
   assert.throws(() => parseInteractions('[{"action":"tap"}]', 'scenario.json'), /scenario\.json: interactions: \[0\] \(tap\) needs selector/);
 });
 
-function fakePage({ missing = new Set(), invalid = new Set() } = {}) {
+function fakePage({ missing = new Set(), invalid = new Set(), secret = new Set() } = {}) {
   const calls = [];
   const handle = (selector) => ({
     tap: async () => calls.push(['tap', selector]),
     click: async () => calls.push(['click', selector]),
     type: async (text, o) => calls.push(['type', selector, text, o.delay]),
     focus: async () => calls.push(['focus', selector]),
-    evaluate: async () => calls.push(['scrollIntoView', selector]),
+    evaluate: async (fn) => fn({ scrollIntoView: () => calls.push(['scrollIntoView', selector]), type: secret.has(selector) ? 'password' : 'text', autocomplete: '' }),
     dispose: async () => {},
   });
   return {
@@ -158,6 +162,10 @@ test('interactions runner: a selector that never shows up is rejected (retryable
     (e) => e.fatal === true && /interactions\[0\] click >>: invalid selector/.test(e.message));
   await assert.rejects(runInteractions({ waitForSelector: async () => { throw new Error('Target closed'); } }, [{ action: 'tap', selector: 'x' }], noWait),
     (e) => !e.rejected && !e.fatal && /Target closed/.test(e.message));
+  const secretPage = fakePage({ secret: new Set(['#field']) });
+  await assert.rejects(runInteractions(secretPage, [{ action: 'type', selector: '#field', text: 'hunter2' }], noWait),
+    (e) => e.fatal === true && /refuses to type into a password or one-time-code field/.test(e.message));
+  assert.ok(!secretPage.calls.some(([call]) => call === 'type'), 'nothing is typed into a password field');
 });
 
 // ---------- metrics ----------

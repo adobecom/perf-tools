@@ -793,7 +793,7 @@ function changesSection(run) {
   return section('Changes',
     c.kinds.length ? h('div', { class: 'badges' }, c.kinds.map((k) => badge(CHANGE_KINDS[k] ?? k))) : null,
     h('div', { class: 'kv-grid' }, hints, pathList('Patched paths', c.patchPaths), pathList('Source override paths', c.sourcePaths), prSources),
-    disclosure('Published metadata', h('p', { class: 'note', text: 'Only mapped paths, change status, commit IDs and hashes are published. Source code, snippets, headers and credentials remain in the private workflow artifact.' })));
+    disclosure('Published metadata', h('p', { class: 'note', text: 'Only mapped paths, change status, commit IDs and hashes are published. Source code, snippets and headers stay in the raw workflow artifact, which any signed-in GitHub user can download until it expires.' })));
 }
 
 function interactionsSection(run) {
