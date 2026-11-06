@@ -1,0 +1,92 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42292664922-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-06T20:57:21.000Z",
+  "finishedAt": "2026-11-06T20:59:53.000Z",
+  "status": "failed",
+  "conclusion": "failure",
+  "errorCode": "profile-mismatch",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": null,
+  "profile": null,
+  "egress": {
+    "country": null,
+    "verified": false,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 1,
+    "before": 0,
+    "after": 0,
+    "pairs": 0,
+    "rejected": 1
+  },
+  "medians": {
+    "before": null,
+    "after": null,
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42292664922/attempts/1",
+    "sha": "2668748ed38910ed52db7c569e7b3b927a2b5b89"
+  },
+  "detailPath": "data/runs/42292664922-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2575,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [
+    {
+      "variant": "after",
+      "run": 1,
+      "attempt": 1,
+      "reason": "lighthouse-failed"
+    }
+  ],
+  "changes": {
+    "kinds": [
+      "headInject"
+    ],
+    "hints": {
+      "requested": 7,
+      "used": 7,
+      "contextual": 0,
+      "dropped": 0,
+      "pairs": [
+        {
+          "pair": 1,
+          "used": 7,
+          "contextual": 0,
+          "dropped": 0
+        }
+      ]
+    },
+    "patchPaths": [],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [],
+  "artifact": {
+    "name": "perf-ab-mw5ggwrj-mn94242g",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42292664922/artifacts/13539998844",
+    "expiresAt": "2027-02-04T20:57:22.000Z",
+    "expired": false
+  }
+}

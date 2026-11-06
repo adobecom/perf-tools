@@ -1,7 +1,42 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-06T20:53:24.862Z",
+  "updatedAt": "2026-11-06T21:00:07.139Z",
   "runs": [
+    {
+      "id": "42292664922-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-06T20:57:21.000Z",
+      "finishedAt": "2026-11-06T20:59:53.000Z",
+      "status": "failed",
+      "conclusion": "failure",
+      "errorCode": "profile-mismatch",
+      "url": "https://www.adobe.com/acrobat/plans.html",
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 1,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 1
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42292664922/attempts/1",
+        "sha": "2668748ed38910ed52db7c569e7b3b927a2b5b89"
+      },
+      "detailPath": "data/runs/42292664922-1.json"
+    },
     {
       "id": "42291687464-1",
       "name": null,
