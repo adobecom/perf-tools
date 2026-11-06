@@ -1,0 +1,1001 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42283658345-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-06T19:54:00.000Z",
+  "finishedAt": "2026-11-06T20:02:46.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/products/firefly/plans.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 5,
+    "after": 5,
+    "pairs": 5,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 3902.669,
+      "LCP": 3902.669,
+      "SI": 7386,
+      "CLS": 0.003830924287170421,
+      "performance": 46,
+      "TBT": 3311.7539999999917
+    },
+    "after": {
+      "FCP": 3540.564,
+      "LCP": 3540.564,
+      "SI": 7073,
+      "CLS": 0.003830924287170421,
+      "performance": null,
+      "TBT": null
+    },
+    "delta": {
+      "FCP": -385.645,
+      "LCP": -385.645,
+      "SI": -476,
+      "CLS": 0,
+      "performance": null,
+      "TBT": null
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42283658345/attempts/1",
+    "sha": "9aaf3a331987f81754fb6a47455fd101cc5412a0"
+  },
+  "detailPath": "data/runs/42283658345-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "performance": 43,
+        "FCP": 3937.004,
+        "LCP": 3937.004,
+        "SI": 7656,
+        "TBT": 4173.4889999999905,
+        "CLS": 0.003830924287170421
+      },
+      "after": {
+        "performance": 47,
+        "FCP": 3551.359,
+        "LCP": 3551.359,
+        "SI": 7158,
+        "TBT": 3851.165000000009,
+        "CLS": 0.003830924287170421
+      },
+      "delta": {
+        "performance": 4,
+        "FCP": -385.645,
+        "LCP": -385.645,
+        "SI": -498,
+        "TBT": -322.3239999999814,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1872.5,
+          "after": 2456.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "performance": 46,
+        "FCP": 3700.717,
+        "LCP": 3700.717,
+        "SI": 7289,
+        "TBT": 2999.2999999999784,
+        "CLS": 0.003830924287170421
+      },
+      "after": {
+        "FCP": 3554.252,
+        "LCP": 3554.252,
+        "SI": 7221,
+        "CLS": 0.003830924287170421
+      },
+      "delta": {
+        "FCP": -146.46500000000015,
+        "LCP": -146.46500000000015,
+        "SI": -68,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2075.5,
+          "after": 2599.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": {
+        "performance": 42,
+        "FCP": 4083.086,
+        "LCP": 4083.086,
+        "SI": 7766,
+        "TBT": 3804.423000000017,
+        "CLS": 0.003830924287170421
+      },
+      "after": {
+        "performance": 48,
+        "FCP": 3540.564,
+        "LCP": 3540.564,
+        "SI": 7073,
+        "TBT": 3087.705999999989,
+        "CLS": 0.003830924287170421
+      },
+      "delta": {
+        "performance": 6,
+        "FCP": -542.5219999999999,
+        "LCP": -542.5219999999999,
+        "SI": -693,
+        "TBT": -716.7170000000278,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1328,
+          "after": 2561.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "performance": 47,
+        "FCP": 3642.79,
+        "LCP": 3642.79,
+        "SI": 7252,
+        "TBT": 3311.7539999999917,
+        "CLS": 0.003830924287170421
+      },
+      "after": {
+        "performance": 48,
+        "FCP": 3524.876,
+        "LCP": 3524.876,
+        "SI": 7071,
+        "TBT": 2913.380999999995,
+        "CLS": 0.003830924287170421
+      },
+      "delta": {
+        "performance": 1,
+        "FCP": -117.91399999999976,
+        "LCP": -117.91399999999976,
+        "SI": -181,
+        "TBT": -398.37299999999686,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2464,
+          "after": 2613.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 5,
+      "before": {
+        "performance": 46,
+        "FCP": 3902.669,
+        "LCP": 3902.669,
+        "SI": 7386,
+        "TBT": 1936.6180000000004,
+        "CLS": 0.003830924287170421
+      },
+      "after": {
+        "performance": 52,
+        "FCP": 3457.891,
+        "LCP": 3457.891,
+        "SI": 6910,
+        "TBT": 1636.7999999999902,
+        "CLS": 0.003830924287170421
+      },
+      "delta": {
+        "performance": 6,
+        "FCP": -444.7779999999998,
+        "LCP": -444.7779999999998,
+        "SI": -476,
+        "TBT": -299.8180000000102,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2932.5,
+          "after": 4456
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "sources"
+    ],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [
+      "/mas/libs/commerce.js",
+      "/mas/libs/mas-field.js",
+      "/mas/libs/mas-mnemonic.js",
+      "/mas/libs/mas.js",
+      "/mas/libs/merch-card-collection.js",
+      "/mas/libs/merch-card.js",
+      "/mas/libs/merch-icon.js",
+      "/mas/libs/merch-mnemonic-list.js",
+      "/mas/libs/merch-quantity-select.js",
+      "/mas/libs/merch-sidenav.js",
+      "/mas/libs/merch-whats-included.js"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "baseRef": "ilyas-adobe-MWPW-212819-css-minification",
+        "headRef": "ilyas-adobe-MWPW-204860-remove-lit-merch-card",
+        "baseSha": "c2e5002ae40a8a690034e80b48c01814f7806ed7",
+        "headSha": "0f91b74db4158b3a4028daf3f638c806f3c18d5f",
+        "mergeBaseSha": "c2e5002ae40a8a690034e80b48c01814f7806ed7",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/mas/libs/commerce.js",
+            "previousPath": null,
+            "blobSha": "3e13a3afef20b2011606c778b4b4c3beffcdd3c7"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/mas-field.js",
+            "previousPath": null,
+            "blobSha": "8d01f037252f14e4a80708740eecfbe08c4c67d0"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/mas-mnemonic.js",
+            "previousPath": null,
+            "blobSha": "cd78e19215cf34df75c2fbd7fa075ad869fcf706"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/mas.js",
+            "previousPath": null,
+            "blobSha": "31cdf17a61733da213cacfe5fe8263ac19425a79"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/merch-card-collection.js",
+            "previousPath": null,
+            "blobSha": "627ec5a4777b05431be7c91cbcd43e33fa54bfd3"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/merch-card.js",
+            "previousPath": null,
+            "blobSha": "b7d9efa9c3495d5f744c10582f8f6e0de4af22ac"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/merch-icon.js",
+            "previousPath": null,
+            "blobSha": "5dfeaeacf8c12743cd9273f051aebbc1d519a5b6"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/merch-mnemonic-list.js",
+            "previousPath": null,
+            "blobSha": "6e758c61bd6d234d17b6450406f56cec64bf7d0f"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/merch-quantity-select.js",
+            "previousPath": null,
+            "blobSha": "43e175e6f5732dbe7af39c6270ff1bf944a77476"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/merch-sidenav.js",
+            "previousPath": null,
+            "blobSha": "1a5d5ec8c1349b797ce052d2a7bc614a1233f4ff"
+          },
+          {
+            "status": "modified",
+            "path": "/mas/libs/merch-whats-included.js",
+            "previousPath": null,
+            "blobSha": "334f18d984084fc91e8bfc9fc9e745bdb207f961"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/mas/libs/commerce.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+        "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/mas/libs/mas-field.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "5958e9d9391b24bfb4e815158105c2f1ee7a0240dfd5a3860c7115023c8132d6",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas-mnemonic.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "151ec07cb345b885ae3f4dfd605682eb3df36ce2c7430c1b344c68bc7444ea31",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "c0d6c4575fd10f42d4b3c80bf6e1acf54fa3530a1d0b78f6eabe9360a779c0d8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card-collection.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "570f9f8a414fb14eb27d2aa7bf31b40a31aab8fc25e1fdb06df95746979be771",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "09809949d034c195b6acce08fb99c8b353b4ecfd16e233d4d82cf4c7617a45e9",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-icon.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "617ca60833885612113fe3ef54c8a3597318b21ddeb037fbf30bb45f16b40c4d",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-mnemonic-list.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "2b0608c11a2e13df21dea73f148433611c2b8eafbce878f82be72dbe7baf5d55",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-quantity-select.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "65a5bcb550be494d084f611e670aeaf06114e865e3fce86618f88087153c8315",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-sidenav.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "6790f13d423ede420256163dd3706caf7ecb069b94a7a789bbb159791e934007",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-whats-included.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 1,
+        "expectedMergeBaseSha256": "8181136e5ca27406db909fb0cc4261f459d69235b90f3acf7a7c6498124829c8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/commerce.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+        "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/mas/libs/mas-field.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "5958e9d9391b24bfb4e815158105c2f1ee7a0240dfd5a3860c7115023c8132d6",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas-mnemonic.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "151ec07cb345b885ae3f4dfd605682eb3df36ce2c7430c1b344c68bc7444ea31",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "c0d6c4575fd10f42d4b3c80bf6e1acf54fa3530a1d0b78f6eabe9360a779c0d8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card-collection.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "570f9f8a414fb14eb27d2aa7bf31b40a31aab8fc25e1fdb06df95746979be771",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "09809949d034c195b6acce08fb99c8b353b4ecfd16e233d4d82cf4c7617a45e9",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-icon.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "617ca60833885612113fe3ef54c8a3597318b21ddeb037fbf30bb45f16b40c4d",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-mnemonic-list.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "2b0608c11a2e13df21dea73f148433611c2b8eafbce878f82be72dbe7baf5d55",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-quantity-select.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "65a5bcb550be494d084f611e670aeaf06114e865e3fce86618f88087153c8315",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-sidenav.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "6790f13d423ede420256163dd3706caf7ecb069b94a7a789bbb159791e934007",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-whats-included.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 2,
+        "expectedMergeBaseSha256": "8181136e5ca27406db909fb0cc4261f459d69235b90f3acf7a7c6498124829c8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/commerce.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+        "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/mas/libs/mas-field.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "5958e9d9391b24bfb4e815158105c2f1ee7a0240dfd5a3860c7115023c8132d6",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas-mnemonic.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "151ec07cb345b885ae3f4dfd605682eb3df36ce2c7430c1b344c68bc7444ea31",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "c0d6c4575fd10f42d4b3c80bf6e1acf54fa3530a1d0b78f6eabe9360a779c0d8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card-collection.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "570f9f8a414fb14eb27d2aa7bf31b40a31aab8fc25e1fdb06df95746979be771",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "09809949d034c195b6acce08fb99c8b353b4ecfd16e233d4d82cf4c7617a45e9",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-icon.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "617ca60833885612113fe3ef54c8a3597318b21ddeb037fbf30bb45f16b40c4d",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-mnemonic-list.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "2b0608c11a2e13df21dea73f148433611c2b8eafbce878f82be72dbe7baf5d55",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-quantity-select.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "65a5bcb550be494d084f611e670aeaf06114e865e3fce86618f88087153c8315",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-sidenav.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "6790f13d423ede420256163dd3706caf7ecb069b94a7a789bbb159791e934007",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-whats-included.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 3,
+        "expectedMergeBaseSha256": "8181136e5ca27406db909fb0cc4261f459d69235b90f3acf7a7c6498124829c8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/commerce.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+        "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/mas/libs/mas-field.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "5958e9d9391b24bfb4e815158105c2f1ee7a0240dfd5a3860c7115023c8132d6",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas-mnemonic.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "151ec07cb345b885ae3f4dfd605682eb3df36ce2c7430c1b344c68bc7444ea31",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "c0d6c4575fd10f42d4b3c80bf6e1acf54fa3530a1d0b78f6eabe9360a779c0d8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card-collection.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "570f9f8a414fb14eb27d2aa7bf31b40a31aab8fc25e1fdb06df95746979be771",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "09809949d034c195b6acce08fb99c8b353b4ecfd16e233d4d82cf4c7617a45e9",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-icon.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "617ca60833885612113fe3ef54c8a3597318b21ddeb037fbf30bb45f16b40c4d",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-mnemonic-list.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "2b0608c11a2e13df21dea73f148433611c2b8eafbce878f82be72dbe7baf5d55",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-quantity-select.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "65a5bcb550be494d084f611e670aeaf06114e865e3fce86618f88087153c8315",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-sidenav.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "6790f13d423ede420256163dd3706caf7ecb069b94a7a789bbb159791e934007",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-whats-included.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 4,
+        "expectedMergeBaseSha256": "8181136e5ca27406db909fb0cc4261f459d69235b90f3acf7a7c6498124829c8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/commerce.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+        "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/mas/libs/mas-field.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "5958e9d9391b24bfb4e815158105c2f1ee7a0240dfd5a3860c7115023c8132d6",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas-mnemonic.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "151ec07cb345b885ae3f4dfd605682eb3df36ce2c7430c1b344c68bc7444ea31",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/mas.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "c0d6c4575fd10f42d4b3c80bf6e1acf54fa3530a1d0b78f6eabe9360a779c0d8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card-collection.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "570f9f8a414fb14eb27d2aa7bf31b40a31aab8fc25e1fdb06df95746979be771",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-card.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "09809949d034c195b6acce08fb99c8b353b4ecfd16e233d4d82cf4c7617a45e9",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-icon.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "617ca60833885612113fe3ef54c8a3597318b21ddeb037fbf30bb45f16b40c4d",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-mnemonic-list.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "2b0608c11a2e13df21dea73f148433611c2b8eafbce878f82be72dbe7baf5d55",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-quantity-select.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "65a5bcb550be494d084f611e670aeaf06114e865e3fce86618f88087153c8315",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-sidenav.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "6790f13d423ede420256163dd3706caf7ecb069b94a7a789bbb159791e934007",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/mas/libs/merch-whats-included.js",
+        "repo": "adobecom/mas",
+        "number": 1487,
+        "pair": 5,
+        "expectedMergeBaseSha256": "8181136e5ca27406db909fb0cc4261f459d69235b90f3acf7a7c6498124829c8",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1328,
+        "max": 4456,
+        "ratio": 3.355,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 1872.5,
+          "after": 2456.5,
+          "ratio": 1.312
+        },
+        {
+          "pair": 2,
+          "before": 2075.5,
+          "after": 2599.5,
+          "ratio": 1.252
+        },
+        {
+          "pair": 3,
+          "before": 1328,
+          "after": 2561.5,
+          "ratio": 1.929
+        },
+        {
+          "pair": 4,
+          "before": 2464,
+          "after": 2613.5,
+          "ratio": 1.061
+        },
+        {
+          "pair": 5,
+          "before": 2932.5,
+          "after": 4456,
+          "ratio": 1.52
+        }
+      ]
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/mas/libs/commerce.js",
+      "repo": "adobecom/mas",
+      "number": 1487,
+      "pair": 1,
+      "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+      "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/mas/libs/commerce.js",
+      "repo": "adobecom/mas",
+      "number": 1487,
+      "pair": 2,
+      "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+      "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/mas/libs/commerce.js",
+      "repo": "adobecom/mas",
+      "number": 1487,
+      "pair": 3,
+      "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+      "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/mas/libs/commerce.js",
+      "repo": "adobecom/mas",
+      "number": 1487,
+      "pair": 4,
+      "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+      "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/mas/libs/commerce.js",
+      "repo": "adobecom/mas",
+      "number": 1487,
+      "pair": 5,
+      "expectedMergeBaseSha256": "097895d0d78a18ba88baba85efd981305741bfc9fe7314ab0ee6320abb1ad978",
+      "productionSha256": "ea71ae15cfac389ddb2c3496683283791206b1bb23631c4a03b1558761721903"
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mw5e7gct-lb2uhuqn",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42283658345/artifacts/13536049129",
+    "expiresAt": "2027-02-04T19:54:01.000Z",
+    "expired": false
+  }
+}
