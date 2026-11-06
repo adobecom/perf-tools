@@ -1,0 +1,92 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42291674739-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-06T20:50:05.000Z",
+  "finishedAt": "2026-11-06T20:52:17.000Z",
+  "status": "failed",
+  "conclusion": "failure",
+  "errorCode": "profile-mismatch",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": null,
+  "profile": null,
+  "egress": {
+    "country": null,
+    "verified": false,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 1,
+    "before": 0,
+    "after": 0,
+    "pairs": 0,
+    "rejected": 1
+  },
+  "medians": {
+    "before": null,
+    "after": null,
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42291674739/attempts/1",
+    "sha": "ed58fa086a83cfa28c9d980868f8bbce23670064"
+  },
+  "detailPath": "data/runs/42291674739-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 3063.5,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [
+    {
+      "variant": "after",
+      "run": 1,
+      "attempt": 1,
+      "reason": "lighthouse-failed"
+    }
+  ],
+  "changes": {
+    "kinds": [
+      "headInject"
+    ],
+    "hints": {
+      "requested": 7,
+      "used": 7,
+      "contextual": 0,
+      "dropped": 0,
+      "pairs": [
+        {
+          "pair": 1,
+          "used": 7,
+          "contextual": 0,
+          "dropped": 0
+        }
+      ]
+    },
+    "patchPaths": [],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [],
+  "artifact": {
+    "name": "perf-ab-mw5g7klm-f7kg402k",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42291674739/artifacts/13539193347",
+    "expiresAt": "2027-02-04T20:50:06.000Z",
+    "expired": false
+  }
+}
