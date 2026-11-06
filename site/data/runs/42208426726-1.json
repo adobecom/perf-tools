@@ -1,0 +1,169 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42208426726-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-06T11:11:53.000Z",
+  "finishedAt": "2026-11-06T11:13:57.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/fr/products/photoshop.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 3,
+    "before": 0,
+    "after": 3,
+    "pairs": 3,
+    "rejected": 0
+  },
+  "medians": {
+    "before": null,
+    "after": {
+      "FCP": 5760.874,
+      "LCP": 5760.874,
+      "SI": 10956,
+      "CLS": 0.1881991019081705,
+      "performance": null,
+      "TBT": null
+    },
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42208426726/attempts/1",
+    "sha": "41aecd5b474b44bf9da7e939d30d20632cbdc68e"
+  },
+  "detailPath": "data/runs/42208426726-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": null,
+      "after": {
+        "FCP": 5760.874,
+        "LCP": 5760.874,
+        "SI": 10956,
+        "CLS": 0.1881991019081705
+      },
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": 1809.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": null,
+      "after": {
+        "FCP": 6214.191,
+        "LCP": 6214.191,
+        "SI": 11462,
+        "CLS": 0.1881991019081705
+      },
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": 1706.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": null,
+      "after": {
+        "FCP": 5427.231,
+        "LCP": 5427.231,
+        "SI": 10945,
+        "CLS": 0.14229866272126265
+      },
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": 2416
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1706.5,
+        "max": 2416,
+        "ratio": 1.416,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": null,
+          "after": 1809.5,
+          "ratio": 1
+        },
+        {
+          "pair": 2,
+          "before": null,
+          "after": 1706.5,
+          "ratio": 1
+        },
+        {
+          "pair": 3,
+          "before": null,
+          "after": 2416,
+          "ratio": 1
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mw4vjzfi-gbxq31lr",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42208426726/artifacts/13498346098",
+    "expiresAt": "2027-02-04T11:11:54.000Z",
+    "expired": false
+  }
+}
