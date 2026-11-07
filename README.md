@@ -2,7 +2,7 @@
 
 Page-load performance measurement and optimization tools for `*.adobe.com`, usable from the command line, GitHub Actions, or as **GitHub Copilot agent skills**:
 
-- **`perf-ab`** *(primary tool)* — Runs controlled before/after Lighthouse comparisons on a live page (such as `www.adobe.com`). Compares the unmodified production page ("before") against your changes ("after"): **Milo or MAS pull requests**, an injected **`head.html` preload snippet**, **guarded source patches**, or **branch query parameters**. Can also benchmark a single URL as-is.
+- **`perf-ab`** *(primary tool)* — Runs controlled before/after Lighthouse comparisons on a live production page (such as `www.adobe.com`). Compares the unmodified production page ("before") against your changes ("after"): **Milo or MAS pull requests** (`--milo-pr`, `--mas-pr`), an injected **`head.html` preload snippet** (`--head-inject`), or **both combined**.
 - **`perf-preload`** — Records cold page loads via `perf-ab` (or analyzes existing DevTools traces), identifies every critical resource that finished loading before Largest Contentful Paint (LCP), and generates a static `<link rel="modulepreload|preload">` snippet ready to test with `perf-ab --head-inject`.
 - **[Results UI (Public Dashboard)](https://adobecom.github.io/perf-tools/)** — Interactive, read-only web UI for browsing completed `perf-ab` runs, paired medians, per-pair charts, and PR provenance, with shareable deep links output automatically by the Copilot skills.
 
@@ -36,7 +36,7 @@ Once installed, you can ask Copilot in natural language:
 
 ## `perf-ab`: Before/After Performance Comparisons
 
-`perf-ab` measures the real impact of code or markup changes on a live production page without deploying to stage or relying on `?milolibs=` query parameters (which production pages ignore).
+`perf-ab` measures the real impact of **Milo/MAS pull requests** and **`<head>` preload links** directly on a live production page.
 
 ### Common Workflows
 
@@ -49,20 +49,11 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 --mas-pr 1487 
 perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html -n 1 -o ./ab-smoke
 perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html -n 5 -o ./ab-full
 
-# 3. Test a guarded source patch on live files
-perf-ab "https://www.adobe.com/acrobat/plans.html" --patch ./market-config.json -n 5
+# 3. Combine preload links and a Milo/MAS PR in a single comparison
+perf-ab "https://www.adobe.com/acrobat/plans.html" \
+  --head-inject ./preloads/acrobat--plans.html --milo-pr 7062 -n 5
 
-# 4. Run a versioned experiment config committed to experiments/<name>.json
-perf-ab --config experiments/acrobat-plans.json -n 1 -o ./ab-smoke
-perf-ab --config experiments/acrobat-plans.json -n 5 -o ./ab-full
-
-# 5. Compare branch query parameters on pages that honor ?milolibs= (e.g. stage)
-perf-ab "https://www.stage.adobe.com/products/photoshop.html" -b my-feature-stage -a my-feature -n 5
-
-# 6. Measure a single URL as-is (baseline only)
-perf-ab "https://www.adobe.com/acrobat/plans.html" -n 5
-
-# 7. Run any comparison locally on your machine instead of GitHub Actions
+# 4. Run locally on your machine instead of GitHub Actions
 perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 -n 3 --local
 ```
 
@@ -72,39 +63,13 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 -n 3 --local
 | --- | --- | --- |
 | `--milo-pr <n>` / `--mas-pr <n>` | Unchanged live production page | Pinned PR diff served through the local measuring proxy (`libs/**` → `/libs/**` for `adobecom/milo`, `web-components/dist/**` → `/mas/libs/**` for `adobecom/mas`). Added, modified, removed, and renamed files are handled accurately; unmapped test/docs files are ignored. |
 | `--head-inject <file>` | Unchanged live production page (with its existing `Link` header preloads) | Snippet injected into `<head>` before the first `<script>`, with all `rel=preload` and `rel=modulepreload` entries stripped from the document's `Link` response header so the snippet is the **sole source of preloads**. |
-| `--patch <file.json>` | Unchanged live production page | Guarded string replacements (`{"replacements":[{"path":"/libs/utils/utils.js","find":"...","replace":"..."}]}`). Every `find` must match **exactly once** or the job fails immediately. |
-| `-b <val> -a <val>` | `<url>?milolibs=<before>--milo--adobecom` | `<url>?milolibs=<after>--milo--adobecom` (customizable via `--param` and `--suffix`). |
-| `--config <file>` | Defined in `experiments/<name>.json` | Combines any of `headInject`, `patches`, `pullRequests`, and `sources` in a versioned config file. |
-| *(no change flags)* | *(none)* | Measures the single URL as-is across `-n` cold runs. |
-
-### Versioned Experiment Configs (`--config`)
-
-Store repeatable optimizations under `experiments/<name>.json` so they can be triggered from either the CLI or the GitHub Actions **Run workflow** form:
-
-```json
-{
-  "schema": "perf-ab/experiment-v1",
-  "name": "acrobat-plans",
-  "description": "Preload critical LCP resources and test Milo PR",
-  "url": "https://www.adobe.com/acrobat/plans.html",
-  "runs": 5,
-  "after": {
-    "headInject": "acrobat-plans/head.html",
-    "patches": ["acrobat-plans/patch.json"],
-    "pullRequests": [{ "repo": "adobecom/milo", "number": 7095 }]
-  }
-}
-```
-
-- **File paths** (`headInject`, `patches`) are relative to the config directory and must stay inside it.
-- **GitHub Actions requires committed configs:** on Actions runs, the workflow reads the config from `--ref` (default `main`), and the CLI refuses to dispatch if your local config or its referenced files differ from `origin/<ref>`. With `--local`, the local file is used directly without needing to commit or push.
-- **Manual GitHub Actions dispatch:** under **Actions → perf-ab → Run workflow**, pick a `config` (or enter a `url`), optionally set `milo_pr` / `mas_pr` (which override that repo's PR in the config for that run), and set `runs` (`1` for a quick smoke test, `5` for a full campaign).
+| `--head-inject` + `--milo-pr` / `--mas-pr` | Unchanged live production page | Applies both the `<head>` preload snippet and the pinned PR file changes together. |
 
 ### Where Measurements Run
 
 | Mode | How It Works | When to Use |
 | --- | --- | --- |
-| **GitHub Actions** *(default)* | Dispatches `.github/workflows/perf-ab.yml` via `gh`, fans out `-n` parallel matrix jobs (one before/after pair per runner VM), verifies **US egress** (`Server-Timing: geo;desc=US` + external geo checks, failing closed if non-US), and downloads the combined artifact. | Standard for shareable, comparable numbers and PR sign-off. |
+| **GitHub Actions** *(default)* | Dispatches `.github/workflows/perf-ab.yml` via `gh`, fans out `-n` parallel matrix jobs (one before/after pair per runner VM), verifies **US egress** (`Server-Timing: geo;desc=US` + external geo checks, failing closed if non-US), and downloads the combined artifact. Can also be triggered manually from **Actions → perf-ab → Run workflow** with a `url`, `milo_pr` / `mas_pr`, and `runs`. | Standard for shareable, comparable numbers and PR sign-off. |
 | **Local** (`--local`) | Runs the exact same Lighthouse 13.6.0 profile, measuring proxy, and cold-run policy on your machine using local Chrome, running pairs sequentially. Authenticates GitHub API PR reads via `GITHUB_TOKEN`, `GH_TOKEN`, or `gh auth token`. | Fast local iteration when explicitly requested. Marked `where: "local"` with a `local-results-not-comparable` warning. |
 
 ### Understanding Output & Results
@@ -116,7 +81,7 @@ By default, results are written to `./traces` (override with `-o <dir>`). Any pr
 - **Directory layout:**
   - `results.json` — Aggregate summary: `status` (`ok` / `partial` / `failed`), `samples`, `medians` (`before`, `after`, and `delta` = **median of the per-pair deltas** across complete pairs), `pairs[]` (per-pair metrics, delta, runner info, Chrome version, and per-variant CPU `benchmarkIndexes`), `warnings[]`, `profile` / `profileKey`, `egress`, and `hints`.
   - `pair<i>/results.json` — Diagnostic metadata and per-run metrics for pair `i`.
-  - `pair<i>/<variant><i>/` — Official Lighthouse `report.html` and `report.json`, Chrome `trace.json`, `devtoolslog.json`, and `run.json` (first document status, document geo, and proxy request log with original vs. served compressed byte sizes).
+  - `pair<i>/<variant><i>/` — Official Lighthouse `report.html` and `report.json`, Chrome `trace.json`, `devtoolslog.json`, and `run.json` (first document status, document geo, pinned PR provenance, and proxy request log with original vs. served compressed byte sizes).
   - `pair<i>/rejected/` — Preserved artifacts from any rejected run attempts for debugging.
 
 ---
@@ -129,7 +94,7 @@ Browse all published `perf-ab` measurements at **<https://adobecom.github.io/per
 
 - **Verdict & Medians:** Before/after medians and the **median of per-pair deltas** across complete pairs, with noise-aware status badges (filtering out normal mobile variance inside `±3` Perf score, `±100 ms` FCP/LCP/SI, `±50 ms` TBT, and `±0.01` CLS).
 - **Per-Pair Breakdown & Charts:** Individual pair metrics (`before`, `after`, `delta`), visual comparison charts, Chrome version, and per-variant Lighthouse CPU `benchmarkIndexes` for each runner VM.
-- **Change Provenance & Diagnostics:** Pinned `adobecom/milo` and `adobecom/mas` PR commits (`baseSha`, `headSha`, `mergeBaseSha`) and mapped files, preload hint usage (`requested`, `used`, `contextual`, `dropped`), patched file paths, and warnings (`environment-variability`, `production-source-drift`).
+- **Change Provenance & Diagnostics:** Pinned `adobecom/milo` and `adobecom/mas` PR commits (`baseSha`, `headSha`, `mergeBaseSha`) and mapped files, preload hint usage (`requested`, `used`, `contextual`, `dropped`), and warnings (`environment-variability`, `production-source-drift`).
 - **Artifacts & Workflow Links:** Direct links to the GitHub Actions workflow run, commit SHA, and the downloadable 90-day artifact ZIP (with live expiration status).
 
 ### Deep Links & Copilot Skill Output
@@ -144,7 +109,7 @@ For example: <https://adobecom.github.io/perf-tools/?run=41631057972-1>
 
 - **Automatic deep links from skills:** When you run a comparison or preload validation through the **`perf-ab`** or **`perf-preload`** Copilot skills, the skill automatically outputs the direct **UI deep link** (`https://adobecom.github.io/perf-tools/?run=<runId>-<attempt>`) for the run(s) it just executed alongside the GitHub Actions run URL and metric summary.
 - **Filterable URLs:** You can also link directly to filtered views using query parameters:
-  - `?q=<text>` — filter by page URL, experiment name, or run ID
+  - `?q=<text>` — filter by page URL or run ID
   - `?status=ok|partial|failed` — filter by run completion status
   - `?profile=<profileKey>` — filter by Lighthouse profile key
   - `?from=YYYY-MM-DD&to=YYYY-MM-DD` — filter by date range
@@ -159,7 +124,7 @@ For example: <https://adobecom.github.io/perf-tools/?run=41631057972-1>
 
 ## Combining `perf-preload` + `perf-ab`
 
-`perf-preload` and `perf-ab` are designed to work as a two-step loop: **discover** the critical LCP path with `perf-preload`, then **verify** the gain with `perf-ab --head-inject`.
+`perf-preload` and `perf-ab` are designed to work as a two-step loop: **discover** the critical LCP path with `perf-preload`, then **verify** the gain with `perf-ab --head-inject` (optionally alongside `--milo-pr` or `--mas-pr`).
 
 ```mermaid
 flowchart LR
@@ -190,7 +155,7 @@ This records 5 cold Lighthouse loads via `perf-ab`, finds the LCP candidate in e
 perf-ab "https://www.adobe.com/products/photoshop.html" \
   --head-inject ./preloads/products--photoshop.html -n 1 -o ./ab-smoke
 
-# Full 5-pair parallel comparison
+# Full 5-pair parallel comparison (or combine with --milo-pr / --mas-pr)
 perf-ab "https://www.adobe.com/products/photoshop.html" \
   --head-inject ./preloads/products--photoshop.html -n 5 -o ./ab-full
 ```
@@ -257,24 +222,18 @@ Every design choice in `perf-ab` is aimed at eliminating measurement bias betwee
 
 ```txt
 perf-ab <pageUrl> [options]
-perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>] [--local]
 ```
 
 | Flag | Default | Description |
 | --- | --- | --- |
-| `--config <file>` | — | Run a versioned experiment config (`experiments/<name>.json`). Cannot be combined with a URL or change flags. |
-| `-n, --runs <1..10>` | `3` (or config's `runs`) | Number of cold before/after pairs (`-n 1` for smoke test, `-n 5` for full campaign). |
+| `-n, --runs <1..10>` | `3` | Number of cold before/after pairs (`-n 1` for smoke test, `-n 5` for full campaign). |
 | `-o, --out <dir>` | `./traces` | Output directory for `results.json`, per-pair Lighthouse reports, and traces. |
 | `--milo-pr <number>` | — | Serve mapped files (`libs/**` → `/libs/**`) from an `adobecom/milo` PR in the "after" variant. |
 | `--mas-pr <number>` | — | Serve mapped files (`web-components/dist/**` → `/mas/libs/**`) from an `adobecom/mas` PR in the "after" variant. |
-| `--head-inject <file>` | — | Inject HTML snippet into `<head>` before the first `<script>` and strip `Link` preload headers in "after". |
-| `--patch <file.json>` | — | Apply guarded exact-once string replacements to live responses in "after". |
-| `-b, --before <val>` / `-a, --after <val>` | — | Compare query parameter values (`?<param>=<value><suffix>`). Must be passed together. |
-| `--param <name>` | `milolibs` | Query parameter name used with `-b` / `-a`. |
-| `--suffix <str>` | `--milo--adobecom` | Suffix appended to `-b` / `-a` values. |
+| `--head-inject <file>` | — | Inject HTML preload snippet into `<head>` before the first `<script>` and strip `Link` preload headers in "after". |
 | `--local` | `false` | Run locally with Chrome on this machine instead of dispatching GitHub Actions. |
 | `--repo <owner/name>` | `adobecom/perf-tools` | GitHub repository hosting the `perf-ab` workflow. |
-| `--ref <branch>` | `main` | Git branch ref for the workflow and committed `--config`. |
+| `--ref <branch>` | `main` | Git branch ref for the workflow. |
 | `--timeout <minutes>` | `75` | Maximum wait time for the GitHub Actions run. |
 
 ### `perf-preload`
@@ -300,7 +259,7 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
 ## Security, Target Scope & Development
 
 - **Allowed targets (`lib/target.mjs`):** Measured URLs (including redirect hops) must use `https://` on a subdomain of `adobe.com` (e.g. `www.adobe.com`) that resolves exclusively to public IP addresses. Private, loopback, and reserved IP ranges are blocked both pre-flight and at connection time.
-- **Public repository warning:** `adobecom/perf-tools` is public. Workflow inputs, logs, and artifacts (reports, traces, `results.json`) are readable by any signed-in GitHub user. Never pass credentials or tokens in URLs, `--head-inject`, or `--patch` files — spec validation rejects URLs containing userinfo or secret-like query parameters (`token`, `api_key`, `secret`, `password`, `sig`, etc.) before dispatch.
+- **Public repository warning:** `adobecom/perf-tools` is public. Workflow inputs, logs, and artifacts (reports, traces, `results.json`) are readable by any signed-in GitHub user. Never pass credentials or tokens in URLs or `--head-inject` snippets — spec validation rejects URLs containing userinfo or secret-like query parameters (`token`, `api_key`, `secret`, `password`, `sig`, etc.) before dispatch.
 - **Running tests:**
   ```sh
   npm test
