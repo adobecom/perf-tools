@@ -1,8 +1,0 @@
-{
-  "schema": "perf-ab/experiment-v1",
-  "name": "acrobat-plans-inp",
-  "description": "INP of the Acrobat plans page: the plans tab switches (Individuals, Business, Students & Teachers) replayed in a Lighthouse timespan after the cold load. No change is configured, so the page is measured as-is; add an \"after\" block (head snippet, patches, PRs) to compare a change under the same interactions.",
-  "url": "https://www.adobe.com/acrobat/plans.html",
-  "runs": 3,
-  "interactions": "acrobat-plans-inp/interactions.json"
-}

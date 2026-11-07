@@ -1,6 +1,0 @@
-[
-  { "action": "waitFor", "selector": "button#tab-compare-plans-2", "label": "Plans tabs are ready" },
-  { "action": "tap", "selector": "button#tab-compare-plans-2", "label": "Business tab" },
-  { "action": "tap", "selector": "button#tab-compare-plans-3", "label": "Students & Teachers tab" },
-  { "action": "tap", "selector": "button#tab-compare-plans-1", "label": "Individuals tab" }
-]
