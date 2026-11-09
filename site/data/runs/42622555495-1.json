@@ -1,0 +1,360 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42622555495-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-09T13:06:29.000Z",
+  "finishedAt": "2026-11-09T13:10:00.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 5,
+    "after": 5,
+    "pairs": 5,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 4923.082,
+      "LCP": 4938.943,
+      "SI": 7476,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "after": {
+      "FCP": 3679.312,
+      "LCP": 3679.312,
+      "SI": 6528,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "delta": {
+      "FCP": -1243.7700000000004,
+      "LCP": -1259.6310000000003,
+      "SI": -948,
+      "CLS": 0,
+      "performance": null,
+      "TBT": null
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42622555495/attempts/1",
+    "sha": "16a541684e659321241af585808d7e2bd2c77174"
+  },
+  "detailPath": "data/runs/42622555495-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "FCP": 4609.958,
+        "LCP": 4693.712,
+        "SI": 7333,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 3639.95,
+        "LCP": 3639.95,
+        "SI": 6456,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -970.0079999999998,
+        "LCP": -1053.7620000000006,
+        "SI": -877,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2430.5,
+          "after": 2459.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "FCP": 5022.06,
+        "LCP": 5036.401,
+        "SI": 7815,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 3702.358,
+        "LCP": 3702.358,
+        "SI": 6695,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -1319.7020000000002,
+        "LCP": -1334.0429999999997,
+        "SI": -1120,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1752,
+          "after": 2452
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": {
+        "FCP": 4923.082,
+        "LCP": 4938.943,
+        "SI": 7476,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 3679.312,
+        "LCP": 3679.312,
+        "SI": 6528,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -1243.7700000000004,
+        "LCP": -1259.6310000000003,
+        "SI": -948,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1732.5,
+          "after": 2476.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "FCP": 4997.525,
+        "LCP": 5007.033,
+        "SI": 7532,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 3656.038,
+        "LCP": 3656.038,
+        "SI": 6405,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -1341.4869999999996,
+        "LCP": -1350.9950000000003,
+        "SI": -1127,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2668.5,
+          "after": 4049
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 5,
+      "before": {
+        "FCP": 4808.587,
+        "LCP": 4836.984,
+        "SI": 7461,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 3707.19,
+        "LCP": 3707.19,
+        "SI": 6691,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -1101.3970000000004,
+        "LCP": -1129.7940000000003,
+        "SI": -770,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2072.5,
+          "after": 2415
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "sources"
+    ],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [
+      "/libs/c2/blocks/rich-content/rich-content.js"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/milo",
+        "number": 7129,
+        "baseRef": "stage",
+        "headRef": "plans-page-perf",
+        "baseSha": "32f75b3057c38e1db73196d00319869193fd8151",
+        "headSha": "11537efd35d7da383207c540d9ac50cd51968f39",
+        "mergeBaseSha": "c205e24edfec29d4e6916578f01bcf9206a729d5",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/libs/c2/blocks/rich-content/rich-content.js",
+            "previousPath": null,
+            "blobSha": "ac7921bddac3b61eaa87656a1ea77befb5079617"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/libs/c2/blocks/rich-content/rich-content.js",
+        "repo": "adobecom/milo",
+        "number": 7129,
+        "pair": 1,
+        "expectedMergeBaseSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/c2/blocks/rich-content/rich-content.js",
+        "repo": "adobecom/milo",
+        "number": 7129,
+        "pair": 2,
+        "expectedMergeBaseSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/c2/blocks/rich-content/rich-content.js",
+        "repo": "adobecom/milo",
+        "number": 7129,
+        "pair": 3,
+        "expectedMergeBaseSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/c2/blocks/rich-content/rich-content.js",
+        "repo": "adobecom/milo",
+        "number": 7129,
+        "pair": 4,
+        "expectedMergeBaseSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/c2/blocks/rich-content/rich-content.js",
+        "repo": "adobecom/milo",
+        "number": 7129,
+        "pair": 5,
+        "expectedMergeBaseSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1732.5,
+        "max": 4049,
+        "ratio": 2.337,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 2430.5,
+          "after": 2459.5,
+          "ratio": 1.012
+        },
+        {
+          "pair": 2,
+          "before": 1752,
+          "after": 2452,
+          "ratio": 1.4
+        },
+        {
+          "pair": 3,
+          "before": 1732.5,
+          "after": 2476.5,
+          "ratio": 1.429
+        },
+        {
+          "pair": 4,
+          "before": 2668.5,
+          "after": 4049,
+          "ratio": 1.517
+        },
+        {
+          "pair": 5,
+          "before": 2072.5,
+          "after": 2415,
+          "ratio": 1.165
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mw99ywth-dai092re",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42622555495/artifacts/13677280763",
+    "expiresAt": "2027-02-07T13:06:31.000Z",
+    "expired": false
+  }
+}
