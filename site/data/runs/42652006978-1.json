@@ -1,0 +1,532 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42652006978-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-09T16:10:12.000Z",
+  "finishedAt": "2026-11-09T16:13:40.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 5,
+    "after": 5,
+    "pairs": 5,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 4536.477,
+      "LCP": 4629.575,
+      "SI": 6944,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "after": {
+      "FCP": 4557.029,
+      "LCP": 4645.299,
+      "SI": 7024,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "delta": {
+      "FCP": -47.56999999999971,
+      "LCP": -35.23199999999997,
+      "SI": -126,
+      "CLS": 0,
+      "performance": null,
+      "TBT": null
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42652006978/attempts/1",
+    "sha": "c7ea27753da10116fd6b4db2d62aa53026f92b73"
+  },
+  "detailPath": "data/runs/42652006978-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "FCP": 4535.112,
+        "LCP": 4615.418,
+        "SI": 6872,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4487.542,
+        "LCP": 4580.186,
+        "SI": 6746,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -47.56999999999971,
+        "LCP": -35.23199999999997,
+        "SI": -126,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 3735,
+          "after": 3753.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "FCP": 4560.286,
+        "LCP": 4647.732,
+        "SI": 7011,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4868.872,
+        "LCP": 4891.279,
+        "SI": 7433,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 308.58600000000024,
+        "LCP": 243.54700000000048,
+        "SI": 422,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2463.5,
+          "after": 1925.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": {
+        "FCP": 4872.984,
+        "LCP": 4917.083,
+        "SI": 7443,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4557.029,
+        "LCP": 4645.299,
+        "SI": 7024,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -315.9549999999999,
+        "LCP": -271.78399999999965,
+        "SI": -419,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1850.5,
+          "after": 2435.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "FCP": 4536.234,
+        "LCP": 4629.575,
+        "SI": 6916,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4969.34,
+        "LCP": 4988.941,
+        "SI": 7714,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 433.10599999999977,
+        "LCP": 359.366,
+        "SI": 798,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2453,
+          "after": 1625.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 5,
+      "before": {
+        "FCP": 4536.477,
+        "LCP": 4602.386,
+        "SI": 6944,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4429.807,
+        "LCP": 4524.655,
+        "SI": 6566,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -106.67000000000007,
+        "LCP": -77.73100000000068,
+        "SI": -378,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 3631.5,
+          "after": 4416.5
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "sources"
+    ],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [
+      "/libs/blocks/merch/merch.js",
+      "/libs/features/personalization/personalization.js"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "baseRef": "main",
+        "headRef": "mwpw-212859-main",
+        "baseSha": "2a2ffb2228c31e42cf0b6585d7a8ecd9066298f4",
+        "headSha": "de8cc17f76b4f0f5e5e3b39fe7735da91948ddab",
+        "mergeBaseSha": "2a2ffb2228c31e42cf0b6585d7a8ecd9066298f4",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/libs/blocks/merch/merch.js",
+            "previousPath": null,
+            "blobSha": "41017a95f21eb249f739bc0f603db55d43c06a8f"
+          },
+          {
+            "status": "modified",
+            "path": "/libs/features/personalization/personalization.js",
+            "previousPath": null,
+            "blobSha": "fc71268178d7d5d6d55cfc9d382e607f5ee340fa"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/libs/blocks/merch/merch.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 1,
+        "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+        "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/features/personalization/personalization.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 1,
+        "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+        "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/blocks/merch/merch.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 2,
+        "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+        "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/features/personalization/personalization.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 2,
+        "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+        "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/blocks/merch/merch.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 3,
+        "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+        "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/features/personalization/personalization.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 3,
+        "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+        "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/blocks/merch/merch.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 4,
+        "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+        "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/features/personalization/personalization.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 4,
+        "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+        "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/blocks/merch/merch.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 5,
+        "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+        "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/features/personalization/personalization.js",
+        "repo": "adobecom/milo",
+        "number": 7097,
+        "pair": 5,
+        "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+        "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1",
+        "productionStatus": 200,
+        "status": "drift"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1625.5,
+        "max": 4416.5,
+        "ratio": 2.717,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 3735,
+          "after": 3753.5,
+          "ratio": 1.005
+        },
+        {
+          "pair": 2,
+          "before": 2463.5,
+          "after": 1925.5,
+          "ratio": 1.279
+        },
+        {
+          "pair": 3,
+          "before": 1850.5,
+          "after": 2435.5,
+          "ratio": 1.316
+        },
+        {
+          "pair": 4,
+          "before": 2453,
+          "after": 1625.5,
+          "ratio": 1.509
+        },
+        {
+          "pair": 5,
+          "before": 3631.5,
+          "after": 4416.5,
+          "ratio": 1.216
+        }
+      ]
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/blocks/merch/merch.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 1,
+      "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+      "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/features/personalization/personalization.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 1,
+      "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+      "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/blocks/merch/merch.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 2,
+      "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+      "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/features/personalization/personalization.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 2,
+      "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+      "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/blocks/merch/merch.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 3,
+      "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+      "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/features/personalization/personalization.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 3,
+      "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+      "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/blocks/merch/merch.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 4,
+      "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+      "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/features/personalization/personalization.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 4,
+      "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+      "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/blocks/merch/merch.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 5,
+      "expectedMergeBaseSha256": "e57a12d348057b3519b24e0a59d0e0f13d06c67645f11b0634e6aa2f2fdbbeb4",
+      "productionSha256": "504a9ee755cbb0fb234ccbd2527cb7a7dcd3df6cbaf6168fedbf3ae5d3a8b3e7"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/features/personalization/personalization.js",
+      "repo": "adobecom/milo",
+      "number": 7097,
+      "pair": 5,
+      "expectedMergeBaseSha256": "6153f07d1a3e4e4990dbff84875586fc6f46d8b6676dd1b5834c9a2b752fb8f7",
+      "productionSha256": "a803cf35fbd5fe2dcc68f975ad5f1fce4ba90e63608e15f4d1ef6f8d0a046ad1"
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mw9gj6db-z4lsqsm3",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42652006978/artifacts/13691000763",
+    "expiresAt": "2027-02-07T16:10:13.000Z",
+    "expired": false
+  }
+}
