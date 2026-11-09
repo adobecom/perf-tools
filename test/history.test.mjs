@@ -113,6 +113,30 @@ test('normalizes paired results, recomputes paired medians and trusts validated 
   assert.equal(parsed.warnings.find((w) => w.kind === 'production-source-drift').path, '/libs/utils/utils.js');
 });
 
+test('execution order survives public history and dashboard parsing without inventing order for old results', () => {
+  const raw = result();
+  raw.pairs[0].job.order = ['before', 'after'];
+  raw.pairs[0].job.orderPolicy = 'counterbalanced';
+  raw.pairs[1].job.order = ['after', 'before'];
+  raw.pairs[1].job.orderPolicy = 'counterbalanced';
+  const detail = normalizeResult(raw, ghRun(), artifact);
+  const parsed = dashboard.parseRun(detail, detail.id);
+  for (const pairs of [detail.pairs, parsed.pairs]) {
+    assert.deepEqual(pairs.map((p) => p.job.order), [['before', 'after'], ['after', 'before'], null]);
+    assert.deepEqual(pairs.map((p) => p.job.orderPolicy), ['counterbalanced', 'counterbalanced', null]);
+  }
+  raw.pairs[0].job.order = ['untrusted', 'before'];
+  raw.pairs[0].job.orderPolicy = 'untrusted';
+  const sanitized = normalizeResult(raw, ghRun(), artifact);
+  assert.equal(sanitized.pairs[0].job.order, null);
+  assert.equal(sanitized.pairs[0].job.orderPolicy, null);
+  raw.pairs[0].job.order = [['before'], ['after']];
+  const nested = normalizeResult(raw, ghRun(), artifact);
+  assert.equal(nested.pairs[0].job.order, null);
+  detail.pairs[0].job.order = [['before'], ['after']];
+  assert.equal(dashboard.parseRun(detail, detail.id).pairs[0].job.order, null);
+});
+
 test('imports legacy result arrays by run index and does not duplicate scalar CPU into both variants', () => {
   const old = result({
     pairs: undefined,

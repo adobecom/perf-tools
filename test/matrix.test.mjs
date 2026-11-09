@@ -116,6 +116,29 @@ test('aggregate: keeps both per-variant CPU benchmarks per pair and warns on run
   }
 });
 
+test('aggregate: preserves execution order separately from canonical before/after metric labels', () => {
+  const dir = tmp('perf-ab-order-');
+  try {
+    for (const i of [1, 2]) {
+      const d = pairJob(dir, i);
+      const file = path.join(d, 'results.json');
+      const result = JSON.parse(fs.readFileSync(file, 'utf8'));
+      result.orderPolicy = 'counterbalanced';
+      if (i === 2) result.runs.reverse();
+      fs.writeFileSync(file, JSON.stringify(result));
+    }
+    const result = aggregatePairs({ pairsDir: dir, expected: 2, requestId: 'req-matrix-1', out: path.join(dir, 'out') });
+    assert.equal(result.status, 'ok');
+    assert.deepEqual(result.pairs.map((p) => p.job.order), [['before', 'after'], ['after', 'before']]);
+    assert.ok(result.pairs.every((p) => p.job.orderPolicy === 'counterbalanced'));
+    assert.equal(result.medians.delta.LCP, -1000);
+    assert.equal(result.pairs[1].before.performance, 52);
+    assert.equal(result.pairs[1].after.performance, 82);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('aggregate: three complete pairs give ok paired medians, per-pair job metadata and pair<i>/ diagnostics', () => {
   const dir = tmp('perf-ab-agg-in-');
   const out = tmp('perf-ab-agg-out-');

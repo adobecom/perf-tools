@@ -16,7 +16,7 @@ import { encodeSpec, decodeSpec, validateSpec, MAX_SPEC_CHARS } from '../lib/pag
 import { resolvedProfile, lighthouseConfig, EXPECTED } from '../lib/pagespeed/profile.mjs';
 import { CPU_SLOWDOWN_MULTIPLIER } from '../lib/pagespeed/stats.mjs';
 import {
-  injectIntoHead, stripPreloadLinks, applyPatches, resolveContextualHints,
+  injectIntoHead, stripPreloadLinks, applyPatches, resolveContextualHints, hasContextualHints,
 } from '../lib/pagespeed/transforms.mjs';
 import { runRemote } from '../lib/pagespeed/remote.mjs';
 import { runJob, makeCert, scanForKeys, extractMetrics, median } from '../lib/pagespeed/job.mjs';
@@ -158,6 +158,16 @@ test('contextual hints: CH URLs resolve to the US consumer request, never blindl
   assert.equal(report.kept, 4);
   assert.deepEqual(report.contextual.map((c) => c.to), [observed[0], observed[1]]);
   assert.deepEqual(report.dropped.map((d) => d.reason.split(':')[0]), ['ambiguous', 'no matching request in the baseline page', '/experienceedge is never preloaded']);
+});
+
+test('only contextual hints need a baseline-first load; static bursts and excluded edge links do not', () => {
+  const page = 'https://www.adobe.com/acrobat/plans.html';
+  for (const href of ['/mas/io/fragment?id=x&amp;country=CH', '/data.json?LOCALE=en_US', '/data.json?market=US']) {
+    assert.equal(hasContextualHints(`<link rel="preload" href="${href}">`, page), true, href);
+  }
+  for (const snippet of ['', '<link rel="modulepreload" href="/libs/utils.js">', '<link href="/data.json?sheet=en">', '<link href="/experienceedge/v2/interact?country=CH">']) {
+    assert.equal(hasContextualHints(snippet, page), false, snippet);
+  }
 });
 
 // ---------- proxy accounting ----------

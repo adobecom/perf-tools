@@ -19,7 +19,7 @@ const SHOTS = process.env.DASHBOARD_SCREENSHOTS || '';
 const skip = fs.existsSync(chromium.executablePath()) ? false : 'Playwright Chromium is not installed (npx playwright install chromium)';
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
-const MODES = new Set(['populated', 'empty', 'schema', 'badjson', 'missing', 'slow', 'warning', 'inp']);
+const MODES = new Set(['populated', 'empty', 'schema', 'badjson', 'missing', 'slow', 'warning', 'inp', 'order', 'contextual']);
 
 // A synthetic INP run derived from a fixture run: the shared fixtures stay INP-free, so every other mode keeps proving that
 // runs without an interaction scenario show no INP column, row or plot.
@@ -79,6 +79,14 @@ function startServer() {
     if (mode === 'missing') return send(res, 404, 'not found', 'text/plain');
     if (mode === 'inp' && data === 'index.json') return send(res, 200, JSON.stringify(inpIndex()));
     if (mode === 'inp' && data === `runs/${INP_RUN}.json`) return send(res, 200, JSON.stringify(inpRun()));
+    if (['order', 'contextual'].includes(mode) && data === 'runs/41700000001-1.json') {
+      const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
+      for (const p of detail.pairs) Object.assign(p.job, {
+        order: mode === 'order' && p.index % 2 === 0 ? ['after', 'before'] : ['before', 'after'],
+        orderPolicy: mode === 'order' ? 'counterbalanced' : 'baseline-first-contextual-hints',
+      });
+      return send(res, 200, JSON.stringify(detail));
+    }
     if (mode === 'slow' && data === 'index.json') await slowGate;
     if (mode === 'warning' && data === 'runs/41700000008-1.json') {
       const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
@@ -198,6 +206,22 @@ describe('history dashboard in a real browser', { skip }, () => {
       assert.ok(u.origin === srv.origin ? u.pathname.startsWith('/m/') : safeExternalUrl(href) === href, `unexpected link ${href}`);
     }
   }
+
+  test('runner details show actual counterbalanced order and contextual baseline-first exceptions', async () => {
+    const page = await newPage();
+    await open(page, 'order', '?run=41700000001-1');
+    let detail = await text(page, '#detail');
+    assert.match(detail, /order before then after/);
+    assert.match(detail, /order after then before/);
+    assert.doesNotMatch(detail, /fixed order: contextual hints/);
+    await open(page, 'contextual', '?run=41700000001-1');
+    detail = await text(page, '#detail');
+    assert.match(detail, /order before then after/);
+    assert.match(detail, /fixed order: contextual hints/);
+    assert.doesNotMatch(detail, /order after then before/);
+    await assertSafe(page);
+    await page.context().close();
+  });
 
   test('populated history: newest run selected, smoke run labelled with no performance conclusion', async () => {
     const page = await newPage();

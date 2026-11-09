@@ -726,6 +726,8 @@ function jobText(job) {
     job.runAttempt != null ? `attempt ${job.runAttempt}` : null,
     job.chromeVersion ? `Chrome ${job.chromeVersion}` : null,
     benchmarkText,
+    job.order?.length ? `order ${job.order.join(' then ')}` : null,
+    job.orderPolicy === 'baseline-first-contextual-hints' ? 'fixed order: contextual hints' : null,
     job.egressCountry,
   ].filter(Boolean).join(' · ') || '—';
 }

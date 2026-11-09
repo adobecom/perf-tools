@@ -575,7 +575,7 @@ test('auto runner: taps what it selected, labels it, and hands exactly those tar
   // A target the before page exposed that the after page lacks rejects the run (retryable) instead of comparing other elements.
   const lacking = autoPage([['tab', 'One'], ['expandable', 'FAQ']]);
   await assert.rejects(runInteractions({}, [{ action: 'auto', max: 3 }], { wait, discover: lacking.discover, plans }),
-    (e) => e.rejected === true && /the target the before page tapped is missing here: button\|button\|\|More/.test(e.message));
+    (e) => e.rejected === true && /the target the first page tapped is missing here: button\|button\|\|More/.test(e.message));
   assert.deepEqual(lacking.taps, ['tab:One', 'expandable:FAQ'], 'what exists is tapped in order; the missing one rejects the run');
 });
 
@@ -620,7 +620,7 @@ test('auto runner: discovers again before every tap, so targets that appear or v
   assert.ok(calls > 3);
   // ...and rejects the run when it never does.
   await assert.rejects(runInteractions({}, [{ action: 'auto' }], { wait, discover: async () => [], plans: plan }),
-    (e) => e.rejected === true && /the target the before page tapped is missing here: tab\|button\|tab\|One/.test(e.message));
+    (e) => e.rejected === true && /the target the first page tapped is missing here: tab\|button\|tab\|One/.test(e.message));
 });
 
 test('experiment config: "interactions": "auto" is the pass-partout scenario', () => {

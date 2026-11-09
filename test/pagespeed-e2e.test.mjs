@@ -223,6 +223,93 @@ test('runner job: real Lighthouse (mobile, DevTools throttling) through the HTTP
   }
 });
 
+test('counterbalanced runner: real cold pairs reverse even indexes, static preloads work first, contextual hints stay baseline-first', { skip: !CHROME && 'no local Chrome', timeout: 300000 }, async (t) => {
+  const cert = makeCert(HOST);
+  let documents = 0;
+  const seen = [];
+  const server = http2.createSecureServer({ key: cert.key, cert: cert.cert, allowHTTP1: false });
+  server.on('stream', (stream, headers) => {
+    const url = headers[':path'];
+    const send = (type, body, extra = {}) => {
+      stream.respond({ ':status': 200, 'content-type': type, 'content-encoding': 'br', ...extra });
+      stream.end(br(body));
+    };
+    if (url === '/page') {
+      if (headers['sec-fetch-dest'] === 'document') documents += 1;
+      return send('text/html', page(3), { 'server-timing': 'geo;desc=US', link: '</app.js>;rel=modulepreload' });
+    }
+    if (url === '/app.js') return send('text/javascript', APP.replace("fetch('/data.json')", "fetch('/data.json?country=US')"));
+    if (url === '/libs/utils/utils.js') return send('text/javascript', 'export const revision = "production";');
+    if (url.startsWith('/data.json')) {
+      seen.push(url);
+      return send('application/json', '{"count":3}');
+    }
+    stream.respond({ ':status': 404 });
+    return stream.end();
+  });
+  await new Promise((resolve) => { server.listen(0, '127.0.0.1', resolve); });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-order-e2e-'));
+  try {
+    for (const [label, pair, snippet, order] of [
+      ['odd-static', 1, '<link rel="modulepreload" href="/libs/utils/utils.js">', ['before', 'after']],
+      ['even-static', 2, '<link rel="modulepreload" href="/libs/utils/utils.js">', ['after', 'before']],
+      ['even-contextual', 2, '<link rel="preload" as="fetch" href="/data.json?country=CH" crossorigin>', ['before', 'after']],
+    ]) await t.test(label, async () => {
+      const start = documents;
+      const url = `https://${HOST}/page`;
+      const dir = path.join(out, label);
+      const result = await runJob({
+        spec: { version: 1, runs: 2, names: ['before', 'after'], variants: { before: { url }, after: { url, headInject: snippet } } },
+        pair, out: dir, requestId: `order-${label}`, attempts: 1,
+        fetchJson: async () => ({ country: 'US', country_iso: 'US', country_code: 'US' }),
+        upstreamOrigin: `https://127.0.0.1:${server.address().port}`, upstreamOptions: { rejectUnauthorized: false },
+        dnsLookup: fakeDns, chromePath: CHROME, log: () => {}, warn: () => {},
+      });
+      assert.equal(result.status, 'ok', result.error);
+      assert.deepEqual(result.runs.map((r) => r.variant), order);
+      assert.deepEqual(result.pairs[0].order, order);
+      assert.equal(documents - start, 2, 'exactly two cold loads; no warm-ups or discovery navigation');
+      assert.equal(result.samples.rejected, 0);
+      for (const variant of order) {
+        const run = JSON.parse(fs.readFileSync(path.join(dir, `${variant}${pair}`, 'run.json'), 'utf8'));
+        assert.deepEqual(run.order, order);
+        assert.equal(run.freshBrowser && run.emptyProfile && !run.warmup, true);
+        assert.equal(run.firstResponse.fromDiskCache, false);
+      }
+      assert.equal(result.hints.usedLinks, 1);
+      assert.equal(result.hints.linkHeaderStripped, 1);
+      if (label === 'even-contextual') {
+        assert.equal(result.orderPolicy, 'baseline-first-contextual-hints');
+        assert.ok(result.warnings.some((w) => w.kind === 'fixed-order-contextual-hints'));
+        assert.equal(result.hints.resolvedFrom, 'before2');
+        assert.match(result.hints.contextual[0].to, /country=US$/);
+        assert.ok(seen.every((u) => !u.includes('country=CH')));
+      } else {
+        assert.equal(result.orderPolicy, 'counterbalanced');
+        assert.equal(result.hints.resolvedFrom, 'static');
+      }
+    });
+  } finally {
+    server.close();
+    cert.cleanup();
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});
+
+test('counterbalanced auto: after discovers first in even pairs and before replays the exact targets', { skip: !CHROME && 'no local Chrome', timeout: 180000 }, async (t) => {
+  const { url, out, run, logs } = await inpFixture(t, { html: autoPage, js: AUTO_APP, ready: '#more' });
+  const result = await run({
+    runs: 2, names: ['before', 'after'], interactions: [{ action: 'auto', max: 2 }],
+    variants: { before: { url }, after: { url, patches: [{ path: '/app.js', find: 'const BLOCK_MS = 300;', replace: 'const BLOCK_MS = 30;' }] } },
+  }, 'e2e-order-auto', { pair: 2 });
+  assert.equal(result.status, 'ok', `${result.error}\n${logs.join('\n')}`);
+  assert.deepEqual(result.runs.map((r) => r.variant), ['after', 'before']);
+  const metas = ['after', 'before'].map((v) => JSON.parse(fs.readFileSync(path.join(out, 'e2e-order-auto', `${v}2`, 'run.json'), 'utf8')));
+  assert.deepEqual(metas[0].interaction.steps.map((s) => s.signature), metas[1].interaction.steps.map((s) => s.signature));
+  assert.equal(metas[0].interaction.targetsKey, metas[1].interaction.targetsKey);
+  assert.equal(metas[0].interaction.steps.filter((s) => s.auto).length, 2);
+});
+
 test('runner job with where=local: same Lighthouse run, non-US egress and document geo are recorded as warnings, never US', { skip: !CHROME && 'no local Chrome', timeout: 240000 }, async () => {
   const cert = makeCert(HOST);
   const server = http2.createSecureServer({ key: cert.key, cert: cert.cert, allowHTTP1: false });

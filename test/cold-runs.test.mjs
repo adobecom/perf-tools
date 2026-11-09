@@ -14,7 +14,7 @@ function fakeBrowsers() {
   return { log, launch, launched: () => next - 1 };
 }
 
-test('A/B: exactly runs x variants measured navigations, alternating, each in its own browser, no warm-up', async () => {
+test('A/B: counterbalanced by pair index, each in its own browser, no warm-up', async () => {
   const { log, launch, launched } = fakeBrowsers();
   const navs = [];
   const results = await measureCold({
@@ -27,7 +27,7 @@ test('A/B: exactly runs x variants measured navigations, alternating, each in it
       return { name, i };
     },
   });
-  assert.deepEqual(navs.map((n) => `${n.name}${n.i}`), ['before1', 'after1', 'before2', 'after2', 'before3', 'after3']);
+  assert.deepEqual(navs.map((n) => `${n.name}${n.i}`), ['before1', 'after1', 'after2', 'before2', 'before3', 'after3']);
   assert.ok(navs.every((n) => n.i >= 1 && n.attempt === 1), 'no run index 0 (warm-up)');
   assert.equal(launched(), 6, 'one browser per measured run');
   assert.equal(new Set(navs.map((n) => n.browser)).size, 6);
@@ -107,9 +107,38 @@ test('paired matrix job: from=runs measures exactly one before/after pair with t
   const { launch, launched } = fakeBrowsers();
   const navs = [];
   const results = await measureCold({ names: ['before', 'after'], runs: 2, from: 2, launch, measure: async (b, name, i) => { navs.push(`${name}${i}`); return i; } });
-  assert.deepEqual(navs, ['before2', 'after2']);
+  assert.deepEqual(navs, ['after2', 'before2']);
   assert.equal(launched(), 2);
   assert.deepEqual(results, { before: [2], after: [2] });
   await assert.rejects(measureCold({ names: ['after'], runs: 2, from: 3, launch, measure: async () => 1 }), /invalid first run index/);
   await assert.rejects(measureCold({ names: ['after'], runs: 2, from: 0, launch, measure: async () => 1 }), /invalid first run index/);
+});
+
+test('matrix pairs use their global index, not their local start; even counts balance exactly', async () => {
+  const names = ['before', 'after'];
+  const firsts = [];
+  for (let pair = 1; pair <= 6; pair += 1) {
+    const { launch, launched } = fakeBrowsers();
+    const seen = [];
+    await measureCold({
+      names, from: pair, runs: pair, attempts: 1, launch,
+      measure: async (browser, name) => { seen.push(name); return name; },
+    });
+    assert.deepEqual(seen, pair % 2 ? ['before', 'after'] : ['after', 'before']);
+    assert.equal(launched(), 2);
+    firsts.push(seen[0]);
+  }
+  assert.equal(firsts.filter((name) => name === 'before').length, 3);
+  assert.deepEqual(names, ['before', 'after'], 'the canonical variant list is never mutated');
+});
+
+test('baseline-dependent pairs keep baseline first without additional discovery loads', async () => {
+  const { launch, launched } = fakeBrowsers();
+  const seen = [];
+  await measureCold({
+    names: ['before', 'after'], runs: 2, from: 2, baselineFirst: true, launch,
+    measure: async (browser, name) => { seen.push(name); return name; },
+  });
+  assert.deepEqual(seen, ['before', 'after']);
+  assert.equal(launched(), 2);
 });

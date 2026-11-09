@@ -292,6 +292,8 @@ function normalizePair(raw, i) {
     complete: !!(before && after),
     job: job && {
       runAttempt: int(job.runAttempt),
+      order: Array.isArray(job.order) && job.order.every((n) => typeof n === 'string') && ['before,after', 'after,before', 'after'].includes(job.order.join(',')) ? [...job.order] : null,
+      orderPolicy: ['counterbalanced', 'baseline-first-contextual-hints', 'single-variant'].includes(job.orderPolicy) ? job.orderPolicy : null,
       chromeVersion: str(job.chromeVersion, 80),
       egressCountry: str(job.egressCountry, 8)?.toUpperCase() ?? null,
       benchmarkIndex: num(job.benchmarkIndex),

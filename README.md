@@ -207,7 +207,9 @@ Every design choice in `perf-ab` is aimed at eliminating measurement bias betwee
    - Because throttling happens inside Chrome rather than via post-hoc Lantern simulation, the trace timestamps, network waterfall, and Lighthouse audits all describe the exact same throttled page load.
    - `profileKey` (e.g. `lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile`) locks the full preset so runs with different profiles are never mixed.
 2. **Paired Matrix & Cold-Run Policy**
-   - `-n N` dispatches `N` parallel GitHub Actions jobs. Each job measures **one complete pair** (`before` then `after`) on the **same runner VM**, so hardware differences between GitHub runners cancel out within each pair's delta.
+   - `-n N` dispatches `N` parallel GitHub Actions jobs. Each job measures **one complete pair** on the **same runner VM**. Odd pair indexes run `before` then `after`; even indexes reverse the order. The same schedule applies locally. Even pair counts balance first/second position exactly; odd counts differ by one. This reduces order bias but does not eliminate changing CPU availability.
+   - Country/locale-specific preload hints must resolve against the measured baseline's requests, so those campaigns remain baseline-first and emit `fixed-order-contextual-hints` (no additional discovery loads). Static preload bursts are counterbalanced normally. Auto interactions discover targets in the first variant and replay the exact targets in the second.
+   - Actual execution order and the ordering policy are recorded in `pairs[].job.order` / `.orderPolicy`, per-load `run.json`, and the Results UI.
    - If the Lighthouse CPU benchmark index (`benchmarkIndexes.before` / `.after`) varies by `1.2x` or more within a pair or across jobs, `results.json` surfaces an `environment-variability` warning instead of silently dropping slow runs.
    - **Every load is cold:** fresh Chrome process, empty temporary user profile, fresh proxy instance, and zero warm-up runs. Runs whose initial document came from cache are rejected.
 3. **Realistic HTTP/2 Measuring Proxy**

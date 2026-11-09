@@ -3,6 +3,7 @@
 #
 # Exactly one of: spec (encoded by the perf-ab CLI), config (repository experiments/**.json) or url (one page,
 # unchanged). runs = N gives N parallel matrix jobs; each measures ONE complete cold before/after pair on its own VM.
+# Odd pairs run before/after, even pairs after/before; contextual preload hints require baseline-first resolution.
 # The aggregate job combines complete pairs only (medians + median per-pair delta) into perf-ab-<request>.
 # All inputs reach scripts only through environment variables and are validated by lib/pagespeed/prepare.mjs.
 # A config or spec with "interactions" (declarative steps) adds INP: every cold run is then a Lighthouse user flow

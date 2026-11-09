@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // perf-ab: before/after page-load comparison. One measurement: real Lighthouse 13.6.0, mobile profile with real
-// DevTools throttling (Slow 4G + 4x CPU, see lib/pagespeed/profile.mjs), alternating cold runs (fresh Chrome + empty profile per attempt, no warm-ups). Only the location
+// DevTools throttling (Slow 4G + 4x CPU, see lib/pagespeed/profile.mjs), counterbalanced cold pairs (fresh Chrome + empty profile per attempt, no warm-ups). Only the location
 // differs: by default the perf-ab GitHub Actions workflow (verified-US egress, fail-closed); with --local the same job
 // runs on this machine, pairs sequentially, and is recorded as local in results.json.
 import fs from 'node:fs';
@@ -46,7 +46,8 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
   throttling: Slow 4G (562.5 ms request latency, 1474.56 kb/s down, 675 kb/s up) and 4x CPU slowdown, applied by Chrome
   itself, so the trace, the metrics and the audits describe the same throttled load.
   Default location: GitHub Actions, the adobecom/perf-tools "perf-ab" workflow with
-  VERIFIED US egress (fails closed if the egress is non-US or unknown). Runs alternate before/after; every
+  VERIFIED US egress (fails closed if the egress is non-US or unknown). Odd pairs run before/after, even pairs after/before;
+  contextual preload hints require baseline-first order (reported explicitly). Every
   run is cold (new Chrome process, empty temporary profile, no warm-ups). A failed run is not retried: it fails and
   the error is reported (the attempt is kept as a rejected diagnostic). Requires gh authenticated with Actions write access to --repo.
   --local runs the identical Lighthouse job on this machine, with pairs measured sequentially. Set CHROME_PATH or
@@ -200,6 +201,7 @@ export async function main(argv = process.argv.slice(2)) {
   console.log(`\nLighthouse mobile, DevTools throttling (Lighthouse ${results.lighthouseVersion}, Chrome ${results.chromeVersion}), ${place}, ${results.samples?.pairs ?? pairs.length}/${results.samples?.requested ?? results.runsPerVariant} complete cold pair(s)`);
   for (const p of pairs) {
     const j = p.job ? ` [${p.job.chromeVersion ?? 'Chrome ?'}${p.job.runAttempt != null ? `, attempt ${p.job.runAttempt}` : ''}]` : '';
+    if (p.job?.order?.length) console.log(`  pair${p.index} order: ${p.job.order.join(' -> ')} (${p.job.orderPolicy ?? 'recorded'})`);
     const bench = (n) => (p.job?.benchmarkIndexes && n in p.job.benchmarkIndexes ? ` [benchmark ${p.job.benchmarkIndexes[n] ?? '?'}]` : '');
     for (const n of ['before', 'after', 'delta']) if (p[n]) console.log(`  pair${p.index} ${n.padEnd(6)} ${line(p[n])}${bench(n)}${n === 'before' || (n === 'after' && !p.before) ? j : ''}`);
   }
