@@ -1,0 +1,172 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42597673739-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-09T10:00:29.000Z",
+  "finishedAt": "2026-11-09T10:03:40.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/creativecloud/plans.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 1,
+    "before": 1,
+    "after": 1,
+    "pairs": 1,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 7930.766,
+      "LCP": 7930.766,
+      "SI": 12538,
+      "CLS": 0.02192678961839356,
+      "performance": null,
+      "TBT": null
+    },
+    "after": {
+      "FCP": 7255.697,
+      "LCP": 7255.697,
+      "SI": 11728,
+      "CLS": 0.02192678961839356,
+      "performance": null,
+      "TBT": null
+    },
+    "delta": {
+      "FCP": -675.0689999999995,
+      "LCP": -675.0689999999995,
+      "SI": -810,
+      "CLS": 0,
+      "performance": null,
+      "TBT": null
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42597673739/attempts/1",
+    "sha": "4481d9a341069539454ade544303ccbf0d8b7682"
+  },
+  "detailPath": "data/runs/42597673739-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "FCP": 7930.766,
+        "LCP": 7930.766,
+        "SI": 12538,
+        "CLS": 0.02192678961839356
+      },
+      "after": {
+        "FCP": 7255.697,
+        "LCP": 7255.697,
+        "SI": 11728,
+        "CLS": 0.02192678961839356
+      },
+      "delta": {
+        "FCP": -675.0689999999995,
+        "LCP": -675.0689999999995,
+        "SI": -810,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1945.5,
+          "after": 2440
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "sources"
+    ],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [
+      "/libs/c2/blocks/rich-content/rich-content.js"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/milo",
+        "number": 7129,
+        "baseRef": "stage",
+        "headRef": "plans-page-perf",
+        "baseSha": "32f75b3057c38e1db73196d00319869193fd8151",
+        "headSha": "11537efd35d7da383207c540d9ac50cd51968f39",
+        "mergeBaseSha": "c205e24edfec29d4e6916578f01bcf9206a729d5",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/libs/c2/blocks/rich-content/rich-content.js",
+            "previousPath": null,
+            "blobSha": "ac7921bddac3b61eaa87656a1ea77befb5079617"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/libs/c2/blocks/rich-content/rich-content.js",
+        "repo": "adobecom/milo",
+        "number": 7129,
+        "pair": 1,
+        "expectedMergeBaseSha256": "bf8177e665c34443f65ddf6f0546132d7119fe38ebf22c17d9f5e832ea9b06e7",
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1945.5,
+        "max": 2440,
+        "ratio": 1.254,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 1945.5,
+          "after": 2440,
+          "ratio": 1.254
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-milo-7129-20261109T1000-smoke",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42597673739/artifacts/13664646109",
+    "expiresAt": "2027-02-07T10:00:30.000Z",
+    "expired": false
+  }
+}
