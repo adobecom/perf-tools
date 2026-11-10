@@ -284,6 +284,11 @@ test('experiment: unknown fields, traversal, absolute files, /experienceedge hin
     assert.throws(() => loadExperiment(write('h.json', { url: 'https://adobe.com.evil.example/' })), /adobe\.com/);
     assert.throws(() => loadExperiment(write('i.json', { after: { patches: ['p.json'] } }, { 'p.json': '{"replacements":[]}' })), /expected \{"replacements"/);
     assert.throws(() => loadExperiment(write('j.json', { runs: 11 })), /runs/);
+    const prelink = '</x/preloads/x.json>; rel=preload; as=fetch; crossorigin=anonymous';
+    const linked = loadExperiment(write('k.json', { after: { linkHeader: { remove: ['*'], add: [prelink] } } }));
+    assert.deepEqual(linked.names, ['before', 'after']);
+    assert.deepEqual(linked.variants.after.linkHeader, { remove: ['*'], add: [prelink] });
+    assert.throws(() => loadExperiment(write('l.json', { after: { linkHeader: { add: ['/x/preloads/x.json'] } } })), /linkHeader\.add entries must each be one Link entry/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

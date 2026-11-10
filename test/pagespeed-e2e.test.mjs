@@ -11,6 +11,7 @@ import { brotliCompressSync, constants } from 'node:zlib';
 import { createHash } from 'node:crypto';
 import { runJob, makeCert, scanForKeys } from '../lib/pagespeed/job.mjs';
 import { interactionsKey } from '../lib/pagespeed/interactions.mjs';
+import { manifestPath, prelinkEntry } from '../lib/prelink.mjs';
 
 const CHROME = [process.env.CHROME_PATH, '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable']
   .find((p) => p && fs.existsSync(p));
@@ -376,6 +377,82 @@ test('runner job with where=local: same Lighthouse run, non-US egress and docume
   }
 });
 
+test('runner job: Link header edits remove, replace and add entries of the served after document, guarded', { skip: !CHROME && 'no local Chrome', timeout: 240000 }, async () => {
+  const cert = makeCert(HOST);
+  const production = '</app.js>; rel=modulepreload, <https://www.adobe.com/page>; rel="canonical"';
+  const server = http2.createSecureServer({ key: cert.key, cert: cert.cert, allowHTTP1: false });
+  server.on('stream', (stream, h) => {
+    const p = h[':path'];
+    const send = (type, body, extra = {}) => {
+      stream.respond({ ':status': 200, 'content-type': type, 'content-encoding': 'br', ...extra });
+      stream.end(br(body));
+    };
+    if (p === '/page') return send('text/html; charset=utf-8', page(1), { 'server-timing': 'geo; desc=US', link: production });
+    if (p === '/app.js') return send('text/javascript', 'document.getElementById("cards").textContent = "ok";');
+    if (p === '/preloads/page.json') return send('application/json', '{"data":[]}');
+    stream.respond({ ':status': 404 });
+    return stream.end();
+  });
+  await new Promise((r) => { server.listen(0, '127.0.0.1', r); });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-e2e-link-'));
+  const jobTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-e2e-link-tmp-'));
+  const prevTmp = process.env.TMPDIR;
+  process.env.TMPDIR = jobTmp;
+  const url = `https://${HOST}/page`;
+  const job = (requestId, linkHeader) => runJob({
+    spec: { version: 1, runs: 1, names: ['before', 'after'], expect: {}, variants: { before: { url }, after: { url, linkHeader } } },
+    requestId, out: path.join(out, requestId), where: 'local', attempts: 1,
+    fetchJson: async () => ({ country: 'US', country_iso: 'US', country_code: 'US' }),
+    upstreamOrigin: `https://127.0.0.1:${server.address().port}`, upstreamOptions: { rejectUnauthorized: false },
+    dnsLookup: fakeDns, chromePath: CHROME, log: () => {}, warn: () => {},
+  });
+  const runDir = (results, variant) => path.join(out, results.requestId, results.runs.find((r) => r.variant === variant).dir);
+  const documentLink = (dir) => Object.entries(JSON.parse(fs.readFileSync(path.join(dir, 'devtoolslog.json'), 'utf8'))
+    .find((e) => e.method === 'Network.responseReceived' && e.params.type === 'Document').params.response.headers)
+    .find(([k]) => k.toLowerCase() === 'link')?.[1];
+  try {
+    const prelink = '</preloads/page.json>; rel=preload; as=fetch; crossorigin=anonymous';
+    const linked = await job('e2e-link-1', {
+      remove: ['https://www.adobe.com/page'], replace: ['</app.js>; rel=modulepreload; fetchpriority=high'], add: [prelink],
+    });
+    assert.equal(linked.status, 'ok', linked.error);
+    assert.equal(linked.hints, null);
+    assert.deepEqual(linked.edits.after.linkHeader, true);
+    assert.deepEqual(linked.edits.before.linkHeader, false);
+    const served = `</app.js>; rel=modulepreload; fetchpriority=high, ${prelink}`;
+    const { edits: requested, ...linkReport } = linked.linkHeader;
+    assert.deepEqual(requested.add, [prelink]);
+    assert.deepEqual(linkReport, {
+      production,
+      served,
+      removed: ['<https://www.adobe.com/page>; rel="canonical"'],
+      replaced: [{ from: '</app.js>; rel=modulepreload', to: '</app.js>; rel=modulepreload; fetchpriority=high' }],
+      added: [prelink],
+    });
+    // Only the after document's header changes; before is production.
+    assert.equal(documentLink(runDir(linked, 'after')), served);
+    assert.equal(documentLink(runDir(linked, 'before')), production);
+    const afterRun = JSON.parse(fs.readFileSync(path.join(runDir(linked, 'after'), 'run.json'), 'utf8'));
+    assert.deepEqual(afterRun.editedResponses, ['/page']);
+    assert.equal(afterRun.linkHeader.served, served);
+    const requests = (variant) => JSON.parse(fs.readFileSync(path.join(runDir(linked, variant), 'report.json'), 'utf8'))
+      .audits['network-requests'].details.items.map((x) => new URL(x.url).pathname);
+    assert.equal(requests('after').filter((p) => p === '/preloads/page.json').length, 1, 'the added prelink is fetched once');
+    assert.equal(requests('before').filter((p) => p === '/preloads/page.json').length, 0);
+    // Guarded: a removed URL the production header does not have fails the job instead of measuring something else.
+    const guarded = await job('e2e-link-2', { remove: ['/missing.js'] });
+    assert.equal(guarded.status, 'failed');
+    assert.equal(guarded.errorKind, 'fatal');
+    assert.match(guarded.error, /remove \/missing\.js matches no entry of the after document's Link header/);
+  } finally {
+    if (prevTmp === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = prevTmp;
+    fs.rmSync(jobTmp, { recursive: true, force: true });
+    server.close();
+    cert.cleanup();
+    fs.rmSync(out, { recursive: true, force: true });
+  }
+});
+
 // ---------- INP: interactions replayed in a Lighthouse timespan after the cold navigation ----------
 
 const inpPage = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
@@ -572,4 +649,107 @@ test('INP auto: the pass-partout finds tabs, toggles, a plain button and a modal
   assert.ok(after.metrics.INP < before.metrics.INP - 150, `after INP ${after.metrics.INP} vs before ${before.metrics.INP}`);
   assert.equal(before.interaction.slowest.step.label, 'button: Show more');
   assert.ok(results.medians.delta.INP < -150);
+});
+
+test('prelink/head.html: a prelinked manifest is fetched once and its valid rows become preloads; missing or broken manifests change nothing', { skip: !CHROME && 'no local Chrome', timeout: 300000 }, async () => {
+  const cert = makeCert(HOST);
+  const seen = [];
+  const manifest = {
+    total: 6, offset: 0, limit: 6, columns: ['rel', 'href', 'as', 'crossorigin', 'fetchpriority'], ':type': 'sheet',
+    data: [
+      { rel: 'preload', href: '/data.json', as: 'fetch', crossorigin: 'anonymous', fetchpriority: 'high' },
+      { rel: 'modulepreload', href: '/libs/utils/utils.js', as: '', crossorigin: '', fetchpriority: '' },
+      { rel: 'preload', href: `https://${HOST}/styles.css`, as: 'style', crossorigin: '', fetchpriority: '' },
+      { rel: 'preload', href: 'https://evil.example/x.js', as: 'script', crossorigin: '', fetchpriority: '' },
+      { rel: 'stylesheet', href: '/x.css', as: '', crossorigin: '', fetchpriority: '' },
+      { rel: 'preload', href: '/no-as.js', as: '', crossorigin: '', fetchpriority: '' },
+    ],
+  };
+  // Acrobat-style loader (acrobat/scripts/scripts.js loadLink): the page stays hidden until its stylesheet loads, and
+  // the stylesheet is skipped when any link[href="<its absolute URL>"] exists, whatever its rel. It waits up to 3 s for
+  // an injected style preload so that a preload carrying the absolute URL would hide the page (NO_FCP).
+  const loader = `<script type="module">
+  for (let i = 0; i < 60 && !document.querySelector('link[as="style"]'); i += 1) await new Promise((r) => setTimeout(r, 50));
+  const href = location.origin + '/styles.css';
+  if (!document.head.querySelector('link[href="' + href + '"]')) {
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.append(l);
+  }
+</script>`;
+  const html = page(3).replace('<title>Fixture plans</title>', '<title>Fixture plans</title><style>body { display: none; }</style>').replace('</head>', `${loader}</head>`);
+  const server = http2.createSecureServer({ key: cert.key, cert: cert.cert, allowHTTP1: false });
+  server.on('stream', (stream, h) => {
+    const p = h[':path'];
+    if (h['sec-fetch-dest'] !== 'document') seen.push(p);
+    const send = (type, body) => {
+      stream.respond({ ':status': 200, 'content-type': type, 'content-encoding': 'br', 'server-timing': 'geo; desc=US' });
+      stream.end(br(body));
+    };
+    if (['/drafts/page', '/drafts/missing', '/drafts/broken'].includes(p)) return send('text/html; charset=utf-8', html);
+    if (p === '/styles.css') return send('text/css', 'body { display: block; }');
+    if (p === '/app.js') return send('text/javascript', APP);
+    if (p === '/libs/utils/utils.js') return send('text/javascript', 'export const revision = "production";\n');
+    if (p === '/data.json') return send('application/json', JSON.stringify({ count: 3 }));
+    if (p === '/drafts/preloads/page.json') return send('application/json', JSON.stringify(manifest));
+    if (p === '/drafts/preloads/broken.json') return send('application/json', '{"data": [');
+    stream.respond({ ':status': 404 });
+    return stream.end();
+  });
+  await new Promise((r) => { server.listen(0, '127.0.0.1', r); });
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-e2e-prelink-'));
+  const jobTmp = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-ab-e2e-prelink-tmp-'));
+  const prevTmp = process.env.TMPDIR;
+  process.env.TMPDIR = jobTmp;
+  const headScript = fs.readFileSync(new URL('../prelink/head.html', import.meta.url), 'utf8');
+  const job = (requestId, spec) => runJob({
+    spec: { version: 1, runs: 1, expect: { counts: [{ selector: '.card', count: 3 }] }, ...spec },
+    requestId, out: path.join(out, requestId), where: 'local', attempts: 1,
+    fetchJson: async () => ({ country: 'US', country_iso: 'US', country_code: 'US' }),
+    upstreamOrigin: `https://127.0.0.1:${server.address().port}`, upstreamOptions: { rejectUnauthorized: false },
+    dnsLookup: fakeDns, chromePath: CHROME, log: () => {}, warn: () => {},
+  });
+  const sent = (results, variant, file) => JSON.parse(fs.readFileSync(path.join(out, results.requestId, results.runs.find((r) => r.variant === variant).dir, 'devtoolslog.json'), 'utf8'))
+    .filter((e) => e.method === 'Network.requestWillBeSent' && new URL(e.params.request.url).pathname === file);
+  try {
+    const url = `https://${HOST}/drafts/page`;
+    const prelinked = await job('prelink-1', {
+      names: ['before', 'after'],
+      variants: { before: { url }, after: { url, headInject: headScript, linkHeader: { add: [prelinkEntry(manifestPath('/drafts/page'))] } } },
+    });
+    assert.equal(prelinked.status, 'ok', prelinked.error);
+    assert.equal(prelinked.linkHeader.served, '</drafts/preloads/page.json>; rel=preload; as=fetch; crossorigin=anonymous');
+    // after: one manifest download (the header prelink, reused by the script's fetch); its two valid rows are
+    // script-inserted preloads that the page then consumes without a second download.
+    assert.equal(sent(prelinked, 'after', '/drafts/preloads/page.json').length, 1, 'manifest fetched once');
+    assert.equal(sent(prelinked, 'after', '/drafts/preloads/page.json')[0].params.request.isLinkPreload, true);
+    for (const file of ['/data.json', '/libs/utils/utils.js']) assert.equal(sent(prelinked, 'after', file).length, 1, `${file} fetched once`);
+    assert.equal(sent(prelinked, 'after', '/data.json')[0].params.request.isLinkPreload, true, '/data.json came from the injected preload');
+    // Chrome does not flag modulepreload requests as link preloads: the injected one is requested by the inline
+    // script together with the injected /data.json preload, not by /app.js importing it.
+    const utils = sent(prelinked, 'after', '/libs/utils/utils.js')[0].params;
+    assert.doesNotMatch(JSON.stringify(utils.initiator), /\/app\.js/);
+    assert.ok(Math.abs(utils.timestamp - sent(prelinked, 'after', '/data.json')[0].params.timestamp) < 0.05, 'requested with the other injected preload');
+    for (const file of ['/x.css', '/no-as.js']) assert.equal(sent(prelinked, 'after', file).length, 0, `${file} rejected`);
+    // The style row became a //host preload that the loader did not mistake for its stylesheet: the page painted
+    // (status ok above) and the stylesheet was downloaded once, by the preload.
+    assert.equal(sent(prelinked, 'after', '/styles.css').length, 1);
+    assert.equal(sent(prelinked, 'after', '/styles.css')[0].params.request.isLinkPreload, true);
+    assert.ok(!seen.some((p) => p.includes('evil')));
+    // before: no script, no prelink, so no manifest request and no preloads.
+    assert.equal(sent(prelinked, 'before', '/drafts/preloads/page.json').length, 0);
+    assert.equal(sent(prelinked, 'before', '/data.json')[0].params.request.isLinkPreload, undefined);
+    // A missing (404) or broken manifest leaves the page working and adds no preloads.
+    for (const [requestId, file] of [['prelink-2', 'missing'], ['prelink-3', 'broken']]) {
+      const r = await job(requestId, { names: ['after'], variants: { after: { url: `https://${HOST}/drafts/${file}`, headInject: headScript } } });
+      assert.equal(r.status, 'ok', `${file}: ${r.error}`);
+      assert.equal(sent(r, 'after', `/drafts/preloads/${file}.json`).length, 1);
+      assert.equal(sent(r, 'after', '/data.json').length, 1);
+      assert.equal(sent(r, 'after', '/data.json')[0].params.request.isLinkPreload, undefined, `${file}: no injected preload`);
+    }
+  } finally {
+    if (prevTmp === undefined) delete process.env.TMPDIR; else process.env.TMPDIR = prevTmp;
+    fs.rmSync(jobTmp, { recursive: true, force: true });
+    server.close();
+    cert.cleanup();
+    fs.rmSync(out, { recursive: true, force: true });
+  }
 });

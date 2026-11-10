@@ -8,7 +8,7 @@ import net from 'node:net';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import {
-  isAdobeHost, assertTargetUrl, isPublicAddress, assertPublicHost, publicOnlyLookup, mainFrameDocumentUrls, assertMainFrameTargets,
+  isAdobeHost, isAemLiveHost, isTargetHost, assertTargetUrl, isPublicAddress, assertPublicHost, publicOnlyLookup, mainFrameDocumentUrls, assertMainFrameTargets,
 } from '../lib/target.mjs';
 import { runJob, makeCert } from '../lib/pagespeed/job.mjs';
 import { startProxy } from '../lib/pagespeed/proxy.mjs';
@@ -52,6 +52,35 @@ test('target: accepts https *.adobe.com pages only', () => {
   }
   assert.equal(isAdobeHost('adobe.com.evil.example'), false);
   assert.equal(isAdobeHost('www.adobe.com'), true);
+});
+
+test('target: accepts <ref>--<repo>--adobecom.aem.live pages, nothing else on aem.live', () => {
+  for (const ok of ['https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans', 'https://mwpw-214935--milo--adobecom.aem.live/libs/x.js', 'https://MAIN--DA-DC--ADOBECOM.aem.live/?parallel-sections=1']) {
+    assert.doesNotThrow(() => assertTargetUrl(ok), ok);
+  }
+  for (const bad of [
+    'https://main--da-dc--someoneelse.aem.live/',
+    'https://main--da-dc--adobecom.aem.page/',
+    'https://da-dc--adobecom.aem.live/',
+    'https://main--da-dc--adobecom.aem.live.evil.example/',
+    'https://x.main--da-dc--adobecom.aem.live/',
+    'https://main----adobecom.aem.live/',
+    'https://main--da--dc--adobecom.aem.live/',
+    'https://-main--da-dc--adobecom.aem.live/',
+    'https://main--da-dc--adobecom.aem.live:8443/',
+    'http://main--da-dc--adobecom.aem.live/',
+    'https://user@main--da-dc--adobecom.aem.live/',
+    'https://evil-adobecom.aem.live/',
+    'https://aem.live/',
+  ]) {
+    assert.throws(() => assertTargetUrl(bad), (e) => e.fatal === true && e.code === 'ETARGET', bad);
+  }
+  assert.throws(() => assertTargetUrl('https://evil.example/'), /not a \*\.adobe\.com or \*--adobecom\.aem\.live benchmark target/);
+  assert.equal(isAemLiveHost('main--milo--adobecom.aem.live'), true);
+  assert.equal(isAemLiveHost('main--milo--adobecom.aem.page'), false);
+  assert.equal(isTargetHost('www.adobe.com'), true);
+  assert.equal(isTargetHost('main--da-dc--adobecom.aem.live'), true);
+  assert.equal(isTargetHost('main--da-dc--other.aem.live'), false);
 });
 
 test('target: loopback and plain-http pages are never accepted', () => {

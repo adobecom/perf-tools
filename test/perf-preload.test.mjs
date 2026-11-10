@@ -58,14 +58,14 @@ test('--exclude typekit.net still removes the allowed typekit hosts; other third
   assert.ok(!out.some((l) => l.includes('typekit.net') || l.includes('cdn.example.net')));
 });
 
-test('--all-origins: crossorigin follows the consumer request mode, same-origin stylesheets are absolute', () => {
+test('--all-origins: crossorigin follows the consumer request mode, stylesheets are protocol-relative', () => {
   assert.deepEqual(generate('--all-origins'), [
     '<link rel="modulepreload" href="/acrobat/scripts/scripts.js">',
-    '<link rel="preload" href="https://www.adobe.com/libs/c2/styles/styles.css" as="style">',
-    '<link rel="preload" href="https://www.adobe.com/acrobat/styles/styles.css?a=1&amp;b=&quot;2&quot;" as="style">',
+    '<link rel="preload" href="//www.adobe.com/libs/c2/styles/styles.css" as="style">',
+    '<link rel="preload" href="//www.adobe.com/acrobat/styles/styles.css?a=1&amp;b=&quot;2&quot;" as="style">',
     '<link rel="modulepreload" href="/libs/utils/utils.js">',
-    '<link rel="preload" href="https://use.typekit.net/vti0xwb.css" as="style">',
-    '<link rel="preload" href="https://p.typekit.net/p.css?s=1&amp;k=vti0xwb&amp;ht=tk" as="style">',
+    '<link rel="preload" href="//use.typekit.net/vti0xwb.css" as="style">',
+    '<link rel="preload" href="//p.typekit.net/p.css?s=1&amp;k=vti0xwb&amp;ht=tk" as="style">',
     '<link rel="preload" href="https://use.typekit.net/af/abc/l?primer=7cdc&amp;fvd=n4&amp;v=3" as="font" crossorigin>',
     '<link rel="modulepreload" href="https://cdn.example.net/lib/module.js" crossorigin>',
     '<link rel="preload" href="https://cdn.example.net/lib/classic.js" as="script" crossorigin>',
@@ -74,21 +74,21 @@ test('--all-origins: crossorigin follows the consumer request mode, same-origin 
   ]);
 });
 
-test('same site plus *.typekit.net by default; stylesheet preloads never match a relative link[href] lookup', () => {
+test('same site plus *.typekit.net by default; stylesheet preloads never match a relative or absolute link[href] lookup', () => {
   const lines = generate();
   assert.deepEqual(lines, [
     '<link rel="modulepreload" href="/acrobat/scripts/scripts.js">',
-    '<link rel="preload" href="https://www.adobe.com/libs/c2/styles/styles.css" as="style">',
-    '<link rel="preload" href="https://www.adobe.com/acrobat/styles/styles.css?a=1&amp;b=&quot;2&quot;" as="style">',
+    '<link rel="preload" href="//www.adobe.com/libs/c2/styles/styles.css" as="style">',
+    '<link rel="preload" href="//www.adobe.com/acrobat/styles/styles.css?a=1&amp;b=&quot;2&quot;" as="style">',
     '<link rel="modulepreload" href="/libs/utils/utils.js">',
-    '<link rel="preload" href="https://use.typekit.net/vti0xwb.css" as="style">',
-    '<link rel="preload" href="https://p.typekit.net/p.css?s=1&amp;k=vti0xwb&amp;ht=tk" as="style">',
+    '<link rel="preload" href="//use.typekit.net/vti0xwb.css" as="style">',
+    '<link rel="preload" href="//p.typekit.net/p.css?s=1&amp;k=vti0xwb&amp;ht=tk" as="style">',
     '<link rel="preload" href="https://use.typekit.net/af/abc/l?primer=7cdc&amp;fvd=n4&amp;v=3" as="font" crossorigin>',
     '<link rel="preload" href="/acrobat/placeholders.json" as="fetch" crossorigin>',
     '<link rel="preload" href="/acrobat/media_123.png?width=750&amp;format=webp" as="image" fetchpriority="high">',
   ]);
   for (const l of lines.filter((x) => x.includes('as="style"'))) {
-    assert.doesNotMatch(l, /href="\//);
+    assert.match(l, /href="\/\/[^/]/, 'protocol-relative: neither the path nor the https URL a loader uses');
     assert.doesNotMatch(l, /crossorigin/);
   }
 });
@@ -210,7 +210,11 @@ function generateFrom(traces, ...flags) {
     });
     const r = spawnSync(process.execPath, [CLI, DOC, ...from, '-o', dir, ...flags], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr);
-    return { ...r, lines: fs.readFileSync(path.join(dir, 'acrobat--plans.html'), 'utf8').trim().split('\n').filter(Boolean) };
+    return {
+      ...r,
+      lines: fs.readFileSync(path.join(dir, 'acrobat--plans.html'), 'utf8').trim().split('\n').filter(Boolean),
+      manifest: JSON.parse(fs.readFileSync(path.join(dir, 'acrobat--plans.json'), 'utf8')),
+    };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -220,7 +224,7 @@ const A = 'https://www.adobe.com';
 const MAS = `${A}/mas/io/fragment?id=33a8&api_key=k&locale=en_US&country=CH`;
 
 test('GET JSON/HTML fetches and script as="fetch" preloads recorded as Other become fetch preloads', () => {
-  const { lines, stdout } = generateFrom([dataTrace([
+  const { lines, stdout, manifest } = generateFrom([dataTrace([
     { url: `${A}/dc-shared/placeholders.json`, fetchType: 'link', preload: true },
     { url: `${A}/libs/commerce/checkout-link.json` },
     { url: `${A}/dc-shared/fragments/offer.plain.html`, mime: 'text/html; charset=utf-8'.split(';')[0] },
@@ -236,6 +240,11 @@ test('GET JSON/HTML fetches and script as="fetch" preloads recorded as Other bec
   ]);
   assert.match(stdout, /Fetch !\s+https:\/\/www\.adobe\.com\/mas\/io\/fragment/);
   assert.match(stdout, /country\/locale specific URL: serve this link only/);
+  // The manifest has the same links minus the country/locale specific one (it is served to every visitor).
+  assert.deepEqual(manifest.data.map((r) => r.href), ['/dc-shared/placeholders.json', '/libs/commerce/checkout-link.json', '/dc-shared/fragments/offer.plain.html', '/api/data.json']);
+  assert.deepEqual(manifest.data[0], { rel: 'preload', href: '/dc-shared/placeholders.json', as: 'fetch', crossorigin: 'anonymous', fetchpriority: '' });
+  assert.match(stdout, /Manifest \(4 rows, 1 country\/locale specific link\(s\) left out\)/);
+  assert.match(stdout, /publish as \/acrobat\/preloads\/plans\.json on https:\/\/www\.adobe\.com; prelink: <\/acrobat\/preloads\/plans\.json>; rel=preload; as=fetch; crossorigin=anonymous/);
 });
 
 test('POST, beacons, non-data MIME, failed, navigation-like and non-preload Other requests never become preloads', () => {
@@ -292,7 +301,7 @@ test('the consumer request decides the preload type when a script preload of the
   t.traceEvents.push({ name: 'v8.compileModule', ts: 500000, args: { data: { url } } });
   assert.deepEqual(generateFrom([t]).lines, [
     '<link rel="modulepreload" href="/libs/blocks/merch/merch.js">',
-    '<link rel="preload" href="https://www.adobe.com/libs/blocks/merch/merch.css" as="style">',
+    '<link rel="preload" href="//www.adobe.com/libs/blocks/merch/merch.css" as="style">',
   ]);
 });
 
@@ -312,4 +321,38 @@ test('/experienceedge and /experienceedge/* are never preloaded, whatever the me
     '<link rel="preload" href="/experienceedge-docs/a.json" as="fetch" crossorigin>',
     '<link rel="preload" href="/federal/experienceedge/a.json" as="fetch" crossorigin>',
   ]);
+});
+
+test('an adobecom aem.live page keeps its Milo libs from main--milo--adobecom.aem.live, not other aem.live owners', () => {
+  const live = 'https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans';
+  const milo = 'https://main--milo--adobecom.aem.live/libs/utils/utils.js';
+  const t = dataTrace([
+    { url: milo, type: 'Script', fetchType: 'script', mime: 'text/javascript' },
+    { url: 'https://main--da-dc--adobecom.aem.live/acrobat/scripts/scripts.js', type: 'Script', fetchType: 'script', mime: 'text/javascript' },
+    { url: 'https://main--x--someoneelse.aem.live/x.js', type: 'Script', fetchType: 'script', mime: 'text/javascript' },
+    { url: 'https://www.adobe.com/libs/other.js', type: 'Script', fetchType: 'script', mime: 'text/javascript' },
+    { url: 'https://main--da-dc--adobecom.aem.live/dc-shared/placeholders.json' },
+  ]);
+  t.traceEvents[0].args.data.documentLoaderURL = live;
+  for (const url of [milo, 'https://main--da-dc--adobecom.aem.live/acrobat/scripts/scripts.js']) t.traceEvents.push({ name: 'v8.compileModule', ts: 900000, args: { data: { url } } });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-preload-test-'));
+  try {
+    const f = path.join(dir, 't1.json');
+    fs.writeFileSync(f, JSON.stringify(t));
+    const r = spawnSync(process.execPath, [CLI, live, '--from', f, '-o', dir], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(fs.readFileSync(path.join(dir, 'drafts--ilyas--acrobat--plans.html'), 'utf8').trim().split('\n'), [
+      `<link rel="modulepreload" href="${milo}" crossorigin>`,
+      '<link rel="modulepreload" href="/acrobat/scripts/scripts.js">',
+      '<link rel="preload" href="/dc-shared/placeholders.json" as="fetch" crossorigin>',
+    ]);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, 'drafts--ilyas--acrobat--plans.json'), 'utf8')).data, [
+      { rel: 'modulepreload', href: milo, as: '', crossorigin: 'anonymous', fetchpriority: '' },
+      { rel: 'modulepreload', href: '/acrobat/scripts/scripts.js', as: '', crossorigin: '', fetchpriority: '' },
+      { rel: 'preload', href: '/dc-shared/placeholders.json', as: 'fetch', crossorigin: 'anonymous', fetchpriority: '' },
+    ]);
+    assert.match(r.stdout, /publish as \/drafts\/ilyas\/acrobat\/preloads\/plans\.json on https:\/\/main--da-dc--adobecom\.aem\.live/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

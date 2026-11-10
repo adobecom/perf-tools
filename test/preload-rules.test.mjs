@@ -112,7 +112,7 @@ test('Link header preloads (initiator "other") are still generated, marked ^; sc
   assert.deepEqual(hrefs(r.links), [
     '/libs/utils/utils.js',
     '/libs/deps/imslib.min.js',
-    'https://www.adobe.com/libs/c2/styles/styles.css',
+    '//www.adobe.com/libs/c2/styles/styles.css',
     '/libs/blocks/a/a.js',
   ]);
   assert.match(r.stdout, /Script \^ +https:\/\/www\.adobe\.com\/libs\/utils\/utils\.js/);

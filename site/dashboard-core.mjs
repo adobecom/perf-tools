@@ -52,6 +52,7 @@ const ERROR_CODE = /^[a-z0-9][a-z0-9-]{0,39}$/;
 export const CHANGE_KINDS = {
   query: 'Query parameters',
   headInject: 'Injected head snippet',
+  linkHeader: 'Link header edits',
   patches: 'Source patches',
   sources: 'Pinned PR source files',
 };
@@ -90,8 +91,8 @@ function time(v) {
 
 // ---------------------------------------------------------------- URL safety
 
-// External links: https only, no credentials or port, and only this repository on github.com or an
-// adobe.com subdomain (the benchmark target policy). Anything else is shown as plain text.
+// External links: https only, no credentials or port, and only this repository on github.com, an adobe.com
+// subdomain or an adobecom aem.live host (the benchmark target policy). Anything else is shown as plain text.
 export function safeExternalUrl(value) {
   if (typeof value !== 'string' || value.length > 2048) return null;
   let u;
@@ -103,6 +104,7 @@ export function safeExternalUrl(value) {
     return /^\/adobecom\/(?:milo|mas)\/pull\/[1-9][0-9]*$/.test(u.pathname) ? u.href : null;
   }
   if (host === 'adobe.com' || host.endsWith('.adobe.com')) return u.href;
+  if (/^[a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*--adobecom\.aem\.live$/.test(host)) return u.href;
   return null;
 }
 

@@ -16,7 +16,7 @@ import { encodeSpec, decodeSpec, validateSpec, MAX_SPEC_CHARS } from '../lib/pag
 import { resolvedProfile, lighthouseConfig, EXPECTED } from '../lib/pagespeed/profile.mjs';
 import { CPU_SLOWDOWN_MULTIPLIER } from '../lib/pagespeed/stats.mjs';
 import {
-  injectIntoHead, stripPreloadLinks, applyPatches, resolveContextualHints, hasContextualHints,
+  injectIntoHead, stripPreloadLinks, applyPatches, resolveContextualHints, hasContextualHints, applyLinkHeaderEdits,
 } from '../lib/pagespeed/transforms.mjs';
 import { runRemote } from '../lib/pagespeed/remote.mjs';
 import { runJob, makeCert, scanForKeys, extractMetrics, median } from '../lib/pagespeed/job.mjs';
@@ -468,6 +468,16 @@ test('CLI spec: unchanged URL measures one variant; changes give before=producti
   assert.throws(() => buildSpec(cliOpts({ 'mas-pr': '0' }), page), /positive PR number/);
   assert.throws(() => buildSpec(cliOpts({ runs: '0' }), page), /--runs/);
   assert.throws(() => buildSpec(cliOpts({ after: 'x' }), page), /together/);
+  const link = buildSpec(cliOpts({ 'link-remove': ['*'], 'link-replace': ['</libs/b.js>; rel=modulepreload'], 'link-add': ['</acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous'] }), page);
+  assert.deepEqual(link.names, ['before', 'after']);
+  assert.deepEqual(link.variants.before, { url: page });
+  assert.deepEqual(link.variants.after, {
+    url: page,
+    linkHeader: { remove: ['*'], replace: ['</libs/b.js>; rel=modulepreload'], add: ['</acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous'] },
+  });
+  assert.deepEqual(buildSpec(cliOpts({ 'link-add': ['</x.json>; rel=preload; as=fetch'] }), page).variants.after.linkHeader, { add: ['</x.json>; rel=preload; as=fetch'] });
+  assert.throws(() => buildSpec(cliOpts({ 'link-add': [true] }), page), /--link-add needs a value/);
+  assert.throws(() => buildSpec(cliOpts({ 'link-add': ['/x.json'] }), page), /one Link entry/);
 });
 
 test('CLI: Actions is the default location, --local opts into the shared Lighthouse job, and legacy flags are gone', async () => {
@@ -485,6 +495,8 @@ test('CLI: Actions is the default location, --local opts into the shared Lightho
   assert.match(stdout, /Default location: GitHub Actions/);
   assert.match(stdout, /--local runs the identical Lighthouse job/);
   assert.match(stdout, /local results are not comparable with Actions results/);
+  for (const flag of ['--link-add <entry>', '--link-remove <url\\|\\*>', '--link-replace <entry>']) assert.match(stdout, new RegExp(flag));
+  await assert.rejects(run(node, [cli, '--config', 'experiments/x.json', '--link-add', '</x.json>; rel=preload']), (e) => e.code === 1 && /remove --link-add/.test(e.stderr));
 });
 
 test('perf-preload: exposes the same local location switch and rejects removed local DevTools options', async () => {
@@ -505,6 +517,69 @@ test('stripPreloadLinks: preload and modulepreload entries are unset, everything
   assert.deepEqual(stripPreloadLinks('</a.js>; rel=preload'), { value: null, removed: ['</a.js>; rel=preload'] });
   assert.deepEqual(stripPreloadLinks(undefined), { value: null, removed: [] });
   assert.deepEqual(stripPreloadLinks('<https://x/>; rel=preconnect'), { value: '<https://x/>; rel=preconnect', removed: [] });
+});
+
+const PLANS = 'https://www.adobe.com/acrobat/plans.html';
+const PRELINK = '</acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous';
+
+test('Link header edits: remove, replace and add by resolved target URL, guarded like patches', () => {
+  const header = '</libs/utils/utils.js>;rel=preload;as=script;crossorigin=anonymous, </libs/martech/martech.js>;rel=preload;as=script;crossorigin=anonymous, <https://www.adobe.com/acrobat/plans.html>; rel="canonical"';
+  const r = applyLinkHeaderEdits(header, {
+    remove: ['https://www.adobe.com/libs/martech/martech.js'],
+    replace: ['</libs/utils/utils.js>; rel=modulepreload'],
+    add: [PRELINK],
+  }, PLANS);
+  assert.deepEqual(r.removed, ['</libs/martech/martech.js>;rel=preload;as=script;crossorigin=anonymous']);
+  assert.deepEqual(r.replaced, [{ from: '</libs/utils/utils.js>;rel=preload;as=script;crossorigin=anonymous', to: '</libs/utils/utils.js>; rel=modulepreload' }]);
+  assert.deepEqual(r.added, [PRELINK]);
+  assert.equal(r.value, `</libs/utils/utils.js>; rel=modulepreload, <https://www.adobe.com/acrobat/plans.html>; rel="canonical", ${PRELINK}`);
+  // A page without a Link header gets the prelink as its only entry; removing the last entry drops the header.
+  assert.equal(applyLinkHeaderEdits(undefined, { add: [PRELINK] }, PLANS).value, PRELINK);
+  assert.equal(applyLinkHeaderEdits('</a.js>; rel=preload; as=script', { remove: ['/a.js'] }, PLANS).value, null);
+  // "*" removes every preload/modulepreload entry and keeps the rest: replacing all preloads = remove "*" + add.
+  const all = applyLinkHeaderEdits(header, { remove: ['*'], add: [PRELINK] }, PLANS);
+  assert.equal(all.removed.length, 2);
+  assert.equal(all.value, `<https://www.adobe.com/acrobat/plans.html>; rel="canonical", ${PRELINK}`);
+  for (const [value, edits, pattern] of [
+    [header, { remove: ['/libs/missing.js'] }, /remove \/libs\/missing\.js matches no entry/],
+    ['<https://x/>; rel=preconnect', { remove: ['*'] }, /remove \* matches no rel=preload\/modulepreload entry/],
+    [header, { replace: ['</libs/missing.js>; rel=preload; as=script'] }, /has 0 entries for it, expected exactly 1/],
+    ['</a.js>; rel=preload, </a.js>; rel=prefetch', { replace: ['</a.js>; rel=modulepreload'] }, /has 2 entries for it/],
+    ['</a.js>;rel=preload;as=script', { replace: ['</a.js>; rel=preload; as=script'] }, /identical to the served entry/],
+    [header, { add: ['<https://www.adobe.com/libs/utils/utils.js>; rel=modulepreload'] }, /already has an entry for it; use replace/],
+  ]) assert.throws(() => applyLinkHeaderEdits(value, edits, PLANS), (e) => e.fatal && pattern.test(e.message), JSON.stringify(edits));
+});
+
+test('spec: Link header edits are after-only single entries with https/root-relative targets and no conflicts', () => {
+  const withEdits = (linkHeader, extra = {}) => ({
+    version: 1, runs: 1, names: ['before', 'after'],
+    variants: { before: { url: PLANS, ...extra.before }, after: { url: PLANS, linkHeader, ...extra.after } },
+  });
+  const ok = withEdits({ remove: ['*', 'https://www.adobe.com/libs/a.js'], replace: ['</libs/b.js>; rel=modulepreload'], add: [PRELINK, '<https://use.typekit.net/x.css>; rel=preload; as=style'] });
+  assert.deepEqual(decodeSpec(encodeSpec(ok)), ok);
+  validateSpec(withEdits({ add: [PRELINK] }, { after: { headInject: '<link rel="preload" href="/a.js" as="script">' } }));
+  for (const [s, pattern] of [
+    [withEdits({ add: [PRELINK] }, { before: { linkHeader: { add: [PRELINK] } } }), /before\.linkHeader: Link header edits apply to the after variant only/],
+    [withEdits([PRELINK]), /must be an object/],
+    [withEdits({ insert: [PRELINK] }), /unknown field\(s\): insert/],
+    [withEdits({ add: [] }), /add must be a non-empty array/],
+    [withEdits({}), /at least one remove, replace or add entry/],
+    [withEdits({ add: [`${PRELINK}\r\nset-cookie: a=1`] }), /single-line strings/],
+    [withEdits({ add: ['/acrobat/preloads/plans.json'] }), /one Link entry "<url>; rel=\.\.\."/],
+    [withEdits({ add: ['</a.json>; rel=preload, </b.json>; rel=preload'] }), /one Link entry/],
+    [withEdits({ replace: ['</a.json>; as=fetch'] }), /<\/a\.json> needs a rel parameter/],
+    [withEdits({ add: ['<http://www.adobe.com/a.json>; rel=preload; as=fetch'] }), /root-relative paths or https URLs/],
+    [withEdits({ add: ['<//cdn.example/a.json>; rel=preload; as=fetch'] }), /root-relative paths or https URLs/],
+    [withEdits({ remove: ['libs/a.js'] }), /root-relative paths or https URLs/],
+    [withEdits({ remove: ['/libs/a.js', 'https://www.adobe.com/libs/a.js'] }), /remove lists https:\/\/www\.adobe\.com\/libs\/a\.js twice/],
+    [withEdits({ remove: ['*', '*'] }), /remove lists \* twice/],
+    [withEdits({ remove: ['/a.js'], replace: ['</a.js>; rel=preload; as=script'] }), /both removed and replaced/],
+    [withEdits({ replace: ['</a.js>; rel=preload; as=script'], add: ['</a.js>; rel=modulepreload'] }), /both replaced and added/],
+    [withEdits({ remove: ['*'] }, { after: { headInject: '<link rel="preload" href="/a.js" as="script">' } }), /redundant with headInject/],
+    [withEdits({ add: Array.from({ length: 101 }, (_, i) => `</p${i}.json>; rel=preload; as=fetch`) }), /at most 100 entries/],
+  ]) assert.throws(() => validateSpec(s), pattern, pattern.source);
+  assert.throws(() => validateSpec(withEdits({ add: ['<https://cdn.example/a.json?token=SECRET>; rel=preload; as=fetch'] })),
+    (e) => /must not carry credentials \(parameter "token"/.test(e.message) && !e.message.includes('SECRET'));
 });
 
 // ---------- local: GitHub token and no Actions dispatch ----------
