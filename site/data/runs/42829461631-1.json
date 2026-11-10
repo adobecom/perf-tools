@@ -1,0 +1,703 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "42829461631-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-10T13:58:28.000Z",
+  "finishedAt": "2026-11-10T14:02:17.000Z",
+  "status": "partial",
+  "conclusion": "failure",
+  "errorCode": "pairs-incomplete",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 10,
+    "before": 9,
+    "after": 9,
+    "pairs": 9,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 4537.677,
+      "LCP": 4630.271,
+      "SI": 6890,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "after": {
+      "FCP": 4543.683,
+      "LCP": 4635.734,
+      "SI": 6964,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "delta": {
+      "FCP": 37.70300000000043,
+      "LCP": 25.48700000000008,
+      "SI": 119,
+      "CLS": 0,
+      "performance": null,
+      "TBT": null
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42829461631/attempts/1",
+    "sha": "8c767b6522fa8ca89114ae794b2edfdbb5a5f0d1"
+  },
+  "detailPath": "data/runs/42829461631-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "FCP": 4894.271,
+        "LCP": 4932.606,
+        "SI": 7474,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4543.683,
+        "LCP": 4635.734,
+        "SI": 6933,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -350.58799999999974,
+        "LCP": -296.8719999999994,
+        "SI": -541,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2060,
+          "after": 2458.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "FCP": 4503.532,
+        "LCP": 4596.25,
+        "SI": 6873,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4853.386,
+        "LCP": 4900.768,
+        "SI": 7396,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 349.85400000000027,
+        "LCP": 304.51800000000003,
+        "SI": 523,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2471,
+          "after": 2011.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": 1,
+        "order": null,
+        "orderPolicy": null,
+        "chromeVersion": null,
+        "egressCountry": "CA",
+        "benchmarkIndexes": {
+          "before": null,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "FCP": 4537.677,
+        "LCP": 4630.271,
+        "SI": 6890,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4856.041,
+        "LCP": 4877.669,
+        "SI": 7365,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 318.3640000000005,
+        "LCP": 247.39800000000014,
+        "SI": 475,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2469,
+          "after": 1986
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 5,
+      "before": {
+        "FCP": 5475.678,
+        "LCP": 5490.296,
+        "SI": 8239,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4441.063,
+        "LCP": 4530.517,
+        "SI": 6601,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -1034.6149999999998,
+        "LCP": -959.7790000000005,
+        "SI": -1638,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 601,
+          "after": 3488
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 6,
+      "before": {
+        "FCP": 4518.704,
+        "LCP": 4609.878,
+        "SI": 6894,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4570.687,
+        "LCP": 4648.444,
+        "SI": 6990,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 51.983000000000175,
+        "LCP": 38.56600000000071,
+        "SI": 96,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2467.5,
+          "after": 2340
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 7,
+      "before": {
+        "FCP": 4555.198,
+        "LCP": 4631.58,
+        "SI": 6766,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4442.939,
+        "LCP": 4538.767,
+        "SI": 6922,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -112.25900000000001,
+        "LCP": -92.8130000000001,
+        "SI": 156,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 4043,
+          "after": 4156.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 8,
+      "before": {
+        "FCP": 4510.451,
+        "LCP": 4603.815,
+        "SI": 6694,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 5943.172,
+        "LCP": 5948.893,
+        "SI": 8567,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 1432.7209999999995,
+        "LCP": 1345.0780000000004,
+        "SI": 1873,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 3036.5,
+          "after": 1493
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 9,
+      "before": {
+        "FCP": 4659.972,
+        "LCP": 4725.893,
+        "SI": 7178,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4512.137,
+        "LCP": 4605.325,
+        "SI": 6964,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -147.83500000000004,
+        "LCP": -120.56800000000021,
+        "SI": -214,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2401.5,
+          "after": 2478.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 10,
+      "before": {
+        "FCP": 4465.561,
+        "LCP": 4559.883,
+        "SI": 6761,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4503.264,
+        "LCP": 4585.37,
+        "SI": 6880,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 37.70300000000043,
+        "LCP": 25.48700000000008,
+        "SI": 119,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2901,
+          "after": 2939.5
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "sources"
+    ],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [
+      "/libs/utils/utils.js"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "baseRef": "stage",
+        "headRef": "MWPW-214869-commerce-preload",
+        "baseSha": "32f75b3057c38e1db73196d00319869193fd8151",
+        "headSha": "a6a3f4779d8cdebac0b64abe28e246dd2c8a63a0",
+        "mergeBaseSha": "32f75b3057c38e1db73196d00319869193fd8151",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/libs/utils/utils.js",
+            "previousPath": null,
+            "blobSha": "829b6794d2a1d324e5cbd8aa0ecbb2117e761af8"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 1,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 2,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 3,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 4,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 5,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 6,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 7,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 8,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 9,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7136,
+        "pair": 10,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f",
+        "productionStatus": 200,
+        "status": "drift"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 601,
+        "max": 4156.5,
+        "ratio": 6.916,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 2060,
+          "after": 2458.5,
+          "ratio": 1.193
+        },
+        {
+          "pair": 2,
+          "before": 2471,
+          "after": 2011.5,
+          "ratio": 1.228
+        },
+        {
+          "pair": 4,
+          "before": 2469,
+          "after": 1986,
+          "ratio": 1.243
+        },
+        {
+          "pair": 5,
+          "before": 601,
+          "after": 3488,
+          "ratio": 5.804
+        },
+        {
+          "pair": 6,
+          "before": 2467.5,
+          "after": 2340,
+          "ratio": 1.054
+        },
+        {
+          "pair": 7,
+          "before": 4043,
+          "after": 4156.5,
+          "ratio": 1.028
+        },
+        {
+          "pair": 8,
+          "before": 3036.5,
+          "after": 1493,
+          "ratio": 2.034
+        },
+        {
+          "pair": 9,
+          "before": 2401.5,
+          "after": 2478.5,
+          "ratio": 1.032
+        },
+        {
+          "pair": 10,
+          "before": 2901,
+          "after": 2939.5,
+          "ratio": 1.013
+        }
+      ]
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7136,
+      "pair": 1,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7136,
+      "pair": 2,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7136,
+      "pair": 4,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7136,
+      "pair": 5,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7136,
+      "pair": 6,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7136,
+      "pair": 7,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7136,
+      "pair": 8,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7136,
+      "pair": 9,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7136,
+      "pair": 10,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "64320b621af6dfbb86b74fcaf4f5fef50ec8795e25bb9fe5af348a294b9cd58f"
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mwar9mly-5vy7idnk",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/42829461631/artifacts/13771660896",
+    "expiresAt": "2027-02-08T13:58:30.000Z",
+    "expired": false
+  }
+}
