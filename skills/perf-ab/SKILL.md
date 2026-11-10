@@ -23,9 +23,9 @@ Accept only error-free Lighthouse runs with finite FCP/LCP/Speed Index/CLS; scor
 
 Run async (queueing plus roughly 2-4 minutes per pair). **Run the requested count directly; default to `-n 5` when unspecified. No preliminary smoke run unless explicitly requested.** Inspect reports/render from that campaign.
 
-Store reviewed optimizations in `experiments/` (`perf-ab/experiment-v1`, see README). Run `perf-ab --config experiments/<name>.json -n 5 -o ./ab`. Actions reads the committed config on `--ref` (default `main`); it must be committed/pushed and match `origin/<ref>`. Local uses the working copy. Never combine `--config` with a URL or change options.
+Store reviewed optimizations in `experiments/` (`perf-ab/experiment-v1`, see README). Run `perf-ab --config experiments/<name>.json -n 5 -o ~/perf-ab-runs/<date>-<topic>/<name>`. Actions reads the committed config on `--ref` (default `main`); it must be committed/pushed and match `origin/<ref>`. Local uses the working copy. Never combine `--config` with a URL or change options.
 
-Output: `-o <dir>` (default `./traces`) **removes prior results there**.
+Output: `-o <dir>` (default `./traces`) **removes prior results there**. **Always pass `-o` with a directory outside the project / repository checkout** (the user's rule: runs inside the project folder are hard to gitignore): `~/perf-ab-runs/<YYYY-MM-DD>-<ticket or topic>/<campaign>`, one subdirectory per campaign. Never rely on the `./traces` default and never write runs into the perf-tools checkout or the user's project; the same applies to perf-preload output and snippets.
 - `results.json`: status/error, requested/complete/rejected samples, before/after medians, median paired delta, `pairs[]`/job metadata, `profile`/`profileKey`, `egress`, `experiment`, `github`, `hints`.
 - `pair<i>/results.json`: egress/profile, Lighthouse/Chrome versions, cold flags, runs/first document and rejections.
 - `pair<i>/<variant><i>/`: official `report.html|report.json` (share these, not replacement reports), `trace.json`, `devtoolslog.json`, `run.json` (document geo, proxy requests and encoded sizes). Interactions add `interaction/` reports/traces/logs and `flow-report.html`. Rejections use `pair<i>/rejected/<variant><i>-attempt<k>/`.
@@ -45,14 +45,14 @@ Without change options the URL is measured as-is (`after<i>/` only). With any ch
 ### a. Preload links / head.html snippet
 
 ```sh
-perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html \
-  -n 5
+perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ~/perf-ab-runs/<run>/preloads/acrobat--plans.html \
+  -n 5 -o ~/perf-ab-runs/<run>/ab-snippet
 ```
 
 - `--head-inject <file>` inserts the HTML into the "after" document before the first `<script>` in `<head>`. Build the snippet with the `perf-preload` skill.
 - Hints whose URL carries country/locale parameters (e.g. MAS `/mas/io/fragment?...&country=CH`) are re-resolved against the US baseline run's own requests; hints with no matching US request are dropped and reported in `results.json` `hints`. Never hand-edit `country=CH` into `country=US` where the real consumer omits the parameter. `/experienceedge` hints are always dropped.
 - **The injected snippet is the only source of preloads for the after page.** With `--head-inject` (or a config's `headInject`, on Actions and with `--local`), perf-ab unsets every `rel=preload` / `rel=modulepreload` entry of the after document's `Link` response header (other `Link` entries stay; before is untouched). Nothing to pass; without `--head-inject` nothing is unset. Report it: `results.json` `hints.linkHeaderStripped` (count) and `hints.linkHeaderEntries` (the entries) are also printed in the console. Say the comparison is production headers + HTML vs snippet-only.
-- Set `fetchpriority` directly on the `<link>` tags in the snippet; there is no CLI override.
+- `fetchpriority` comes from perf-preload's generic rule (data high; scripts high when first requested in the first half of the time to LCP, otherwise low; stylesheets/fonts default). To try other values, edit the snippet tags (or manifest rows); there is no CLI override.
 - Do not use `?mep=off` on the page URL: it disables the existing `preloadLcpCodeFiles`, which is part of the baseline.
 - Check: `hints.usedLinks` vs `requestedLinks`, and in the "after" report's network requests each preloaded file is fetched once and early.
 
@@ -120,6 +120,7 @@ Other flags: `--local`, `--param`, `--suffix` (`--suffix ""` for raw values), `-
 
 - Verify `status: "ok"`, `samples.pairs === samples.requested`, location/US egress on Actions, Lighthouse 13.6.0 and profile; inspect one official report per variant for correct rendering.
 - Always share the Actions run's clickable **Results UI link**: `https://adobecom.github.io/perf-tools/?run=<runId>-<runAttempt>` using `results.github.runId` and `results.github.runAttempt ?? 1`, plus `results.github.runUrl`. Say `perf-ab Pages` automatically publishes completed `main` runs after completion.
+- **When the user asks for "the run links", answer with the Results UI deep links** (`https://adobecom.github.io/perf-tools/?run=<runId>-<runAttempt>`, one per run, labelled by variant/page), not only the GitHub Actions run URLs; the Actions URL may follow as a secondary link. Pages publishes only `--ref main` runs (`lib/pagespeed/publish.mjs`): run campaigns on `main` whenever the needed code is there, and for a run on another ref say that its deep link will not resolve and give the Actions URL instead.
 - Report aggregate medians/median paired delta, warnings and hint usage. Inspect `pairs[]` without dropping/rerunning outliers. Under 5 runs, a few score points or FCP/LCP deltas under ~100 ms are noise.
 - Read INP beside load metrics; inspect `flow-report.html` or `interaction/report.html`. Metrics and traces describe the same throttled load.
 - Check CLS/TBT regressions, comparable request counts and explained rejections. Repeat on a heavier second page before go/no-go; check Safari/Firefox manually.

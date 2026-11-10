@@ -67,11 +67,11 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 -n 5
 perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 --mas-pr 1487 -n 5
 
 # 2. Test an injected <head> preload snippet (5-pair campaign)
-perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html -n 5 -o ./ab-full
+perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ~/perf-ab-runs/plans/preloads/acrobat--plans.html -n 5 -o ~/perf-ab-runs/plans/ab-full
 
 # 3. Combine preload links and a Milo/MAS PR in a single comparison
 perf-ab "https://www.adobe.com/acrobat/plans.html" \
-  --head-inject ./preloads/acrobat--plans.html --milo-pr 7062 -n 5
+  --head-inject ~/perf-ab-runs/plans/preloads/acrobat--plans.html --milo-pr 7062 -n 5 -o ~/perf-ab-runs/plans/ab-milo
 
 # 4. Run locally on your machine instead of GitHub Actions
 perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 -n 3 --local
@@ -134,7 +134,7 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" \
 
 ### Understanding Output & Results
 
-By default, results are written to `./traces` (override with `-o <dir>`). Any prior results in the target directory are cleaned before writing.
+By default, results are written to `./traces` relative to the current directory (override with `-o <dir>`). Any prior results in the target directory are cleaned before writing. Keep runs outside the repository checkout (for example `~/perf-ab-runs/<date>-<topic>/<campaign>`): a campaign is 300 MB or more of reports and traces.
 
 - **Metrics reported:** Lighthouse Performance score (`0–100`), **FCP**, **LCP**, **Speed Index (SI)**, **TBT** (in ms), and **CLS**.
   - A run is accepted only when Lighthouse completes without runtime error and `FCP`, `LCP`, `SI`, and `CLS` are finite numbers (`performance` and `TBT` are included whenever the page reaches network quiet). Failed runs are never silently retried.
@@ -188,17 +188,17 @@ For example: <https://adobecom.github.io/perf-tools/?run=41631057972-1>
 
 ```mermaid
 flowchart LR
-  A["1. Record & analyze cold traces<br/><code>perf-preload &lt;url&gt; -n 5</code>"] --> B["Static snippet<br/><code>./preloads/&lt;page&gt;.html</code>"]
+  A["1. Record & analyze cold traces<br/><code>perf-preload &lt;url&gt; -n 5</code>"] --> B["Static snippet<br/><code>&lt;out&gt;/&lt;page&gt;.html</code>"]
   B --> C["2. Full 5-pair A/B validation<br/><code>perf-ab &lt;url&gt; --head-inject ... -n 5</code>"]
 ```
 
 ### Step 1: Generate the LCP preload snippet
 
 ```sh
-perf-preload "https://www.adobe.com/products/photoshop.html" -n 5 -o ./preloads
+perf-preload "https://www.adobe.com/products/photoshop.html" -n 5 -o ~/perf-ab-runs/photoshop/preloads
 ```
 
-This records 5 cold Lighthouse loads via `perf-ab`, finds the LCP candidate in each trace, and writes `./preloads/products--photoshop.html`:
+This records 5 cold Lighthouse loads via `perf-ab`, finds the LCP candidate in each trace, and writes `~/perf-ab-runs/photoshop/preloads/products--photoshop.html`:
 
 ```html
 <link rel="modulepreload" href="/creativecloud/scripts/utils.js">
@@ -212,7 +212,7 @@ This records 5 cold Lighthouse loads via `perf-ab`, finds the LCP candidate in e
 ```sh
 # Full 5-pair parallel comparison (or combine with --milo-pr / --mas-pr)
 perf-ab "https://www.adobe.com/products/photoshop.html" \
-  --head-inject ./preloads/products--photoshop.html -n 5 -o ./ab-full
+  --head-inject ~/perf-ab-runs/photoshop/preloads/products--photoshop.html -n 5 -o ~/perf-ab-runs/photoshop/ab-full
 ```
 
 The Copilot skills run the requested count directly, using five pairs when no
@@ -237,15 +237,16 @@ flowchart LR
 
 ```sh
 # 1. Generate the snippet and the manifest from the page itself (aem.live pages keep their aem.live Milo URLs)
-perf-preload "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans" -n 5 --no-lcp-image -o ./preloads
+perf-preload "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans" -n 5 --no-lcp-image -o ~/perf-ab-runs/drafts-plans/preloads
 
-# 2. Publish ./preloads/drafts--ilyas--acrobat--plans.json as /drafts/ilyas/acrobat/preloads/plans.json
+# 2. Publish ~/perf-ab-runs/drafts-plans/preloads/drafts--ilyas--acrobat--plans.json as /drafts/ilyas/acrobat/preloads/plans.json
 #    (the perf-preload Copilot skill does this through the DA MCP, after your approval)
 
 # 3. Measure: inline script + manifest prelink vs the unchanged page
 perf-ab "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans" \
   --head-inject prelink/head.html \
-  --link-add '</drafts/ilyas/acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous' -n 5
+  --link-add '</drafts/ilyas/acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous' \
+  -n 5 -o ~/perf-ab-runs/drafts-plans/ab-manifest
 ```
 
 How `prelink/head.html` behaves:
@@ -263,17 +264,18 @@ You can run `perf-preload` against a live URL (which records traces via `perf-ab
 
 ```sh
 # Record 5 cold loads on GitHub Actions (default) or locally (--local)
-perf-preload "https://www.adobe.com/products/photoshop.html" -n 5 -o ./preloads
-perf-preload "https://www.adobe.com/products/photoshop.html" -n 5 -o ./preloads --local
+perf-preload "https://www.adobe.com/products/photoshop.html" -n 5 -o ~/perf-ab-runs/photoshop/preloads
+perf-preload "https://www.adobe.com/products/photoshop.html" -n 5 -o ~/perf-ab-runs/photoshop/preloads --local
 
 # Or generate preloads from existing trace files or a perf-ab output directory
-perf-preload --from ./traces -o ./preloads
-perf-preload --from Trace-1.json --from Trace-2.json -o ./preloads
+perf-preload --from ~/perf-ab-runs/photoshop/ab-full -o ~/perf-ab-runs/photoshop/preloads
+perf-preload --from Trace-1.json --from Trace-2.json -o ~/perf-ab-runs/photoshop/preloads
 ```
 
 ### How Resources Are Selected & Formatted
 
 - **Included resource types:** Scripts (`modulepreload` for ES modules, `as="script"` otherwise), stylesheets (`as="style"`), fonts (`as="font" crossorigin`), the LCP image (`as="image" fetchpriority="high"`, unless `--no-lcp-image` is passed), and GET JSON/HTML `fetch()` or XHR data requests (`as="fetch" crossorigin`) that finished before LCP in at least `--min-runs` traces (default: majority, e.g. 2 of 3 or 3 of 5).
+- **`fetchpriority` (generic, every page):** all links start together and compete for bandwidth, so the files needed first get it: data fetches (JSON/HTML, small and awaited before rendering) are `high`; scripts first requested in the first half of the median time to LCP are `high`, later ones `low`; stylesheets and fonts keep the browser default (already the highest); the LCP image is `high`. The console table shows `[high]` / `[low]` per link.
 - **Skipped automatically:** Resources already discovered by the HTML parser from the initial markup, POST/beacon requests, and cross-site origins (unless `--all-origins` is passed; same-site origins and `*.typekit.net` are kept by default).
 - **Built-in exclusions (always active):**
   - `/experienceedge` and `/experienceedge/*`
@@ -298,8 +300,8 @@ The console also prints where to publish it and the matching prelink: a page `<d
 {
   "total": 2, "limit": 2, "offset": 0, ":sheetname": "data", ":type": "sheet",
   "data": [
-    { "rel": "modulepreload", "href": "https://main--milo--adobecom.aem.live/libs/utils/utils.js", "as": "", "crossorigin": "anonymous", "fetchpriority": "" },
-    { "rel": "preload", "href": "/dc-shared/placeholders.json", "as": "fetch", "crossorigin": "anonymous", "fetchpriority": "" }
+    { "rel": "modulepreload", "href": "https://main--milo--adobecom.aem.live/libs/utils/utils.js", "as": "", "crossorigin": "anonymous", "fetchpriority": "high" },
+    { "rel": "preload", "href": "/dc-shared/placeholders.json", "as": "fetch", "crossorigin": "anonymous", "fetchpriority": "high" }
   ]
 }
 ```
