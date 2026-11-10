@@ -60,16 +60,16 @@ test('--exclude typekit.net still removes the allowed typekit hosts; other third
 
 test('--all-origins: crossorigin follows the consumer request mode, stylesheets are protocol-relative', () => {
   assert.deepEqual(generate('--all-origins'), [
-    '<link rel="modulepreload" href="/acrobat/scripts/scripts.js">',
+    '<link rel="modulepreload" href="/acrobat/scripts/scripts.js" fetchpriority="high">',
     '<link rel="preload" href="//www.adobe.com/libs/c2/styles/styles.css" as="style">',
     '<link rel="preload" href="//www.adobe.com/acrobat/styles/styles.css?a=1&amp;b=&quot;2&quot;" as="style">',
-    '<link rel="modulepreload" href="/libs/utils/utils.js">',
+    '<link rel="modulepreload" href="/libs/utils/utils.js" fetchpriority="high">',
     '<link rel="preload" href="//use.typekit.net/vti0xwb.css" as="style">',
     '<link rel="preload" href="//p.typekit.net/p.css?s=1&amp;k=vti0xwb&amp;ht=tk" as="style">',
     '<link rel="preload" href="https://use.typekit.net/af/abc/l?primer=7cdc&amp;fvd=n4&amp;v=3" as="font" crossorigin>',
-    '<link rel="modulepreload" href="https://cdn.example.net/lib/module.js" crossorigin>',
-    '<link rel="preload" href="https://cdn.example.net/lib/classic.js" as="script" crossorigin>',
-    '<link rel="preload" href="/acrobat/placeholders.json" as="fetch" crossorigin>',
+    '<link rel="modulepreload" href="https://cdn.example.net/lib/module.js" crossorigin fetchpriority="high">',
+    '<link rel="preload" href="https://cdn.example.net/lib/classic.js" as="script" crossorigin fetchpriority="high">',
+    '<link rel="preload" href="/acrobat/placeholders.json" as="fetch" crossorigin fetchpriority="high">',
     '<link rel="preload" href="/acrobat/media_123.png?width=750&amp;format=webp" as="image" fetchpriority="high">',
   ]);
 });
@@ -77,14 +77,14 @@ test('--all-origins: crossorigin follows the consumer request mode, stylesheets 
 test('same site plus *.typekit.net by default; stylesheet preloads never match a relative or absolute link[href] lookup', () => {
   const lines = generate();
   assert.deepEqual(lines, [
-    '<link rel="modulepreload" href="/acrobat/scripts/scripts.js">',
+    '<link rel="modulepreload" href="/acrobat/scripts/scripts.js" fetchpriority="high">',
     '<link rel="preload" href="//www.adobe.com/libs/c2/styles/styles.css" as="style">',
     '<link rel="preload" href="//www.adobe.com/acrobat/styles/styles.css?a=1&amp;b=&quot;2&quot;" as="style">',
-    '<link rel="modulepreload" href="/libs/utils/utils.js">',
+    '<link rel="modulepreload" href="/libs/utils/utils.js" fetchpriority="high">',
     '<link rel="preload" href="//use.typekit.net/vti0xwb.css" as="style">',
     '<link rel="preload" href="//p.typekit.net/p.css?s=1&amp;k=vti0xwb&amp;ht=tk" as="style">',
     '<link rel="preload" href="https://use.typekit.net/af/abc/l?primer=7cdc&amp;fvd=n4&amp;v=3" as="font" crossorigin>',
-    '<link rel="preload" href="/acrobat/placeholders.json" as="fetch" crossorigin>',
+    '<link rel="preload" href="/acrobat/placeholders.json" as="fetch" crossorigin fetchpriority="high">',
     '<link rel="preload" href="/acrobat/media_123.png?width=750&amp;format=webp" as="image" fetchpriority="high">',
   ]);
   for (const l of lines.filter((x) => x.includes('as="style"'))) {
@@ -232,17 +232,17 @@ test('GET JSON/HTML fetches and script as="fetch" preloads recorded as Other bec
     { url: `${A}/api/data.json`, fetchType: 'xmlhttprequest', mime: 'application/ld+json' },
   ])]);
   assert.deepEqual(lines, [
-    '<link rel="preload" href="/dc-shared/placeholders.json" as="fetch" crossorigin>',
-    '<link rel="preload" href="/libs/commerce/checkout-link.json" as="fetch" crossorigin>',
-    '<link rel="preload" href="/dc-shared/fragments/offer.plain.html" as="fetch" crossorigin>',
-    '<link rel="preload" href="/mas/io/fragment?id=33a8&amp;api_key=k&amp;locale=en_US&amp;country=CH" as="fetch" crossorigin>',
-    '<link rel="preload" href="/api/data.json" as="fetch" crossorigin>',
+    '<link rel="preload" href="/dc-shared/placeholders.json" as="fetch" crossorigin fetchpriority="high">',
+    '<link rel="preload" href="/libs/commerce/checkout-link.json" as="fetch" crossorigin fetchpriority="high">',
+    '<link rel="preload" href="/dc-shared/fragments/offer.plain.html" as="fetch" crossorigin fetchpriority="high">',
+    '<link rel="preload" href="/mas/io/fragment?id=33a8&amp;api_key=k&amp;locale=en_US&amp;country=CH" as="fetch" crossorigin fetchpriority="high">',
+    '<link rel="preload" href="/api/data.json" as="fetch" crossorigin fetchpriority="high">',
   ]);
   assert.match(stdout, /Fetch !\s+https:\/\/www\.adobe\.com\/mas\/io\/fragment/);
   assert.match(stdout, /country\/locale specific URL: serve this link only/);
   // The manifest has the same links minus the country/locale specific one (it is served to every visitor).
   assert.deepEqual(manifest.data.map((r) => r.href), ['/dc-shared/placeholders.json', '/libs/commerce/checkout-link.json', '/dc-shared/fragments/offer.plain.html', '/api/data.json']);
-  assert.deepEqual(manifest.data[0], { rel: 'preload', href: '/dc-shared/placeholders.json', as: 'fetch', crossorigin: 'anonymous', fetchpriority: '' });
+  assert.deepEqual(manifest.data[0], { rel: 'preload', href: '/dc-shared/placeholders.json', as: 'fetch', crossorigin: 'anonymous', fetchpriority: 'high' });
   assert.match(stdout, /Manifest \(4 rows, 1 country\/locale specific link\(s\) left out\)/);
   assert.match(stdout, /publish as \/acrobat\/preloads\/plans\.json on https:\/\/www\.adobe\.com; prelink: <\/acrobat\/preloads\/plans\.json>; rel=preload; as=fetch; crossorigin=anonymous/);
 });
@@ -262,7 +262,7 @@ test('POST, beacons, non-data MIME, failed, navigation-like and non-preload Othe
     { url: `${A}/no-method-other.json`, method: null },
     { url: `${A}/legacy-xhr.json`, type: 'XHR', method: null, mime: null },
   ])]);
-  assert.deepEqual(lines, ['<link rel="preload" href="/legacy-xhr.json" as="fetch" crossorigin>']);
+  assert.deepEqual(lines, ['<link rel="preload" href="/legacy-xhr.json" as="fetch" crossorigin fetchpriority="high">']);
   assert.match(stderr, /1 Fetch\/XHR request\(s\) without requestMethod .* assumed to be GET/);
 });
 
@@ -282,8 +282,8 @@ test('a URL requested twice in one trace counts once for --min-runs and yields o
   const t3 = dataTrace([]);
   const { lines, stdout } = generateFrom([t1, t2, t3]);
   assert.deepEqual(lines, [
-    '<link rel="preload" href="/federal/assets/supported-markets/supported-markets.json" as="fetch" crossorigin>',
-    '<link rel="preload" href="/mas/io/fragment?id=64d1&amp;locale=en_US&amp;country=CH" as="fetch" crossorigin>',
+    '<link rel="preload" href="/federal/assets/supported-markets/supported-markets.json" as="fetch" crossorigin fetchpriority="high">',
+    '<link rel="preload" href="/mas/io/fragment?id=64d1&amp;locale=en_US&amp;country=CH" as="fetch" crossorigin fetchpriority="high">',
   ]);
   assert.match(stdout, />= 2 traces/);
   // median of per-trace earliest starts: t1 preload at 100 ms (not its consumer at 300 ms), t2 fetch at 200 ms
@@ -300,7 +300,7 @@ test('the consumer request decides the preload type when a script preload of the
   ]);
   t.traceEvents.push({ name: 'v8.compileModule', ts: 500000, args: { data: { url } } });
   assert.deepEqual(generateFrom([t]).lines, [
-    '<link rel="modulepreload" href="/libs/blocks/merch/merch.js">',
+    '<link rel="modulepreload" href="/libs/blocks/merch/merch.js" fetchpriority="high">',
     '<link rel="preload" href="//www.adobe.com/libs/blocks/merch/merch.css" as="style">',
   ]);
 });
@@ -317,9 +317,9 @@ test('/experienceedge and /experienceedge/* are never preloaded, whatever the me
     { url: `${A}/federal/experienceedge/a.json` },
   ])]);
   assert.deepEqual(lines, [
-    '<link rel="preload" href="/experienceedgex.json" as="fetch" crossorigin>',
-    '<link rel="preload" href="/experienceedge-docs/a.json" as="fetch" crossorigin>',
-    '<link rel="preload" href="/federal/experienceedge/a.json" as="fetch" crossorigin>',
+    '<link rel="preload" href="/experienceedgex.json" as="fetch" crossorigin fetchpriority="high">',
+    '<link rel="preload" href="/experienceedge-docs/a.json" as="fetch" crossorigin fetchpriority="high">',
+    '<link rel="preload" href="/federal/experienceedge/a.json" as="fetch" crossorigin fetchpriority="high">',
   ]);
 });
 
@@ -342,17 +342,40 @@ test('an adobecom aem.live page keeps its Milo libs from main--milo--adobecom.ae
     const r = spawnSync(process.execPath, [CLI, live, '--from', f, '-o', dir], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr);
     assert.deepEqual(fs.readFileSync(path.join(dir, 'drafts--ilyas--acrobat--plans.html'), 'utf8').trim().split('\n'), [
-      `<link rel="modulepreload" href="${milo}" crossorigin>`,
-      '<link rel="modulepreload" href="/acrobat/scripts/scripts.js">',
-      '<link rel="preload" href="/dc-shared/placeholders.json" as="fetch" crossorigin>',
+      `<link rel="modulepreload" href="${milo}" crossorigin fetchpriority="high">`,
+      '<link rel="modulepreload" href="/acrobat/scripts/scripts.js" fetchpriority="high">',
+      '<link rel="preload" href="/dc-shared/placeholders.json" as="fetch" crossorigin fetchpriority="high">',
     ]);
     assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, 'drafts--ilyas--acrobat--plans.json'), 'utf8')).data, [
-      { rel: 'modulepreload', href: milo, as: '', crossorigin: 'anonymous', fetchpriority: '' },
-      { rel: 'modulepreload', href: '/acrobat/scripts/scripts.js', as: '', crossorigin: '', fetchpriority: '' },
-      { rel: 'preload', href: '/dc-shared/placeholders.json', as: 'fetch', crossorigin: 'anonymous', fetchpriority: '' },
+      { rel: 'modulepreload', href: milo, as: '', crossorigin: 'anonymous', fetchpriority: 'high' },
+      { rel: 'modulepreload', href: '/acrobat/scripts/scripts.js', as: '', crossorigin: '', fetchpriority: 'high' },
+      { rel: 'preload', href: '/dc-shared/placeholders.json', as: 'fetch', crossorigin: 'anonymous', fetchpriority: 'high' },
     ]);
     assert.match(r.stdout, /publish as \/drafts\/ilyas\/acrobat\/preloads\/plans\.json on https:\/\/main--da-dc--adobecom\.aem\.live/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('fetchpriority: data fetches high, scripts high in the first half of the time to LCP and low after, stylesheets default', () => {
+  // dataTrace: 100 ms steps from navigation, LCP at ~10 s, so the cutoff is ~5 s.
+  const early = `${A}/libs/utils/utils.js`;
+  const late = `${A}/libs/blocks/global-navigation/utilities/utilities.js`;
+  const t = dataTrace([
+    { url: early, type: 'Script', fetchType: 'script', at: 2, mime: 'text/javascript' },
+    { url: `${A}/libs/c2/styles/styles.css`, type: 'Stylesheet', fetchType: 'link', at: 3, mime: 'text/css' },
+    { url: late, type: 'Script', fetchType: 'script', at: 60, mime: 'text/javascript' },
+    { url: `${A}/acrobat/plans.json`, at: 70 },
+  ]);
+  for (const url of [early, late]) t.traceEvents.push({ name: 'v8.compileModule', ts: 9000000, args: { data: { url } } });
+  const { lines, manifest, stdout } = generateFrom([t]);
+  assert.deepEqual(lines, [
+    '<link rel="modulepreload" href="/libs/utils/utils.js" fetchpriority="high">',
+    '<link rel="preload" href="//www.adobe.com/libs/c2/styles/styles.css" as="style">',
+    '<link rel="modulepreload" href="/libs/blocks/global-navigation/utilities/utilities.js" fetchpriority="low">',
+    '<link rel="preload" href="/acrobat/plans.json" as="fetch" crossorigin fetchpriority="high">',
+  ]);
+  assert.deepEqual(manifest.data.map((r) => r.fetchpriority), ['high', '', 'low', 'high']);
+  assert.match(stdout, /utilities\.js +\[low\]/);
+  assert.match(stdout, /scripts first requested by 5000 ms \(50% of the median LCP\) high, later ones low/);
 });

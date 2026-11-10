@@ -44,6 +44,9 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
   --min-runs traces to be kept. Writes <out>/<page-key>.html with static <link> tags, ready for
   perf-ab --head-inject, and <out>/<page-key>.json: the same links (minus country/locale specific URLs) as a
   prelink manifest (DA sheet: rel, href, as, crossorigin, fetchpriority) to publish at <dir>/preloads/<name>.json.
+  fetchpriority (all links start together and share the bandwidth): data fetches high; scripts high when first
+  requested in the first half of the median time to LCP, otherwise low; stylesheets and fonts keep the browser
+  default; the LCP image is high.
 
   -n, --runs <n>       cold page loads to record (default 3, all counted)
   -o, --out <dir>      output dir for the snippet and traces (default ./preloads)
@@ -242,6 +245,13 @@ const picked = [...byUrl.values()]
   .sort((a, b) => a.start - b.start);
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const lcps = runs.map((r) => Math.round(r.lcp));
+// fetchpriority: all links start together and share the bandwidth, so what the page needs first should win it.
+// Data fetches (JSON/HTML, small and awaited by code before rendering) are high; scripts the page first requested
+// in the first half of the time to LCP are high, later ones low; stylesheets and fonts keep the browser default
+// (already the highest); the LCP image is high.
+const PRIORITY_SPLIT = 0.5;
+const priorityCutoff = median(lcps) * PRIORITY_SPLIT;
 // The link attributes of a picked resource, shared by the HTML snippet and the JSON manifest.
 function linkOf(x) {
   const u = new URL(x.url);
@@ -252,13 +262,16 @@ function linkOf(x) {
   // on aem.live); "//host/path" resolves to the same URL, so the preload is reused, but never equals either string.
   const href = x.type === 'Stylesheet' ? x.url.replace(/^https:/, '') : cross ? x.url : `${u.pathname}${u.search}`;
   const co = (always) => (always || cross ? 'anonymous' : '');
+  const scriptPriority = x.start <= priorityCutoff ? 'high' : 'low';
   switch (x.type) {
-    case 'Script': return x.module ? { rel: 'modulepreload', href, crossorigin: co() } : { rel: 'preload', href, as: 'script', crossorigin: co() };
+    case 'Script': return x.module
+      ? { rel: 'modulepreload', href, crossorigin: co(), fetchpriority: scriptPriority }
+      : { rel: 'preload', href, as: 'script', crossorigin: co(), fetchpriority: scriptPriority };
     // <link rel="stylesheet"> and @import fetch in no-cors mode; a crossorigin preload would not be reused.
     case 'Stylesheet': return { rel: 'preload', href, as: 'style' };
     case 'Font': return { rel: 'preload', href, as: 'font', crossorigin: co(true) };
     case 'LCP image': return { rel: 'preload', href, as: 'image', fetchpriority: 'high' };
-    default: return { rel: 'preload', href, as: 'fetch', crossorigin: co(true) };
+    default: return { rel: 'preload', href, as: 'fetch', crossorigin: co(true), fetchpriority: 'high' };
   }
 }
 const tag = ({ rel, href, as, crossorigin, fetchpriority }) => `<link rel="${rel}" href="${esc(href)}"${as ? ` as="${as}"` : ''}${crossorigin ? ' crossorigin' : ''}${fetchpriority ? ` fetchpriority="${fetchpriority}"` : ''}>`;
@@ -273,13 +286,12 @@ const manifestLinks = links.filter((l) => !isContextual(l.url));
 const manifestFile = path.join(OUT, `${key}.json`);
 fs.writeFileSync(manifestFile, `${JSON.stringify(toManifest(manifestLinks), null, 2)}\n`);
 
-const lcps = runs.map((r) => Math.round(r.lcp));
 console.log(`\n${page.href}: ${runs.length} traces, LCP ${lcps.join(' / ')} ms (median ${Math.round(median(lcps))}), element ${runs[0].lcpNode}${runs[0].lcpImage ? ` ${runs[0].lcpImage}` : ''}`);
 console.log(`Resources finished before LCP in >= ${minRuns} traces (median ms):`);
 console.log('start'.padStart(7), 'end'.padStart(7), ' type'.padEnd(18), 'url');
-for (const x of picked) {
+for (const [i, x] of picked.entries()) {
   const type = `${x.type}${x.module ? ' (module)' : ''}${x.jsPreload && !x.headerPreload ? ' *' : ''}${x.headerPreload ? ' ^' : ''}${contextual(x.url) ? ' !' : ''}`;
-  console.log(String(Math.round(x.start)).padStart(7), String(Math.round(x.end)).padStart(7), ` ${type}`.padEnd(18), x.url);
+  console.log(String(Math.round(x.start)).padStart(7), String(Math.round(x.end)).padStart(7), ` ${type}`.padEnd(18), x.url, links[i].fetchpriority ? ` [${links[i].fetchpriority}]` : '');
 }
 const excludedByRule = new Map();
 for (const r of runs) for (const [url, rule] of r.excluded) if (!excludedByRule.has(url)) excludedByRule.set(url, rule);
@@ -291,6 +303,7 @@ console.log(`Exclude rules: ${excludeRules.map(describeRule).join(', ')}`);
 if (picked.some((x) => x.jsPreload && !x.headerPreload)) console.log('* already preloaded by a script (e.g. preloadLcpCodeFiles); a static tag starts it earlier');
 if (picked.some((x) => x.headerPreload)) console.log("^ preloaded by the document's Link response header today; perf-ab --head-inject unsets those header entries, so this tag takes over");
 if (picked.some((x) => contextual(x.url))) console.log('! country/locale specific URL: serve this link only to visitors in the matching context, never hardcode it for every geo');
+console.log(`[high]/[low] fetchpriority: data fetches high; scripts first requested by ${Math.round(priorityCutoff)} ms (${PRIORITY_SPLIT * 100}% of the median LCP) high, later ones low; stylesheets and fonts keep the browser default`);
 console.log(`\nSnippet (${picked.length} links): ${snippet}`);
 const contextualDropped = links.length - manifestLinks.length;
 console.log(`Manifest (${manifestLinks.length} rows${contextualDropped ? `, ${contextualDropped} country/locale specific link(s) left out` : ''}): ${manifestFile}`);
