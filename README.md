@@ -1,6 +1,6 @@
 # perf-tools
 
-Page-load performance measurement and optimization tools for `*.adobe.com`, usable from the command line, GitHub Actions, or as **GitHub Copilot agent skills**:
+Page-load performance measurement and optimization tools for `*.adobe.com` and `*--adobecom.aem.live` pages, usable from the command line, GitHub Actions, or as **GitHub Copilot agent skills**:
 
 - **`perf-ab`** *(primary tool)* — Runs controlled before/after Lighthouse comparisons on a live production page (such as `www.adobe.com`). Compares the unmodified production page ("before") against your changes ("after"): **Milo or MAS pull requests** (`--milo-pr`, `--mas-pr`), an injected **`head.html` preload snippet** (`--head-inject`), or **both combined**.
 - **`perf-preload`** — Records cold page loads via `perf-ab` (or analyzes existing DevTools traces), identifies every critical resource that finished loading before Largest Contentful Paint (LCP), and generates a static `<link rel="modulepreload|preload">` snippet ready to test with `perf-ab --head-inject`.
@@ -32,11 +32,32 @@ Once installed, you can ask Copilot in natural language:
 - *"Test Milo PR 7062 on https://www.adobe.com/acrobat/plans.html"*
 - *"Generate preloads for https://www.adobe.com/products/photoshop.html and A/B test them"*
 
+### Use live development skills
+
+To use the current local checkout instead of a cached plugin, disable the
+`perf-tools` plugin in Copilot and link both skill directories into
+`~/.copilot/skills`:
+
+```sh
+# Run from the perf-tools checkout. Move any existing skill directories or links
+# out of ~/.copilot/skills first to avoid loading duplicate skills.
+mkdir -p ~/.copilot/skills
+for skill in perf-ab perf-preload; do
+  test ! -e "$HOME/.copilot/skills/$skill" &&
+    test ! -L "$HOME/.copilot/skills/$skill" &&
+    ln -s "$PWD/skills/$skill" "$HOME/.copilot/skills/$skill"
+done
+```
+
+These links read the working tree, including uncommitted edits; they do not fetch
+GitHub updates. Start a new Copilot session after switching sources so previously
+loaded skill instructions are not reused. Keep the checkout at the linked path.
+
 ---
 
 ## `perf-ab`: Before/After Performance Comparisons
 
-`perf-ab` measures the real impact of **Milo/MAS pull requests** and **`<head>` preload links** directly on a live production page.
+`perf-ab` measures the real impact of **Milo/MAS pull requests**, **`<head>` preload links** and **`Link` response header preloads (prelinks)** directly on a live production page.
 
 ### Common Workflows
 
@@ -45,8 +66,7 @@ Once installed, you can ask Copilot in natural language:
 perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 -n 5
 perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 --mas-pr 1487 -n 5
 
-# 2. Test an injected <head> preload snippet (1-pair smoke test first, then 5-pair campaign)
-perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html -n 1 -o ./ab-smoke
+# 2. Test an injected <head> preload snippet (5-pair campaign)
 perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ./preloads/acrobat--plans.html -n 5 -o ./ab-full
 
 # 3. Combine preload links and a Milo/MAS PR in a single comparison
@@ -55,6 +75,10 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" \
 
 # 4. Run locally on your machine instead of GitHub Actions
 perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 -n 3 --local
+
+# 5. Send a prelink (e.g. a preload manifest) in the after document's Link response header
+perf-ab "https://www.adobe.com/acrobat/plans.html" \
+  --link-add '</acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous' -n 5
 ```
 
 ### What You Can Compare
@@ -64,6 +88,42 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 -n 3 --local
 | `--milo-pr <n>` / `--mas-pr <n>` | Unchanged live production page | Pinned PR diff served through the local measuring proxy (`libs/**` → `/libs/**` for `adobecom/milo`, `web-components/dist/**` → `/mas/libs/**` for `adobecom/mas`). Added, modified, removed, and renamed files are handled accurately; unmapped test/docs files are ignored. |
 | `--head-inject <file>` | Unchanged live production page (with its existing `Link` header preloads) | Snippet injected into `<head>` before the first `<script>`, with all `rel=preload` and `rel=modulepreload` entries stripped from the document's `Link` response header so the snippet is the **sole source of preloads**. |
 | `--head-inject` + `--milo-pr` / `--mas-pr` | Unchanged live production page | Applies both the `<head>` preload snippet and the pinned PR file changes together. |
+| `--link-add` / `--link-remove` / `--link-replace` | Unchanged live production page (with its existing `Link` response header) | The document's `Link` response header with entries added, removed, or replaced by the measuring proxy (see [Editing `Link` header prelinks](#editing-link-header-prelinks)). Combines with every other option. |
+
+### Editing `Link` Header Prelinks
+
+The measuring proxy can rewrite the **`Link` response header of the "after" document**, so a prelink can be tested before it exists in production (for example, before the site's header config sends it). The "before" document is never touched.
+
+```sh
+# Add a prelink to a page (a page without a Link header gets it as its only entry)
+perf-ab "https://www.adobe.com/acrobat/plans.html" \
+  --link-add '</acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous' -n 5
+
+# Remove one production preload and change another one
+perf-ab "https://www.adobe.com/acrobat/plans.html" \
+  --link-remove /libs/martech/martech.js \
+  --link-replace '</libs/utils/utils.js>; rel=modulepreload' -n 5
+
+# Replace every production preload with your own set ("*" = every rel=preload / rel=modulepreload entry)
+perf-ab "https://www.adobe.com/acrobat/plans.html" \
+  --link-remove '*' \
+  --link-add '</libs/utils/utils.js>; rel=preload; as=script; crossorigin=anonymous' \
+  --link-add '</acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous' -n 5
+```
+
+| Flag (repeatable) | Value | Effect on the "after" `Link` header |
+| --- | --- | --- |
+| `--link-remove <url\|*>` | A root-relative path or `https://` URL, or `*` (quote it in the shell) | Removes every entry for that URL; `*` removes every `rel=preload` / `rel=modulepreload` entry and keeps the rest (`preconnect`, `canonical`, ...). |
+| `--link-replace <entry>` | One full entry, e.g. `'</libs/utils/utils.js>; rel=modulepreload'` | Replaces, in place, the one entry with the same URL (to change `rel`, `as`, `crossorigin`, `fetchpriority`, ...). |
+| `--link-add <entry>` | One full entry, e.g. `'</x.json>; rel=preload; as=fetch; crossorigin=anonymous'` | Appends the entry at the end of the header. |
+
+- **Order:** remove, then replace, then add. With `--head-inject`, the production `rel=preload` / `rel=modulepreload` entries are unset first, so the snippet plus your added entries are the only preloads (useful to test an inline head script together with the prelink of the manifest it reads).
+- **Matching by URL:** entries are matched by their target URL resolved against the page URL, so `</libs/utils/utils.js>` and `<https://www.adobe.com/libs/utils/utils.js>` are the same entry.
+- **Guarded, like `--patch`:** a removed URL must be in the header, a replaced URL must be in it exactly once with a different value, and an added URL must not be in it yet (use `--link-replace`). Otherwise production changed and the job fails instead of measuring something else.
+- **Validation before dispatch:** every entry is a single line of at most 2048 characters (no header injection), `--link-add` / `--link-replace` entries need a `rel`, targets are root-relative paths or `https://` URLs without credentials, a URL may not be both removed and replaced or both replaced and added, and at most 100 edits are allowed. `--link-remove '*'` is rejected with `--head-inject` (it already unsets those entries).
+- **Prelink fetches:** an `as=fetch` prelink is only reused by a script's `fetch()` when request mode and credentials match. Plain `fetch(url)` (CORS mode, `same-origin` credentials) matches `crossorigin=anonymous`; without it the browser downloads the file twice.
+- **Reported:** `results.json` → `linkHeader` lists the requested `edits`, the `production` header, the `served` header, and the `removed`, `replaced` (`from` / `to`) and `added` entries; each "after" `run.json` has the same `linkHeader` record. The console prints them, and the Results UI shows a **Link header edits** change badge (the entries themselves stay in the artifact).
+- **Experiment configs:** use `after.linkHeader` with the same lists, e.g. `"linkHeader": { "remove": ["*"], "add": ["</acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous"] }`.
 
 ### Where Measurements Run
 
@@ -79,7 +139,7 @@ By default, results are written to `./traces` (override with `-o <dir>`). Any pr
 - **Metrics reported:** Lighthouse Performance score (`0–100`), **FCP**, **LCP**, **Speed Index (SI)**, **TBT** (in ms), and **CLS**.
   - A run is accepted only when Lighthouse completes without runtime error and `FCP`, `LCP`, `SI`, and `CLS` are finite numbers (`performance` and `TBT` are included whenever the page reaches network quiet). Failed runs are never silently retried.
 - **Directory layout:**
-  - `results.json` — Aggregate summary: `status` (`ok` / `partial` / `failed`), `samples`, `medians` (`before`, `after`, and `delta` = **median of the per-pair deltas** across complete pairs), `pairs[]` (per-pair metrics, delta, runner info, Chrome version, and per-variant CPU `benchmarkIndexes`), `warnings[]`, `profile` / `profileKey`, `egress`, and `hints`.
+  - `results.json` — Aggregate summary: `status` (`ok` / `partial` / `failed`), `samples`, `medians` (`before`, `after`, and `delta` = **median of the per-pair deltas** across complete pairs), `pairs[]` (per-pair metrics, delta, runner info, Chrome version, and per-variant CPU `benchmarkIndexes`), `warnings[]`, `profile` / `profileKey`, `egress`, `hints`, and `linkHeader` (`Link` header edits, when requested).
   - `pair<i>/results.json` — Diagnostic metadata and per-run metrics for pair `i`.
   - `pair<i>/<variant><i>/` — Official Lighthouse `report.html` and `report.json`, Chrome `trace.json`, `devtoolslog.json`, and `run.json` (first document status, document geo, pinned PR provenance, and proxy request log with original vs. served compressed byte sizes).
   - `pair<i>/rejected/` — Preserved artifacts from any rejected run attempts for debugging.
@@ -129,8 +189,7 @@ For example: <https://adobecom.github.io/perf-tools/?run=41631057972-1>
 ```mermaid
 flowchart LR
   A["1. Record & analyze cold traces<br/><code>perf-preload &lt;url&gt; -n 5</code>"] --> B["Static snippet<br/><code>./preloads/&lt;page&gt;.html</code>"]
-  B --> C["2. Smoke-test 1 pair<br/><code>perf-ab &lt;url&gt; --head-inject ... -n 1</code>"]
-  C --> D["3. Full 5-pair A/B validation<br/><code>perf-ab &lt;url&gt; --head-inject ... -n 5</code>"]
+  B --> C["2. Full 5-pair A/B validation<br/><code>perf-ab &lt;url&gt; --head-inject ... -n 5</code>"]
 ```
 
 ### Step 1: Generate the LCP preload snippet
@@ -144,27 +203,57 @@ This records 5 cold Lighthouse loads via `perf-ab`, finds the LCP candidate in e
 ```html
 <link rel="modulepreload" href="/creativecloud/scripts/utils.js">
 <link rel="modulepreload" href="/libs/blocks/hero-marquee/hero-marquee.js">
-<link rel="preload" href="https://www.adobe.com/libs/blocks/hero-marquee/hero-marquee.css" as="style">
+<link rel="preload" href="//www.adobe.com/libs/blocks/hero-marquee/hero-marquee.css" as="style">
 <link rel="modulepreload" href="/libs/features/placeholders.js">
 ```
 
 ### Step 2: Validate the snippet with `perf-ab`
 
 ```sh
-# Quick 1-pair smoke check
-perf-ab "https://www.adobe.com/products/photoshop.html" \
-  --head-inject ./preloads/products--photoshop.html -n 1 -o ./ab-smoke
-
 # Full 5-pair parallel comparison (or combine with --milo-pr / --mas-pr)
 perf-ab "https://www.adobe.com/products/photoshop.html" \
   --head-inject ./preloads/products--photoshop.html -n 5 -o ./ab-full
 ```
+
+The Copilot skills run the requested count directly, using five pairs when no
+count is specified. They do not add a preliminary smoke run unless requested;
+reports are inspected after the campaign.
 
 ### Why They Work Together
 
 - **Single source of preloads in "after":** When `--head-inject` is active, `perf-ab` strips all `rel=preload` and `rel=modulepreload` entries from the "after" document's HTTP `Link` response header (leaving `preconnect`, `canonical`, etc. untouched). Meanwhile, `perf-preload` includes resources currently preloaded by the `Link` header (marked `^` in its console table). This ensures you are comparing **production headers + HTML ("before")** against **your snippet alone ("after")**.
 - **Automatic geo/locale hint resolution:** If a preload URL in your snippet contains contextual query parameters (`country`, `locale`, `lang`, `geo`, `region`, `market` — e.g. `/mas/io/fragment?...&country=CH`), `perf-ab` automatically rewrites that hint against the URL observed during the job's first baseline load. Unmatched contextual hints and `/experienceedge` URLs are dropped and reported under `results.json` → `hints`.
 - **Post-run verification:** Check `results.json` → `hints` (`usedLinks`, `contextual`, `dropped`, `linkHeaderStripped`) and verify in the "after" Lighthouse report (`network-requests`) that each preloaded asset starts immediately after the document and downloads only once.
+
+### Prelink Manifests: Preloads Without Editing the Page
+
+Instead of a static snippet per page, a page can get its preloads from a **prelink manifest**: the `<page-key>.json` that `perf-preload` writes, published next to the page, sent early with a `Link` response header prelink, and turned into `<link>` tags by one shared inline script, [`prelink/head.html`](prelink/head.html).
+
+```mermaid
+flowchart LR
+  A["perf-preload &lt;url&gt;<br/><code>&lt;page-key&gt;.json</code>"] --> B["Publish to DA<br/><code>&lt;dir&gt;/preloads/&lt;name&gt;.json</code>"]
+  B --> C["perf-ab --head-inject prelink/head.html<br/>--link-add '&lt;manifest&gt;; rel=preload; as=fetch; crossorigin=anonymous'"]
+```
+
+```sh
+# 1. Generate the snippet and the manifest from the page itself (aem.live pages keep their aem.live Milo URLs)
+perf-preload "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans" -n 5 --no-lcp-image -o ./preloads
+
+# 2. Publish ./preloads/drafts--ilyas--acrobat--plans.json as /drafts/ilyas/acrobat/preloads/plans.json
+#    (the perf-preload Copilot skill does this through the DA MCP, after your approval)
+
+# 3. Measure: inline script + manifest prelink vs the unchanged page
+perf-ab "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans" \
+  --head-inject prelink/head.html \
+  --link-add '</drafts/ilyas/acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous' -n 5
+```
+
+How `prelink/head.html` behaves:
+
+- It derives the manifest URL from the page path (`<dir>/<name>` or `<dir>/<name>.html` → `<dir>/preloads/<name>.json`, `<dir>/` → `<dir>/preloads/index.json`) and requests it with a plain `fetch()`, which reuses the `Link` header prelink (one download).
+- For each row it adds a `<link>` to `<head>` only when `rel` is `preload` (with `as` = `script`, `style`, `font`, `image` or `fetch`) or `modulepreload`, the URL is `https:` on the page host, `*.adobe.com`, `*--adobecom.aem.live` or `use.typekit.net` / `p.typekit.net`, and no `<link>` with that URL exists yet. `crossorigin` is only `anonymous`; `fetchpriority` only `high`, `low` or `auto`. Style preloads get a protocol-relative `href` (`//host/path`) whatever the row says, so site loaders that look up `link[href="<stylesheet URL>"]` still add the stylesheet.
+- A missing (404) or invalid manifest, or any error, leaves the page unchanged; the script never throws. Without a prelink, the manifest request starts only when the script runs, so it costs one extra request (a 404 on pages without a manifest).
+- With `--head-inject`, perf-ab unsets the production header preloads, so the manifest links (plus the added prelink) are the only preloads, as with a static snippet.
 
 ---
 
@@ -192,9 +281,28 @@ perf-preload --from Trace-1.json --from Trace-2.json -o ./preloads
   - `bfp.adobe.com` (and its subdomains)
   - Add custom exclusions with repeatable `--exclude <path-prefix|host>` (e.g. `--exclude /libs/martech --exclude cdn.example.net`). All matched requests are listed transparently under `Excluded by rule`.
 - **Markup safety:**
-  - Stylesheet preloads always use **absolute URLs** without `crossorigin` so site loaders that query `link[href="<relative-path>"]` without checking `rel` don't mistake the preload for an applied stylesheet, and no-CORS stylesheet fetches reuse the preloaded response.
+  - Stylesheet preloads always use **protocol-relative URLs** (`//host/path`) without `crossorigin`. Site loaders such as Acrobat's `loadLink` skip a stylesheet when any `link[href="<the URL they load>"]` exists, whatever its `rel`; they load by path on www.adobe.com (`/libs/...`) but by absolute URL on aem.live (`https://main--milo--adobecom.aem.live/libs/...`). `//host/path` resolves to the same URL, so the no-CORS stylesheet fetch reuses the preload, but never equals either string (an absolute preload on aem.live left the page unstyled and hidden).
   - Data preloads (`as="fetch" crossorigin`) assume standard CORS `fetch()`/XHR with default credentials; review and remove any link whose consumer sends custom headers or `credentials: 'include'`.
   - Contextual URLs (marked `!` in console output) should only be served to matching locales/geos, never hardcoded globally in a shared `head.html`.
+
+### Outputs: Snippet and Prelink Manifest
+
+Each run writes two files to `-o <dir>` (the page key is the page path with `/` → `--`, e.g. `drafts--ilyas--acrobat--plans`):
+
+- **`<page-key>.html`** — the static `<link>` snippet for `perf-ab --head-inject`.
+- **`<page-key>.json`** — the same links as a **prelink manifest**: a DA sheet (`:type: "sheet"`) whose rows have exactly the columns `rel`, `href`, `as`, `crossorigin`, `fetchpriority` (strings, `""` when unset; `crossorigin` is `anonymous` or `""`). Country/locale specific URLs are left out (the manifest is served to every visitor) and counted in the console.
+
+The console also prints where to publish it and the matching prelink: a page `<dir>/<name>` (or `<dir>/<name>.html`) gets `<dir>/preloads/<name>.json` on the page's own origin (`<dir>/` → `<dir>/preloads/index.json`), prelinked with `</dir/preloads/<name>.json>; rel=preload; as=fetch; crossorigin=anonymous`.
+
+```json
+{
+  "total": 2, "limit": 2, "offset": 0, ":sheetname": "data", ":type": "sheet",
+  "data": [
+    { "rel": "modulepreload", "href": "https://main--milo--adobecom.aem.live/libs/utils/utils.js", "as": "", "crossorigin": "anonymous", "fetchpriority": "" },
+    { "rel": "preload", "href": "/dc-shared/placeholders.json", "as": "fetch", "crossorigin": "anonymous", "fetchpriority": "" }
+  ]
+}
+```
 
 ---
 
@@ -228,11 +336,14 @@ perf-ab <pageUrl> [options]
 
 | Flag | Default | Description |
 | --- | --- | --- |
-| `-n, --runs <1..10>` | `3` | Number of cold before/after pairs (`-n 1` for smoke test, `-n 5` for full campaign). |
+| `-n, --runs <1..10>` | `3` | Number of cold before/after pairs. Copilot skills explicitly pass the requested count, or `-n 5` when unspecified. |
 | `-o, --out <dir>` | `./traces` | Output directory for `results.json`, per-pair Lighthouse reports, and traces. |
 | `--milo-pr <number>` | — | Serve mapped files (`libs/**` → `/libs/**`) from an `adobecom/milo` PR in the "after" variant. |
 | `--mas-pr <number>` | — | Serve mapped files (`web-components/dist/**` → `/mas/libs/**`) from an `adobecom/mas` PR in the "after" variant. |
 | `--head-inject <file>` | — | Inject HTML preload snippet into `<head>` before the first `<script>` and strip `Link` preload headers in "after". |
+| `--link-add <entry>` | — | Repeatable. Append a `Link` entry (e.g. a prelink) to the "after" document's `Link` response header. |
+| `--link-remove <url\|*>` | — | Repeatable. Remove the "after" `Link` entries for a URL; `*` removes every `rel=preload` / `rel=modulepreload` entry. |
+| `--link-replace <entry>` | — | Repeatable. Replace the one "after" `Link` entry with the same URL. |
 | `--local` | `false` | Run locally with Chrome on this machine instead of dispatching GitHub Actions. |
 | `--repo <owner/name>` | `adobecom/perf-tools` | GitHub repository hosting the `perf-ab` workflow. |
 | `--ref <branch>` | `main` | Git branch ref for the workflow. |
@@ -248,7 +359,7 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
 | Flag | Default | Description |
 | --- | --- | --- |
 | `-n, --runs <n>` | `3` | Number of cold loads to record through `perf-ab`. |
-| `-o, --out <dir>` | `./preloads` | Output directory for `<page-key>.html` and recorded traces. |
+| `-o, --out <dir>` | `./preloads` | Output directory for `<page-key>.html` (snippet), `<page-key>.json` (prelink manifest) and recorded traces. |
 | `--from <path>` | — | Repeatable. Analyze existing trace file(s) or a `perf-ab` output directory instead of recording. |
 | `--min-runs <k>` | Majority (`⌊n/2⌋ + 1`) | Minimum number of traces a resource must finish before LCP in to be included. |
 | `--no-lcp-image` | `false` | Omit the LCP image preload tag (useful when generating viewport-independent snippets). |
@@ -260,7 +371,8 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
 
 ## Security, Target Scope & Development
 
-- **Allowed targets (`lib/target.mjs`):** Measured URLs (including redirect hops) must use `https://` on a subdomain of `adobe.com` (e.g. `www.adobe.com`) that resolves exclusively to public IP addresses. Private, loopback, and reserved IP ranges are blocked both pre-flight and at connection time.
+- **Allowed targets (`lib/target.mjs`):** Measured URLs (including redirect hops) must use `https://` on a subdomain of `adobe.com` (e.g. `www.adobe.com`) or on an adobecom Edge Delivery Services live host `<ref>--<repo>--adobecom.aem.live` (e.g. `main--da-dc--adobecom.aem.live`; other owners, `aem.page` and lookalike hosts are refused), and must resolve exclusively to public IP addresses. Private, loopback, and reserved IP ranges are blocked both pre-flight and at connection time.
+- **aem.live pages:** Milo loads from `main--milo--adobecom.aem.live/libs` there, not from the page host, so `--milo-pr` / `--mas-pr` (which serve PR files under the page host's `/libs/**` and `/mas/libs/**`) do not reach those requests; test Milo branches with `-b main -a <branch>` (`?milolibs=`) instead. `perf-preload` treats every `*--adobecom.aem.live` host as the page's own site, so the generated links keep those Milo URLs.
 - **Public repository warning:** `adobecom/perf-tools` is public. Workflow inputs, logs, and artifacts (reports, traces, `results.json`) are readable by any signed-in GitHub user. Never pass credentials or tokens in URLs or `--head-inject` snippets — spec validation rejects URLs containing userinfo or secret-like query parameters (`token`, `api_key`, `secret`, `password`, `sig`, etc.) before dispatch.
 - **Running tests:**
   ```sh

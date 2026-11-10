@@ -1,3 +1,24 @@
-node_modules
-traces
-mcp-server.log
+# Dependencies
+node_modules/
+
+# perf-ab output (default -o ./traces; ./ab and ./ab-* are used in the docs and skills)
+traces/
+ab/
+ab-*/
+
+# perf-preload output (default -o ./preloads). Commit reviewed snippets under experiments/ instead.
+preloads/
+
+# Logs (CLI runs, MCP server)
+logs/
+*.log
+
+# Local secrets (GitHub tokens for --local runs)
+.env
+.env.*
+
+# OS and editor files
+.DS_Store
+.vscode/
+.idea/
+*.swp

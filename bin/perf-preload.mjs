@@ -7,8 +7,9 @@ import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { isLegacyWarmup } from '../lib/cold-runs.mjs';
-import { assertTargetUrl } from '../lib/target.mjs';
+import { assertTargetUrl, isAemLiveHost } from '../lib/target.mjs';
 import { BUILT_IN_EXCLUDES, parseExclude, matchExclude, describeRule, isAllowedHost } from '../lib/preload-rules.mjs';
+import { manifestPath, prelinkEntry, toManifest, isContextual } from '../lib/prelink.mjs';
 
 const { values: o, positionals } = parseArgs({
   allowPositionals: true,
@@ -41,7 +42,8 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
   credentials are not detected or reproduced, so review and remove links for such consumers.
   Resources the HTML parser already requests from the document itself are skipped. A resource must appear in
   --min-runs traces to be kept. Writes <out>/<page-key>.html with static <link> tags, ready for
-  perf-ab --head-inject.
+  perf-ab --head-inject, and <out>/<page-key>.json: the same links (minus country/locale specific URLs) as a
+  prelink manifest (DA sheet: rel, href, as, crossorigin, fetchpriority) to publish at <dir>/preloads/<name>.json.
 
   -n, --runs <n>       cold page loads to record (default 3, all counted)
   -o, --out <dir>      output dir for the snippet and traces (default ./preloads)
@@ -131,7 +133,9 @@ if (o.from.length) {
 }
 if (!traceFiles.length) { console.error('No traces to analyze'); process.exit(1); }
 
-const site = (host) => host.split('.').slice(-2).join('.');
+// Registrable site of a host; every <ref>--<repo>--adobecom.aem.live host (e.g. the page and its Milo libs on
+// main--milo--adobecom.aem.live) is one site, other aem.live owners are not.
+const site = (host) => (isAemLiveHost(host) ? 'adobecom.aem.live' : host.split('.').slice(-2).join('.'));
 const KEEP = new Set(['Script', 'Stylesheet', 'Font']);
 // Data requests a static <link rel="preload" as="fetch" crossorigin> can serve. Modern Chrome records fetch(),
 // XHR and script-inserted as="fetch" preloads as resourceType "Other", so the role comes from the initiator's
@@ -229,8 +233,7 @@ for (const r of runs) for (const q of r.reqs) {
   x.headerPreload ||= q.headerPreload;
 }
 if (legacyNoMethod) console.warn(`${legacyNoMethod} Fetch/XHR request(s) without requestMethod (older or synthetic trace) were assumed to be GET`);
-const CONTEXT_PARAM = /^(country|locale|lang|language|geo|region|market)$/i;
-const contextual = (url) => [...new URL(url).searchParams.keys()].some((k) => CONTEXT_PARAM.test(k));
+const contextual = (url) => isContextual(url);
 const picked = [...byUrl.values()]
   .filter((x) => x.starts.length >= minRuns)
   .filter((x) => o['all-origins'] || site(new URL(x.url).hostname) === site(page.hostname) || isAllowedHost(new URL(x.url).hostname))
@@ -239,27 +242,36 @@ const picked = [...byUrl.values()]
   .sort((a, b) => a.start - b.start);
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-function tag(x) {
+// The link attributes of a picked resource, shared by the HTML snippet and the JSON manifest.
+function linkOf(x) {
   const u = new URL(x.url);
   const cross = u.origin !== page.origin;
-  // Stylesheets are always absolute: some site loaders (e.g. Acrobat's loadLink) look for an existing
-  // link[href="<relative path>"] without checking rel, find the preload and never add the stylesheet.
-  const href = esc(cross || x.type === 'Stylesheet' ? x.url : `${u.pathname}${u.search}`);
-  const co = (always) => (always || cross ? ' crossorigin' : '');
+  // Stylesheets are protocol-relative (//host/path): site loaders such as Acrobat's loadLink look for an existing
+  // link[href="<the URL they load>"] without checking rel, find the preload and never add the stylesheet. They load
+  // either a relative path (/libs/... on www.adobe.com) or an absolute URL (https://main--milo--adobecom.aem.live/...
+  // on aem.live); "//host/path" resolves to the same URL, so the preload is reused, but never equals either string.
+  const href = x.type === 'Stylesheet' ? x.url.replace(/^https:/, '') : cross ? x.url : `${u.pathname}${u.search}`;
+  const co = (always) => (always || cross ? 'anonymous' : '');
   switch (x.type) {
-    case 'Script': return x.module ? `<link rel="modulepreload" href="${href}"${co()}>` : `<link rel="preload" href="${href}" as="script"${co()}>`;
+    case 'Script': return x.module ? { rel: 'modulepreload', href, crossorigin: co() } : { rel: 'preload', href, as: 'script', crossorigin: co() };
     // <link rel="stylesheet"> and @import fetch in no-cors mode; a crossorigin preload would not be reused.
-    case 'Stylesheet': return `<link rel="preload" href="${href}" as="style">`;
-    case 'Font': return `<link rel="preload" href="${href}" as="font"${co(true)}>`;
-    case 'LCP image': return `<link rel="preload" href="${href}" as="image" fetchpriority="high">`;
-    default: return `<link rel="preload" href="${href}" as="fetch"${co(true)}>`;
+    case 'Stylesheet': return { rel: 'preload', href, as: 'style' };
+    case 'Font': return { rel: 'preload', href, as: 'font', crossorigin: co(true) };
+    case 'LCP image': return { rel: 'preload', href, as: 'image', fetchpriority: 'high' };
+    default: return { rel: 'preload', href, as: 'fetch', crossorigin: co(true) };
   }
 }
+const tag = ({ rel, href, as, crossorigin, fetchpriority }) => `<link rel="${rel}" href="${esc(href)}"${as ? ` as="${as}"` : ''}${crossorigin ? ' crossorigin' : ''}${fetchpriority ? ` fetchpriority="${fetchpriority}"` : ''}>`;
 
 const key = page.pathname.replace(/\.html$/, '').replace(/^\/|\/$/g, '').replace(/\//g, '--') || 'index';
 fs.mkdirSync(OUT, { recursive: true });
+const links = picked.map((x) => ({ ...linkOf(x), url: x.url }));
 const snippet = path.join(OUT, `${key}.html`);
-fs.writeFileSync(snippet, `${picked.map(tag).join('\n')}\n`);
+fs.writeFileSync(snippet, `${links.map(tag).join('\n')}\n`);
+// The manifest is served to every visitor, so country/locale specific URLs stay out of it.
+const manifestLinks = links.filter((l) => !isContextual(l.url));
+const manifestFile = path.join(OUT, `${key}.json`);
+fs.writeFileSync(manifestFile, `${JSON.stringify(toManifest(manifestLinks), null, 2)}\n`);
 
 const lcps = runs.map((r) => Math.round(r.lcp));
 console.log(`\n${page.href}: ${runs.length} traces, LCP ${lcps.join(' / ')} ms (median ${Math.round(median(lcps))}), element ${runs[0].lcpNode}${runs[0].lcpImage ? ` ${runs[0].lcpImage}` : ''}`);
@@ -280,5 +292,11 @@ if (picked.some((x) => x.jsPreload && !x.headerPreload)) console.log('* already 
 if (picked.some((x) => x.headerPreload)) console.log("^ preloaded by the document's Link response header today; perf-ab --head-inject unsets those header entries, so this tag takes over");
 if (picked.some((x) => contextual(x.url))) console.log('! country/locale specific URL: serve this link only to visitors in the matching context, never hardcode it for every geo');
 console.log(`\nSnippet (${picked.length} links): ${snippet}`);
+const contextualDropped = links.length - manifestLinks.length;
+console.log(`Manifest (${manifestLinks.length} rows${contextualDropped ? `, ${contextualDropped} country/locale specific link(s) left out` : ''}): ${manifestFile}`);
+console.log(`  publish as ${manifestPath(page.pathname)} on ${page.origin}; prelink: ${prelinkEntry(manifestPath(page.pathname))}`);
 const rel = path.relative(process.cwd(), snippet);
 if (positionals[0]) console.log(`Validate: perf-ab "${page.href}" --head-inject ${rel.startsWith('..') ? snippet : rel} -n 5`);
+const headScript = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'prelink', 'head.html');
+const headRel = path.relative(process.cwd(), headScript);
+if (positionals[0]) console.log(`Validate the published manifest: perf-ab "${page.href}" --head-inject ${headRel.startsWith('..') ? headScript : headRel} --link-add '${prelinkEntry(manifestPath(page.pathname))}' -n 5`);

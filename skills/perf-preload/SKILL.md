@@ -1,6 +1,6 @@
 ---
 name: perf-preload
-description: Generate static preload `<link>` tags for a page's LCP with the `perf-preload` CLI (adobecom/perf-tools). Records a production page several times through perf-ab (always real Lighthouse 13.6.0, mobile profile with real DevTools throttling; by default on a verified-US GitHub Actions runner, or locally with --local; every load cold with a fresh Chrome and empty profile, no warm-ups), finds the LCP element in each trace and the scripts, stylesheets, fonts, GET JSON/HTML data fetches and LCP image that finished loading before it, and writes a head.html snippet of `<link rel="modulepreload|preload">` tags. Then validates the snippet with perf-ab. Also analyzes DevTools trace JSON files attached by the user. Use when asked to "generate preloads", "what should be preloaded for LCP", "find the LCP critical resources", "build a preload list / head.html snippet", or "why is LCP late on this page".
+description: Generate static preload `<link>` tags for a page's LCP with the `perf-preload` CLI (adobecom/perf-tools). Records a production page several times through perf-ab (always real Lighthouse 13.6.0, mobile profile with real DevTools throttling; by default on a verified-US GitHub Actions runner, or locally with --local; every load cold with a fresh Chrome and empty profile, no warm-ups), finds the LCP element in each trace and the scripts, stylesheets, fonts, GET JSON/HTML data fetches and LCP image that finished loading before it, and writes a head.html snippet of `<link rel="modulepreload|preload">` tags plus the same links as a JSON prelink manifest (DA sheet) that it can publish to DA (through the DA MCP, only after the user's approval) for the inline `prelink/head.html` loader. Then validates the snippet or the manifest with perf-ab. Also analyzes DevTools trace JSON files attached by the user. Use when asked to "generate preloads", "what should be preloaded for LCP", "find the LCP critical resources", "build a preload list / head.html snippet", "create / publish a preload manifest", or "why is LCP late on this page".
 ---
 
 # LCP preload generator (`perf-preload`)
@@ -17,7 +17,7 @@ perf-preload "https://www.adobe.com/products/photoshop.html" -n 5 -o ./preloads
 
 For each trace it finds the final LCP candidate (for an image LCP, its URL), then keeps the scripts, stylesheets, fonts, GET data fetches and the LCP image whose response finished before LCP. It skips the document and the resources the HTML parser already requests from the markup (those are discovered as early as possible already). A resource must appear in a majority of runs (`--min-runs`); each URL counts once per trace, however often it was requested. Only same-site URLs are kept unless `--all-origins`.
 
-The page must be `https://` on a subdomain of `adobe.com` (the same target policy as perf-ab: no apex, credentials, ports, lookalikes or private destinations); anything else is refused before recording.
+The page must be `https://` on a subdomain of `adobe.com` or on `<ref>--<repo>--adobecom.aem.live` (the same target policy as perf-ab: no apex, credentials, ports, lookalikes or private destinations); anything else is refused before recording. On an aem.live page every `*--adobecom.aem.live` host (e.g. Milo on `main--milo--adobecom.aem.live`) counts as the page's own site.
 
 Data fetches: modern Chrome records `fetch()`, XHR and script-inserted `as="fetch"` preloads as resource type `Other`, so earlier versions silently omitted them (placeholders, `checkout-link.json`, personalization manifests, `.plain.html` fragments, `/mas/io/fragment`). They are now kept when the trace shows a `fetch`/`xmlhttprequest` initiator or a link fetch preload, method GET, a 2xx response and a JSON or HTML MIME type. Never kept: POST and other methods, beacons/pings, unrelated `Other` requests (documents, favicons, images fetched by script), and anything matched by an exclude rule (below). Legacy traces without `requestMethod`: only an explicit `Fetch`/`XHR` type is assumed to be GET, with a warning. The type of a URL comes from its real consumer, not from a script preload of it.
 
@@ -29,7 +29,8 @@ Limitations: the generated `as="fetch" crossorigin` assumes the consumer is a de
 
 Output:
 - A table: median start / end (ms from navigation), resource type, URL. `*` marks resources that a script already preloads (for example Milo `preloadLcpCodeFiles`); a static tag still starts them earlier, because no script has to run first.
-- `<out>/<page-key>.html` (`/products/photoshop.html` becomes `products--photoshop.html`) with tags sorted by start time: `modulepreload` for module scripts, `preload as=script|style|font|fetch|image`, `crossorigin` where the consumer's fetch mode needs it (fonts, fetches, cross-origin scripts; never stylesheets, which load without CORS), absolute URLs for stylesheets (a relative one can be mistaken for the stylesheet by site loaders that match `link[href]` without `rel`, leaving it unapplied), `fetchpriority="high"` for the LCP image. In the table, `!` marks URLs with country/locale query parameters (for example `/mas/io/fragment?...&locale=en_US&country=CH`): serve such a link only to visitors in the matching context, never hardcode it in a global `head.html`.
+- `<out>/<page-key>.json`: the same links as a prelink manifest (a DA sheet with exactly the columns `rel`, `href`, `as`, `crossorigin`, `fetchpriority`; country/locale specific `!` URLs are left out because the manifest is served to every visitor). The console prints where it belongs (`<dir>/<name>` → `<dir>/preloads/<name>.json` on the page origin), its prelink entry and the validate command; see section 5.
+- `<out>/<page-key>.html` (`/products/photoshop.html` becomes `products--photoshop.html`) with tags sorted by start time: `modulepreload` for module scripts, `preload as=script|style|font|fetch|image`, `crossorigin` where the consumer's fetch mode needs it (fonts, fetches, cross-origin scripts; never stylesheets, which load without CORS), protocol-relative URLs for stylesheets (`//host/path`: site loaders that match `link[href]` without `rel` would mistake a preload carrying the exact path or absolute URL they load for the stylesheet and never apply it; on aem.live Milo loads styles by absolute URL), `fetchpriority="high"` for the LCP image. In the table, `!` marks URLs with country/locale query parameters (for example `/mas/io/fragment?...&locale=en_US&country=CH`): serve such a link only to visitors in the matching context, never hardcode it in a global `head.html`.
 - The perf-ab download in `<out>/traces` (`results.json`, official Lighthouse reports and one cold `pair<i>/after<i>/trace.json` per run: perf-ab runs `-n` parallel matrix jobs of one load each; the accepted runs listed in `results.json` are counted, `rejected/` never) and a ready-made validate command. The generator reads LCP and the finish times from these throttled traces.
 
 Existing traces (DevTools exports, perf-ab output, user attachments): `perf-preload --from Trace-1.json --from ./traces -o ./preloads`. Only cold traces taken under the same conditions are comparable. A default perf-ab output directory (with `results.json`, including the paired `pair<i>/` layout) contributes only its accepted runs' `trace.json` and is refused unless `status` is `ok`; for a before/after output only the unchanged "before" runs are used, never the changed "after" page. In other `--from` directories, legacy perf-ab warm-up traces (`before0.json` / `after0.json`) and traces with `metadata.perfAb.warmup: true` are skipped with a warning.
@@ -47,9 +48,10 @@ Everything that finished before LCP is a candidate, not a requirement. Prune wit
 ## 3. Validate with perf-ab
 
 ```sh
-perf-ab "https://www.adobe.com/products/photoshop.html" --head-inject ./preloads/products--photoshop.html -n 1   # smoke pair first
 perf-ab "https://www.adobe.com/products/photoshop.html" --head-inject ./preloads/products--photoshop.html -n 5
 ```
+
+Run the requested count directly, defaulting to `-n 5`; no preliminary smoke run unless explicitly requested. Inspect reports from that campaign.
 
 Each `-n` pair is its own cold before/after job; the comparison uses complete pairs only (`status: "partial"` means some pairs are missing: report it as incomplete). Once the user approves a snippet, store it as a versioned experiment config under `experiments/` (see the perf-ab skill) so it can be re-run with `perf-ab --config`.
 
@@ -59,4 +61,31 @@ The snippet is injected before the first `<script>` in `<head>` of the "after" v
 
 Static tags need no JavaScript in `<head>`: the browser's preload scanner finds them as soon as the HTML arrives. On EDS, `head.html` is the same for every page, so:
 - Resources shared by all pages (for example `utils.js`, `styles.css`, common fonts) can go into `head.html` directly.
-- Page-specific tags need per-page injection (an edge worker or the server rendering the page), not `head.html`.
+- Page-specific tags need per-page injection (an edge worker or the server rendering the page), not `head.html`, or a prelink manifest (section 5).
+
+## 5. Publish a prelink manifest to DA and validate it
+
+A prelink manifest delivers page-specific preloads without editing the page: the manifest is published next to the page, the document response prelinks it, and the shared inline script `prelink/head.html` (in the perf-tools checkout) turns its rows into `<link>` tags. Until the site sends the prelink header itself, perf-ab adds it through the proxy (`--link-add`).
+
+DA rules (the user's, non-negotiable):
+- Write only manifest files: `<dir>/preloads/<name>.json`, the path the console printed for the page (`manifestPath` in `lib/prelink.mjs`). Refuse any other path.
+- Never create, update or delete a page or any other source (no page metadata, no bulk `metadata*.json`, no `head.html`), never delete anything, and never overwrite a file at the manifest path that is not a manifest.
+- Ask the user before any DA write. One `ask_user` approval covers the create/update, preview and publish of that one manifest; show the org, repo, DA path, live URL and the rows (or the row diff) first. Without approval, stop and give the user the file and the path.
+
+Procedure (DA MCP tools `da_get_source`, `da_create_source`, `da_update_source`, `da_preview_content`, `da_publish_content`):
+1. Site: for `https://<ref>--<repo>--<org>.aem.live/...` the DA org and repo come from the host (`main--da-dc--adobecom.aem.live` → org `adobecom`, repo `da-dc`). For other hosts (for example www.adobe.com) ask which DA org/repo serves the page; do not guess.
+2. Path: the DA path is the manifest path without the leading slash (`/drafts/ilyas/acrobat/plans` → `drafts/ilyas/acrobat/preloads/plans.json`).
+3. Read it with `da_get_source`. Not found → this is a create. Found → it must be a manifest (`:type: "sheet"`, every row exactly the five columns; `manifestRows` in `lib/prelink.mjs`), otherwise stop; compare its rows with the new ones by `href` (added, removed, changed) for the approval.
+4. Ask for approval (step above). Then `da_create_source` (new) or `da_update_source` (existing manifest) with `contentType: application/json` and the content of `<out>/<page-key>.json` unchanged.
+5. `da_preview_content`, then `da_publish_content`. These tools strip the last file extension, so a plain `.../plans.json` previews the page `.../plans` instead and fails with a 404 for `plans.md`. Pass the manifest path with `.json` doubled (`drafts/ilyas/acrobat/preloads/plans.json.json`) and check that the returned `path` ends in `.json`.
+6. Verify `https://main--<repo>--<org>.aem.live/<path>` returns 200 `application/json` whose `data` rows match the file (EDS may add a `columns` field). Report the DA edit URL and the live URL.
+
+Validate with perf-ab (the manifest must be published first; the inline script fetches it from the page origin):
+
+```sh
+perf-ab "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans" \
+  --head-inject prelink/head.html \
+  --link-add '</drafts/ilyas/acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous' -n 5
+```
+
+Use the path to `prelink/head.html` in the perf-tools checkout. With `--head-inject` the production header preloads are unset, so manifest links plus the prelink are the only preloads in "after". Report `results.json` `linkHeader` (the served prelink) as well as the usual medians, and check in the "after" report that the manifest and each manifest link are fetched once. Compare against the static snippet result (`--head-inject <page-key>.html`) for the same page: the manifest adds one round trip (prelink → script → links), so it is expected to be somewhat slower than static tags.

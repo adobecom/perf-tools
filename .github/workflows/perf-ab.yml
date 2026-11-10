@@ -19,7 +19,7 @@ on:
         required: false
         type: string
       url:
-        description: One https://*.adobe.com page (unchanged unless a PR input is supplied)
+        description: One https://*.adobe.com or https://<ref>--<repo>--adobecom.aem.live page (unchanged unless a PR input is supplied)
         required: false
         type: string
       runs:

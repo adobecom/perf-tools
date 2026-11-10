@@ -67,8 +67,9 @@ test('sanitizes target URLs to strict HTTPS adobe subdomains without credentials
   assert.equal(sanitizeTargetUrl('https://user:pass@www.adobe.com/a?api_key=secret#frag'), 'https://www.adobe.com/a');
   for (const url of [
     'http://www.adobe.com/', 'https://adobe.com/', 'https://evil-adobe.com/', 'https://www.adobe.com:8443/',
-    'https://www.adobe.com.evil.example/',
+    'https://www.adobe.com.evil.example/', 'https://main--da-dc--other.aem.live/', 'https://main--da-dc--adobecom.aem.page/',
   ]) assert.equal(sanitizeTargetUrl(url), null, url);
+  assert.equal(sanitizeTargetUrl('https://main--da-dc--adobecom.aem.live/drafts/x?parallel-sections=1'), 'https://main--da-dc--adobecom.aem.live/drafts/x');
 });
 
 test('normalizes paired results, recomputes paired medians and trusts validated sample rows only', () => {
@@ -268,4 +269,17 @@ test('re-sanitizing a published detail is idempotent and preserves per-pair hint
     { pair: 3, used: 57, contextual: 2, dropped: 0 },
   ]);
   assert.deepEqual(once.changes.kinds, ['headInject', 'patches', 'sources', 'query']);
+});
+
+test('Link header edits are published as a change kind without their entries', () => {
+  const detail = normalizeResult(result({
+    edits: { after: { headInject: false, linkHeader: true, patches: [], sources: {} } },
+    hints: null,
+    linkHeader: { edits: { add: ['</acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous'] }, served: '</acrobat/preloads/plans.json>; rel=preload; as=fetch; crossorigin=anonymous' },
+  }), ghRun(), artifact);
+  assert.deepEqual(detail.changes.kinds, ['linkHeader', 'query']);
+  assert.ok(!JSON.stringify(detail).includes('preloads/plans.json'), 'Link entries stay in the artifact, not in public history');
+  const again = mergeHistory({ schema: 'perf-ab/history-v1', runs: [summaryFromDetail(detail)] }, [], Date.parse('2026-11-03T00:00:00Z'), { [detail.id]: detail }).details.get(detail.id);
+  assert.deepEqual(again.changes.kinds, detail.changes.kinds);
+  assert.equal(dashboard.CHANGE_KINDS.linkHeader, 'Link header edits');
 });

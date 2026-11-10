@@ -156,9 +156,11 @@ test('safeExternalUrl allows https links to trusted repos and adobe.com', () => 
     'https://github.com/adobecom/mas/pull/1487',
     'https://www.adobe.com/acrobat/pricing.html?x=1',
     'https://adobe.com/',
+    'https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans',
   ];
   for (const u of ok) assert.equal(core.safeExternalUrl(u), new URL(u).href, u);
   const bad = [
+    'https://main--da-dc--other.aem.live/', 'https://main--da-dc--adobecom.aem.live.evil.net/', 'https://x.main--da-dc--adobecom.aem.live/',
     'javascript:alert(1)', 'data:text/html,x', 'http://www.adobe.com/', 'https://user:pw@www.adobe.com/', 'https://www.adobe.com:8443/',
     'https://evil-adobe.com/', 'https://www.adobe.com.evil.net/', 'https://github.com/adobecom/perf-tools-evil/x',
     'https://github.com/adobecom/milo/issues/1', 'https://github.com/evil/repo',
