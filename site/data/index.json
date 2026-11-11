@@ -1,7 +1,42 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-11T08:54:26.652Z",
+  "updatedAt": "2026-11-11T08:54:53.331Z",
   "runs": [
+    {
+      "id": "42990662988-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-11T08:53:50.000Z",
+      "finishedAt": "2026-11-11T08:54:35.000Z",
+      "status": "failed",
+      "conclusion": "failure",
+      "errorCode": "artifact-invalid",
+      "url": null,
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42990662988/attempts/1",
+        "sha": "6fb29b6ab3ffeb4cc014b074451df72b0dbbae4f"
+      },
+      "detailPath": "data/runs/42990662988-1.json"
+    },
     {
       "id": "42990619011-1",
       "name": null,
