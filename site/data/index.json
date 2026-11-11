@@ -1,7 +1,65 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-11T12:15:46.833Z",
+  "updatedAt": "2026-11-11T12:23:25.455Z",
   "runs": [
+    {
+      "id": "43019615202-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-11T12:21:22.000Z",
+      "finishedAt": "2026-11-11T12:23:13.000Z",
+      "status": "partial",
+      "conclusion": "failure",
+      "errorCode": "pairs-incomplete",
+      "url": "https://mwpw-214935-manifest--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 0,
+        "after": 4,
+        "pairs": 4,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": {
+          "performance": 65.5,
+          "FCP": 3276.982,
+          "LCP": 3369.839,
+          "SI": 7587.5,
+          "TBT": 576.7380000000028,
+          "CLS": 0.001218951304257111
+        },
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43019615202/attempts/1",
+        "sha": "81c060bd57b141e3f2c388de4b14fc6c9356c895"
+      },
+      "detailPath": "data/runs/43019615202-1.json"
+    },
     {
       "id": "43018348569-1",
       "name": null,
