@@ -126,7 +126,7 @@ test('--exclude adds path prefixes and hosts (repeatable) on top of the built-in
   assert.match(bad.stderr, /--exclude https:\/\/nope\//);
 });
 
-test('Link header preloads (initiator "other") are still generated, marked ^; script preloads keep the * note', () => {
+test('Link header preloads (initiator "other") are still generated, marked ^ with a bias warning; script preloads keep the * note', () => {
   const header = (url, type) => [url, type, { type: 'other' }, { isLinkPreload: true }];
   const r = run([
     header('https://www.adobe.com/libs/utils/utils.js', 'Script'),
@@ -145,7 +145,7 @@ test('Link header preloads (initiator "other") are still generated, marked ^; sc
   ]);
   assert.match(r.stdout, /Script \^ +https:\/\/www\.adobe\.com\/libs\/utils\/utils\.js/);
   assert.match(r.stdout, /Script \* +https:\/\/www\.adobe\.com\/libs\/blocks\/a\/a\.js/);
-  assert.match(r.stdout, /\^ preloaded by the document's Link response header today/);
+  assert.match(r.stdout, /\^ preloaded by the document's Link response header in these traces\. WARNING: biased list/);
   assert.match(r.stdout, /already preloaded by a script/);
   assert.ok(r.stdout.includes('/marketingtech/*  https://www.adobe.com/marketingtech/header-preloaded.js'), 'rules also apply to header-preloaded resources');
 });

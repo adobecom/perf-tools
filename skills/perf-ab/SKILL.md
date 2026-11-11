@@ -66,6 +66,7 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" \
 - `--link-add <entry>`, `--link-remove <url|*>` and `--link-replace <entry>` (all repeatable; config: `after.linkHeader` with `add` / `remove` / `replace` lists) edit the after document's `Link` response header through the proxy, in the order remove, replace, add. Use them to test a prelink before the site sends it. `*` removes every `rel=preload` / `rel=modulepreload` entry, so `--link-remove '*'` plus `--link-add` replaces the whole preload set.
 - Entries are matched by resolved URL and guarded: a removed URL must exist, a replaced URL must exist exactly once with a different value, an added URL must not exist yet; otherwise the job fails (production changed). Do not retry by guessing; read the production header (`curl -sI <url> | grep -i '^link'`) and adjust.
 - With `--head-inject`, header preloads are unset first, then the edits apply: snippet + added entries are the only preloads. `--link-remove '*'` is rejected there (redundant).
+- `--after-only` measures only the edited page (no before baseline or deltas) and needs a change option; perf-preload records with `--after-only --link-remove '*'`.
 - An `as=fetch` prelink is only reused by `fetch(url)` with `crossorigin=anonymous`; check in the "after" report that the prelinked file is fetched once.
 - Report `results.json` `linkHeader` (`production`, `served`, `removed`, `replaced`, `added`; also printed in the console) and say the comparison is the production header vs the edited header.
 

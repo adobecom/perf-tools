@@ -88,6 +88,8 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
                           header preloads are unset). They are guarded: a removed URL must be present, a replaced URL present exactly
                           once with a different value, an added URL absent, or the job fails (production changed).
                           Reported in results.json linkHeader (production, served, removed, replaced, added) and the console.
+  --after-only            measure only the changed (after) page: no before baseline, pairs or deltas. Needs a change option;
+                          perf-preload records with --after-only --link-remove '*' so no server Link preload biases its traces.
   --patch <file.json>     {"replacements":[{"path":"/libs/utils/utils.js","find":"...","replace":"..."}]}:
                           guarded edits of live sources (after only); each find must match exactly once or the job fails
   --milo-pr <n> / --mas-pr <n>   pin the PR's exact commit, locally read only mapped changed files, and serve them
@@ -142,7 +144,9 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
     after.pullRequests = [...(after.pullRequests ?? []), { repo, number }];
   }
   const changed = o.before != null || after.headInject != null || after.linkHeader || after.patches || after.sources || after.pullRequests;
-  return validateSpec({ version: 1, runs, names: changed ? ['before', 'after'] : ['after'], variants: changed ? { before, after } : { after }, ...(interactions ? { interactions } : {}) });
+  if (o['after-only'] && !changed) throw new Error('--after-only needs a change option (e.g. --link-remove \'*\'); without one the URL is already measured as-is');
+  const paired = changed && !o['after-only'];
+  return validateSpec({ version: 1, runs, names: paired ? ['before', 'after'] : ['after'], variants: paired ? { before, after } : { after }, ...(interactions ? { interactions } : {}) });
 }
 
 export async function main(argv = process.argv.slice(2)) {
@@ -170,11 +174,12 @@ export async function main(argv = process.argv.slice(2)) {
       ref: { type: 'string', default: 'main' },
       timeout: { type: 'string', default: '75' },
       local: { type: 'boolean', default: false },
+      'after-only': { type: 'boolean', default: false },
       help: { type: 'boolean', short: 'h' },
     },
   });
   if (o.help || (!positionals[0] && !o.config)) { console.log(HELP); process.exit(positionals[0] || o.help ? 0 : 1); }
-  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'interactions', 'repo', 'ref', 'timeout', 'local', 'help']);
+  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'interactions', 'repo', 'ref', 'timeout', 'local', 'after-only', 'help']);
   const unknown = Object.keys(o).filter((k) => !known.has(k));
   if (unknown.length) fail(`unknown option(s): ${unknown.map((k) => `--${k}`).join(', ')}`);
   if (positionals.length > 1) fail(`unexpected arguments: ${positionals.slice(1).join(' ')}`);
@@ -182,6 +187,7 @@ export async function main(argv = process.argv.slice(2)) {
   let config = null;
   try {
     if (o.config) {
+      if (o['after-only']) throw new Error('--after-only cannot be combined with --config');
       const clash = CHANGE_OPTIONS.filter((k) => k in o && !(Array.isArray(o[k]) && !o[k].length) && o[k] !== '');
       if (positionals.length || clash.length) throw new Error(`--config defines the URL and changes; remove ${[...positionals, ...clash.map((k) => `--${k}`)].join(', ')}`);
       const c = resolveConfig(o.config);
