@@ -1,7 +1,97 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-11T11:35:37.835Z",
+  "updatedAt": "2026-11-11T11:36:08.446Z",
   "runs": [
+    {
+      "id": "43012945555-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-11T11:33:39.000Z",
+      "finishedAt": "2026-11-11T11:35:55.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/creativecloud.html",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 0,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": {
+          "FCP": 5517.129,
+          "LCP": 5517.129,
+          "SI": 8229,
+          "CLS": 0.005017724747407674
+        },
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43012945555/attempts/1",
+        "sha": "98ff0eaff76985399ec512292fa3b3a7df2a506f"
+      },
+      "detailPath": "data/runs/43012945555-1.json"
+    },
+    {
+      "id": "43012945495-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-11T11:33:39.000Z",
+      "finishedAt": "2026-11-11T11:35:58.000Z",
+      "status": "failed",
+      "conclusion": "failure",
+      "errorCode": "profile-mismatch",
+      "url": "https://www.adobe.com/creativecloud.html",
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 5
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43012945495/attempts/1",
+        "sha": "98ff0eaff76985399ec512292fa3b3a7df2a506f"
+      },
+      "detailPath": "data/runs/43012945495-1.json"
+    },
     {
       "id": "43012787842-1",
       "name": null,
