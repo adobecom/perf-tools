@@ -176,17 +176,22 @@ function analyze(file) {
     ? events.filter((e) => e.name === 'LargestImagePaint::Candidate' && e.ts >= t0 && e.args?.frame === frame && e.args.data.DOMNodeId === lcp.args.data.nodeId).pop()?.args.data.imageUrl
     : null;
   const modules = new Set(events.filter((e) => e.name === 'v8.compileModule').map((e) => e.args?.data?.url));
-  const finish = new Map(events.filter((e) => e.name === 'ResourceFinish').map((e) => [e.args.data.requestId, e.ts]));
+  const finish = new Map(events.filter((e) => e.name === 'ResourceFinish').map((e) => [e.args.data.requestId, e]));
   const response = new Map(events.filter((e) => e.name === 'ResourceReceiveResponse').map((e) => [e.args.data.requestId, e.args.data]));
   // One entry per URL per trace: a page can request the same URL more than once (a script preload plus the
   // consumer fetch), and that must count as one run for --min-runs.
   const byUrl = new Map();
   const excluded = new Map();
+  const failed = new Map();
   for (const e of events) {
     if (e.name !== 'ResourceSendRequest' || e.ts < t0 || e.args.data.frame !== frame) continue;
     const d = e.args.data;
-    const end = finish.get(d.requestId);
+    const done = finish.get(d.requestId);
+    const end = done?.ts;
     if (!end || end > lcp.ts || d.url === docUrl || !/^https?:\/\//.test(d.url)) continue;
+    // A failed request finishes early without serving anything (e.g. a Link header preload that 404s on this host).
+    const status = response.get(d.requestId)?.statusCode;
+    if (done.args.data.didFail || status >= 400) { failed.set(d.url, done.args.data.didFail ? 'network error' : `HTTP ${status}`); continue; }
     const isLcpImage = d.url === lcpImage;
     const data = !isLcpImage && dataRequest(d, response.get(d.requestId));
     if (!KEEP.has(d.resourceType) && !isLcpImage && !data) continue;
@@ -215,7 +220,7 @@ function analyze(file) {
     x.jsPreload ||= q.jsPreload;
     x.headerPreload ||= q.headerPreload;
   }
-  return { docUrl, lcp: (lcp.ts - t0) / 1000, lcpNode: lcp.args.data.nodeName, lcpImage, reqs: [...byUrl.values()], excluded };
+  return { docUrl, lcp: (lcp.ts - t0) / 1000, lcpNode: lcp.args.data.nodeName, lcpImage, reqs: [...byUrl.values()], excluded, failed };
 }
 
 const runs = traceFiles.map(analyze).filter(Boolean);
@@ -303,6 +308,13 @@ for (const r of runs) for (const [url, rule] of r.excluded) if (!excludedByRule.
 if (excludedByRule.size) {
   console.log('Excluded by rule (finished before LCP, never preloaded):');
   for (const [url, rule] of excludedByRule) console.log(`  ${describeRule(rule)}  ${url}`);
+}
+const pickedUrls = new Set(picked.map((x) => x.url));
+const failedResponses = new Map();
+for (const r of runs) for (const [url, why] of r.failed) if (!pickedUrls.has(url) && !failedResponses.has(url)) failedResponses.set(url, why);
+if (failedResponses.size) {
+  console.log('Failed responses (finished before LCP without content, never preloaded):');
+  for (const [url, why] of failedResponses) console.log(`  ${why}  ${url}`);
 }
 console.log(`Exclude rules: ${excludeRules.map(describeRule).join(', ')}`);
 if (picked.some((x) => x.jsPreload && !x.headerPreload)) console.log('* already preloaded by a script (e.g. preloadLcpCodeFiles); a static tag starts it earlier');

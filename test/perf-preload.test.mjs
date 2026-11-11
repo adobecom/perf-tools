@@ -357,6 +357,19 @@ test('an adobecom aem.live page keeps its Milo libs from main--milo--adobecom.ae
   }
 });
 
+test('failed responses (HTTP >= 400 or network errors) finish early but never become preloads', () => {
+  const ok = `${A}/acrobat/scripts/scripts.js`;
+  const t = dataTrace([
+    { url: ok, type: 'Script', fetchType: 'script', mime: 'text/javascript' },
+    { url: `${A}/libs/utils/utils.js`, type: 'Script', fetchType: 'script', mime: 'text/javascript', status: 404, preload: true },
+    { url: `${A}/broken.css`, type: 'Stylesheet', fetchType: 'link', mime: 'text/css' },
+  ]);
+  t.traceEvents.find((e) => e.name === 'ResourceFinish' && e.args.data.requestId === 'D2').args.data.didFail = true;
+  const { lines, stdout } = generateFrom([t]);
+  assert.deepEqual(lines, ['<link rel="preload" href="/acrobat/scripts/scripts.js" as="script" fetchpriority="high">']);
+  assert.match(stdout, /Failed responses[^\n]*\n {2}HTTP 404 {2}https:\/\/www\.adobe\.com\/libs\/utils\/utils\.js\n {2}network error {2}https:\/\/www\.adobe\.com\/broken\.css/);
+});
+
 test('fetchpriority: data fetches high, scripts high in the first half of the time to LCP and low after, stylesheets default', () => {
   // dataTrace: 100 ms steps from navigation, LCP at ~10 s, so the cutoff is ~5 s.
   const early = `${A}/libs/utils/utils.js`;
