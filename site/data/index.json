@@ -1,7 +1,42 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-11T10:14:36.421Z",
+  "updatedAt": "2026-11-11T10:16:53.629Z",
   "runs": [
+    {
+      "id": "43002210947-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-11T10:16:20.000Z",
+      "finishedAt": "2026-11-11T10:16:41.000Z",
+      "status": "failed",
+      "conclusion": "cancelled",
+      "errorCode": "workflow-cancelled",
+      "url": null,
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": null,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": null
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43002210947/attempts/1",
+        "sha": "6b287f5a8ff49e27bac80d09ae347392c91cd5ca"
+      },
+      "detailPath": "data/runs/43002210947-1.json"
+    },
     {
       "id": "43001427625-1",
       "name": null,
