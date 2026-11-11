@@ -59,8 +59,10 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
   --no-lcp-image       do not preload the LCP image (its URL is viewport specific)
   --exclude <rule>     (repeatable) never preload a path prefix (/marketingtech) or a host (bfp.adobe.com, subdomains
                        included), on top of the built-in rules below
-  Built-in rules (always on, listed as "excluded by rule" in the output): /experienceedge/*, /marketingtech/*
-  (any origin) and bfp.adobe.com. The snippet is meant to be the ONLY source of preloads for the page: perf-ab
+  Built-in rules (always on, listed as "excluded by rule" in the output): /experienceedge/*, /marketingtech/*,
+  /libs/features/mep/mep-next/* (Milo MEP preview tooling, loaded on preview hosts only; any origin) and
+  bfp.adobe.com. A resource first requested by an excluded resource (e.g. a module it imports) is excluded too.
+  The snippet is meant to be the ONLY source of preloads for the page: perf-ab
   --head-inject unsets every rel=preload/modulepreload entry of the after document's Link response header, so
   resources that the header preloads today are generated here like any other (marked ^).
   --local              record with the same Lighthouse job locally (Actions is the default). A known non-US
@@ -183,8 +185,17 @@ function analyze(file) {
   const byUrl = new Map();
   const excluded = new Map();
   const failed = new Map();
-  for (const e of events) {
-    if (e.name !== 'ResourceSendRequest' || e.ts < t0 || e.args.data.frame !== frame) continue;
+  // Rules apply to the matching URL and to everything it pulls in: a request whose initiator is an excluded
+  // resource (e.g. a module imported by MEP preview tooling) is excluded too, unless the page requested it first.
+  const sends = events.filter((e) => e.name === 'ResourceSendRequest' && e.ts >= t0 && e.args.data.frame === frame).sort((a, b) => a.ts - b.ts);
+  const ruleOf = new Map();
+  for (const { args: { data: d } } of sends) {
+    if (ruleOf.has(d.url)) continue;
+    const parent = d.initiator?.url ?? d.initiator?.stack?.callFrames?.[0]?.url;
+    const inherited = parent && ruleOf.get(parent) ? { kind: 'initiator', value: parent } : null;
+    ruleOf.set(d.url, matchExclude(excludeRules, d.url) ?? inherited);
+  }
+  for (const e of sends) {
     const d = e.args.data;
     const done = finish.get(d.requestId);
     const end = done?.ts;
@@ -196,7 +207,7 @@ function analyze(file) {
     const data = !isLcpImage && dataRequest(d, response.get(d.requestId));
     if (!KEEP.has(d.resourceType) && !isLcpImage && !data) continue;
     if (d.initiator?.type === 'parser' && d.initiator.url === docUrl && !isLcpImage) continue;
-    const rule = matchExclude(excludeRules, d.url);
+    const rule = ruleOf.get(d.url);
     if (rule) { excluded.set(d.url, rule); continue; }
     const jsPreload = !!d.isLinkPreload && d.initiator?.type !== 'parser';
     // Chrome reports a Link response header preload with initiator type "other", a script-inserted one with "script".
