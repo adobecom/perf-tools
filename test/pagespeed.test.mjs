@@ -20,7 +20,7 @@ import {
 } from '../lib/pagespeed/transforms.mjs';
 import { runRemote } from '../lib/pagespeed/remote.mjs';
 import { runJob, makeCert, scanForKeys, extractMetrics, median } from '../lib/pagespeed/job.mjs';
-import { startProxy } from '../lib/pagespeed/proxy.mjs';
+import { startProxy, sharedLookup } from '../lib/pagespeed/proxy.mjs';
 import { buildSpec } from '../bin/perf-ab.mjs';
 
 const BIN = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'bin');
@@ -255,6 +255,21 @@ test('proxy refuses HTTP/2 server push upstream, like Chrome (a pushing CDN must
     upstream.close();
     cert.cleanup();
   }
+});
+
+test('proxy DNS: one lookup per host per load, shared by concurrent tunnels; failures are not cached', async () => {
+  const calls = [];
+  const addrs = [{ address: '2001:db8::1', family: 6 }, { address: '203.0.113.7', family: 4 }];
+  const lookup = sharedLookup((host, opts, cb) => { calls.push([host, opts]); setTimeout(() => (host === 'bad.test' ? cb(new Error('ENOTFOUND')) : cb(null, addrs)), 10); });
+  const ask = (host, opts) => new Promise((resolve) => lookup(host, opts, (err, a, f) => resolve(err ? err.message : [a, f])));
+  const results = await Promise.all([ask('milo.test', {}), ask('milo.test', { all: true }), ask('milo.test', { family: 4 }), ask('cdn.test', 6)]);
+  assert.deepEqual(results, [['2001:db8::1', 6], [addrs, undefined], ['203.0.113.7', 4], ['2001:db8::1', 6]]);
+  assert.deepEqual(await ask('milo.test', {}), ['2001:db8::1', 6]);
+  assert.deepEqual(calls.map(([h]) => h), ['milo.test', 'cdn.test']);
+  assert.ok(calls.every(([, o]) => o.all === true), 'resolves all addresses once, then picks per caller');
+  assert.equal(await ask('bad.test', {}), 'ENOTFOUND');
+  assert.equal(await ask('bad.test', {}), 'ENOTFOUND');
+  assert.equal(calls.filter(([h]) => h === 'bad.test').length, 2, 'a failed lookup is retried, not cached');
 });
 
 test('proxy refuses tunnels to local/IP targets (SSRF guard)', async () => {
