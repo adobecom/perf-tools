@@ -1,7 +1,77 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-11T08:42:51.645Z",
+  "updatedAt": "2026-11-11T08:54:26.652Z",
   "runs": [
+    {
+      "id": "42990619011-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-11T08:53:29.000Z",
+      "finishedAt": "2026-11-11T08:54:16.000Z",
+      "status": "failed",
+      "conclusion": "failure",
+      "errorCode": "artifact-invalid",
+      "url": null,
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42990619011/attempts/1",
+        "sha": "6fb29b6ab3ffeb4cc014b074451df72b0dbbae4f"
+      },
+      "detailPath": "data/runs/42990619011-1.json"
+    },
+    {
+      "id": "42990300334-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-11T08:51:03.000Z",
+      "finishedAt": "2026-11-11T08:52:01.000Z",
+      "status": "failed",
+      "conclusion": "failure",
+      "errorCode": "artifact-invalid",
+      "url": null,
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/42990300334/attempts/1",
+        "sha": "6fb29b6ab3ffeb4cc014b074451df72b0dbbae4f"
+      },
+      "detailPath": "data/runs/42990300334-1.json"
+    },
     {
       "id": "42988811065-1",
       "name": null,
