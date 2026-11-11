@@ -514,6 +514,10 @@ test('CLI spec: unchanged URL measures one variant; changes give before=producti
   assert.deepEqual(buildSpec(cliOpts({ 'link-add': ['</x.json>; rel=preload; as=fetch'] }), page).variants.after.linkHeader, { add: ['</x.json>; rel=preload; as=fetch'] });
   assert.throws(() => buildSpec(cliOpts({ 'link-add': [true] }), page), /--link-add needs a value/);
   assert.throws(() => buildSpec(cliOpts({ 'link-add': ['/x.json'] }), page), /one Link entry/);
+  const only = buildSpec(cliOpts({ 'link-remove': ['*'], 'after-only': true }), page);
+  assert.deepEqual(only.names, ['after']);
+  assert.deepEqual(only.variants, { after: { url: page, linkHeader: { remove: ['*'] } } });
+  assert.throws(() => buildSpec(cliOpts({ 'after-only': true }), page), /--after-only needs a change option/);
 });
 
 test('CLI: Actions is the default location, --local opts into the shared Lighthouse job, and legacy flags are gone', async () => {

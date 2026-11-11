@@ -10,6 +10,7 @@ import { isLegacyWarmup } from '../lib/cold-runs.mjs';
 import { assertTargetUrl, isAemLiveHost } from '../lib/target.mjs';
 import { BUILT_IN_EXCLUDES, parseExclude, matchExclude, describeRule, isAllowedHost } from '../lib/preload-rules.mjs';
 import { manifestPath, prelinkEntry, toManifest, isContextual } from '../lib/prelink.mjs';
+import { stripPreloadLinks } from '../lib/pagespeed/transforms.mjs';
 
 const { values: o, positionals } = parseArgs({
   allowPositionals: true,
@@ -31,7 +32,9 @@ if (o.help || (!positionals[0] && !o.from.length)) {
 perf-preload --from <trace.json|dir> [--from ...] [options]
 
   Loads <pageUrl> -n times through perf-ab (real Lighthouse 13.6.0, mobile, real DevTools throttling: Slow 4G and 4x
-  CPU; Actions is the default, --local runs on this machine). Every load is cold in a fresh Chrome process and empty
+  CPU; Actions is the default, --local runs on this machine). Recordings are unbiased: when the page's response has
+  rel=preload/modulepreload Link entries, every load runs with them unset (perf-ab --after-only --link-remove '*'),
+  so files are timed as the page itself requests them. Every load is cold in a fresh Chrome process and empty
   profile, with no warm-up, and exactly the n accepted Lighthouse traces are analyzed. The throttling is applied by
   Chrome itself, so the trace times (LCP, "finished before LCP") are those of the throttled load. It finds the LCP in
   each trace and keeps the scripts,
@@ -64,7 +67,8 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
   bfp.adobe.com. A resource first requested by an excluded resource (e.g. a module it imports) is excluded too.
   The snippet is meant to be the ONLY source of preloads for the page: perf-ab
   --head-inject unsets every rel=preload/modulepreload entry of the after document's Link response header, so
-  resources that the header preloads today are generated here like any other (marked ^).
+  resources that the header preloads today are generated here like any other. --from traces that still had header
+  preloads mark them ^ and print a bias warning.
   --local              record with the same Lighthouse job locally (Actions is the default). A known non-US
                        location is allowed and reported, but local results are not comparable with Actions.`);
   process.exit(positionals[0] || o.from.length ? 0 : 1);
@@ -113,6 +117,22 @@ if (o.from.length) {
   fs.rmSync(traceDir, { recursive: true, force: true });
   const args = [path.join(path.dirname(fileURLToPath(import.meta.url)), 'perf-ab.mjs'), positionals[0], '-n', o.runs, '-o', traceDir];
   if (o.local) args.push('--local');
+  // Unbiased recording: a server Link preload starts its file with the document response, so it finishes "before
+  // LCP" because it was preloaded, not because the page requests it early. Every load runs with the page's
+  // rel=preload/modulepreload Link entries unset, so files are timed as the page itself requests them.
+  let serverPreloads;
+  try {
+    const res = await fetch(positionals[0], { redirect: 'follow', signal: AbortSignal.timeout(30000) });
+    serverPreloads = stripPreloadLinks(res.headers.get('link')).removed;
+    await res.body?.cancel();
+  } catch (e) {
+    console.error(`cannot read the page's Link response header (${e.message}); no preloads generated`);
+    process.exit(1);
+  }
+  if (serverPreloads.length) {
+    args.push('--after-only', '--link-remove', '*');
+    console.log(`unbiased recording: the page's ${serverPreloads.length} server Link preload(s) are unset in every load`);
+  }
   try {
     execFileSync(process.execPath, args, { stdio: 'inherit' });
   } catch (e) {
@@ -126,7 +146,8 @@ if (o.from.length) {
     : results.where !== 'local' && results.egress?.ok === true && results.egress?.country === 'US';
   if (results.status !== 'ok' || !locationOk || !results.profile) { console.error(`perf-ab results are not a complete ${o.local ? 'local' : 'verified US'} Lighthouse run (status ${results.status}); no preloads generated`); process.exit(1); }
   const location = o.local ? 'local (not comparable with Actions)' : 'verified US egress';
-  console.log(`traces: Lighthouse ${results.lighthouseVersion} ${results.profile.name}, ${location}, ${results.runsPerVariant} cold run(s)`);
+  if (serverPreloads.length && !results.linkHeader?.removed?.length) { console.error('perf-ab did not unset the server Link preloads; no preloads generated'); process.exit(1); }
+  console.log(`traces: Lighthouse ${results.lighthouseVersion} ${results.profile.name}, ${location}, ${results.runsPerVariant} cold run(s)${serverPreloads.length ? ', server Link preloads unset' : ''}`);
   // perf-ab saves one cold load per run and no warm-up. Read exactly the
   // requested runs, never whatever else happens to be in the folder.
   for (let i = 1; i <= Number(o.runs); i += 1) {
@@ -329,7 +350,7 @@ if (failedResponses.size) {
 }
 console.log(`Exclude rules: ${excludeRules.map(describeRule).join(', ')}`);
 if (picked.some((x) => x.jsPreload && !x.headerPreload)) console.log('* already preloaded by a script (e.g. preloadLcpCodeFiles); a static tag starts it earlier');
-if (picked.some((x) => x.headerPreload)) console.log("^ preloaded by the document's Link response header today; perf-ab --head-inject unsets those header entries, so this tag takes over");
+if (picked.some((x) => x.headerPreload)) console.log("^ preloaded by the document's Link response header in these traces. WARNING: biased list: a header preload starts with the document, so it finishes before LCP even when the page needs it later. Record with perf-preload <pageUrl>, which unsets server preloads, for an unbiased list");
 if (picked.some((x) => contextual(x.url))) console.log('! country/locale specific URL: serve this link only to visitors in the matching context, never hardcode it for every geo');
 console.log(`[high]/[low] fetchpriority: data fetches high; scripts first requested by ${Math.round(priorityCutoff)} ms (${PRIORITY_SPLIT * 100}% of the median LCP) high, later ones low; stylesheets and fonts keep the browser default`);
 console.log(`\nSnippet (${picked.length} links): ${snippet}`);
