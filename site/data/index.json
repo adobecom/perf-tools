@@ -1,7 +1,64 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-11T13:00:55.774Z",
+  "updatedAt": "2026-11-11T13:01:23.010Z",
   "runs": [
+    {
+      "id": "43025043492-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-11T12:59:09.000Z",
+      "finishedAt": "2026-11-11T13:00:58.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://mwpw-214935-static--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 0,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": null,
+        "after": {
+          "performance": 38,
+          "FCP": 7198.316,
+          "LCP": 7265.407,
+          "SI": 11403,
+          "TBT": 798.422999999997,
+          "CLS": 0.001218951304257111
+        },
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43025043492/attempts/1",
+        "sha": "b86e4be95b6c4c9babb03bc935de500ae4beb758"
+      },
+      "detailPath": "data/runs/43025043492-1.json"
+    },
     {
       "id": "43024998415-1",
       "name": null,
@@ -56,6 +113,77 @@
         "sha": "b3a2abf02d22cb0916d333443c4e900135e2f173"
       },
       "detailPath": "data/runs/43024998415-1.json"
+    },
+    {
+      "id": "43024907019-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-11T12:58:09.000Z",
+      "finishedAt": "2026-11-11T13:00:56.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 5,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "performance": 40,
+          "FCP": 8720.116,
+          "LCP": 8810.564,
+          "SI": 12960,
+          "TBT": 610.8629999999994,
+          "CLS": 0.001218951304257111
+        },
+        "after": {
+          "performance": 43,
+          "FCP": 6923.669,
+          "LCP": 7015.503,
+          "SI": 11079,
+          "TBT": 547.0699999999979,
+          "CLS": 0.001218951304257111
+        },
+        "delta": {
+          "performance": 5,
+          "FCP": -1811.299,
+          "LCP": -1810.101999999999,
+          "SI": -1898,
+          "TBT": -163.06299999998373,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43024907019/attempts/1",
+        "sha": "b3a2d3f5ea2855e69605e210b8700427d8e025ac"
+      },
+      "detailPath": "data/runs/43024907019-1.json"
     },
     {
       "id": "43024369719-1",
