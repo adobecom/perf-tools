@@ -1,4 +1,4 @@
-// Built-in preload exclusions (/marketingtech/*, bfp.adobe.com, /experienceedge/*), --exclude, and Link header
+// Built-in preload exclusions (/marketingtech/*, bfp.adobe.com, /experienceedge/*, MEP preview tooling), --exclude, and Link header
 // preloads in recorded traces.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -53,7 +53,7 @@ function run(requests, ...flags) {
 const hrefs = (links) => links.map((l) => /href="([^"]*)"/.exec(l)[1]);
 
 test('rules: built-ins and --exclude values parse and match path prefixes and hosts', () => {
-  assert.deepEqual(BUILT_IN_EXCLUDES.map(describeRule), ['/experienceedge/*', '/marketingtech/*', 'bfp.adobe.com']);
+  assert.deepEqual(BUILT_IN_EXCLUDES.map(describeRule), ['/experienceedge/*', '/marketingtech/*', 'bfp.adobe.com', '/libs/features/mep/mep-next/*']);
   const u = (s) => new URL(s);
   assert.ok(matchExclude(BUILT_IN_EXCLUDES, u('https://www.adobe.com/marketingtech/a.js')));
   assert.ok(matchExclude(BUILT_IN_EXCLUDES, u('https://x.example/marketingtech')));
@@ -83,8 +83,36 @@ test('perf-preload never emits /marketingtech/* (any origin) or bfp.adobe.com, a
   }
   assert.match(r.stdout, /\/marketingtech\/\*  https:\/\/www\.adobe\.com\/marketingtech\/main\.min\.js/);
   assert.match(r.stdout, /bfp\.adobe\.com  https:\/\/bfp\.adobe\.com\/bfp\.js/);
-  assert.match(r.stdout, /Exclude rules: \/experienceedge\/\*, \/marketingtech\/\*, bfp\.adobe\.com/);
+  assert.match(r.stdout, /Exclude rules: \/experienceedge\/\*, \/marketingtech\/\*, bfp\.adobe\.com, \/libs\/features\/mep\/mep-next\/\*/);
   assert.doesNotMatch(r.links.join('\n'), /marketingtech\/(main|nested|other)|bfp\.adobe\.com/);
+});
+
+test('MEP preview tooling and what it imports are never preloaded; the page\'s own requests stay', () => {
+  const M = 'https://main--milo--adobecom.aem.live/libs';
+  const r = run([
+    [`${M}/features/personalization/personalization.js`, 'Script', SCRIPT],
+    [`${M}/features/mep/mep-next/mep-next.js`, 'Script', { type: 'script', url: `${M}/features/personalization/personalization.js` }],
+    [`${M}/blocks/merch/merch.js`, 'Script', { type: 'script', url: `${M}/features/mep/mep-next/mep-next.js` }],
+    [`${M}/features/mep/mep-next/mep-overlay/mep-overlay.js`, 'Script', SCRIPT],
+    [`${M}/features/mep/sidekick-auth.js`, 'Script', { type: 'script', url: `${M}/features/mep/mep-next/mep-overlay/mep-overlay.js` }],
+    [`${M}/utils/decorate.js`, 'Script', { type: 'script', stack: { callFrames: [{ url: `${M}/c2/blocks/rich-content/rich-content.js` }] } }],
+  ], '--all-origins', '--min-runs', '1');
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(hrefs(r.links), [`${M}/features/personalization/personalization.js`, `${M}/utils/decorate.js`]);
+  assert.match(r.stdout, /\/libs\/features\/mep\/mep-next\/\*  https:\/\/[^\n]*mep-next\.js/);
+  assert.match(r.stdout, /requested by excluded https:\/\/[^\n]*mep-next\.js  https:\/\/[^\n]*\/blocks\/merch\/merch\.js/);
+  assert.match(r.stdout, /requested by excluded https:\/\/[^\n]*mep-overlay\.js  https:\/\/[^\n]*sidekick-auth\.js/);
+});
+
+test('a resource the page requested before an excluded one did is kept', () => {
+  const M = 'https://main--milo--adobecom.aem.live/libs';
+  const r = run([
+    [`${M}/blocks/merch/merch.js`, 'Script', SCRIPT],
+    [`${M}/features/mep/mep-next/mep-next.js`, 'Script', SCRIPT],
+    [`${M}/blocks/merch/merch.js`, 'Script', { type: 'script', url: `${M}/features/mep/mep-next/mep-next.js` }],
+  ], '--all-origins', '--min-runs', '1');
+  assert.equal(r.status, 0, r.stderr);
+  assert.deepEqual(hrefs(r.links), [`${M}/blocks/merch/merch.js`]);
 });
 
 test('--exclude adds path prefixes and hosts (repeatable) on top of the built-ins', () => {
