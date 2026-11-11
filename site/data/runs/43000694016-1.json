@@ -1,0 +1,144 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "43000694016-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-11T10:05:46.000Z",
+  "finishedAt": "2026-11-11T10:07:08.000Z",
+  "status": "failed",
+  "conclusion": "cancelled",
+  "errorCode": "artifact-invalid",
+  "url": null,
+  "profileKey": null,
+  "profile": null,
+  "egress": {
+    "country": null,
+    "verified": false,
+    "documentGeo": "unavailable"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 0,
+    "after": 0,
+    "pairs": 0,
+    "rejected": 0
+  },
+  "medians": {
+    "before": null,
+    "after": null,
+    "delta": null
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43000694016/attempts/1",
+    "sha": "49d0f9c365ea8a33af00aed306a4c3f4b1e6f477"
+  },
+  "detailPath": "data/runs/43000694016-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": null,
+        "order": null,
+        "orderPolicy": null,
+        "chromeVersion": null,
+        "egressCountry": null,
+        "benchmarkIndexes": {
+          "before": null,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": null,
+        "order": null,
+        "orderPolicy": null,
+        "chromeVersion": null,
+        "egressCountry": null,
+        "benchmarkIndexes": {
+          "before": null,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": null,
+        "order": null,
+        "orderPolicy": null,
+        "chromeVersion": null,
+        "egressCountry": null,
+        "benchmarkIndexes": {
+          "before": null,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 4,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": null,
+        "order": null,
+        "orderPolicy": null,
+        "chromeVersion": null,
+        "egressCountry": null,
+        "benchmarkIndexes": {
+          "before": null,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 5,
+      "before": null,
+      "after": null,
+      "delta": null,
+      "job": {
+        "runAttempt": null,
+        "order": null,
+        "orderPolicy": null,
+        "chromeVersion": null,
+        "egressCountry": null,
+        "benchmarkIndexes": {
+          "before": null,
+          "after": null
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [],
+  "artifact": {
+    "name": "perf-ab-mwbye89n-mf1p05at",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/43000694016/artifacts/13845249082",
+    "expiresAt": "2027-02-09T10:05:47.000Z",
+    "expired": false
+  }
+}
