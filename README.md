@@ -281,7 +281,7 @@ perf-preload --from Trace-1.json --from Trace-2.json -o ~/perf-ab-runs/photoshop
   - `/experienceedge` and `/experienceedge/*`
   - `/marketingtech/*` (on any origin)
   - `bfp.adobe.com` (and its subdomains)
-  - Add custom exclusions with repeatable `--exclude <path-prefix|host>` (e.g. `--exclude /libs/martech --exclude cdn.example.net`). All matched requests are listed transparently under `Excluded by rule`.
+  - Add custom exclusions with repeatable `--exclude <path-prefix|host>` (e.g. `--exclude /libs/martech --exclude cdn.example.net`). All matched requests are listed transparently under `Excluded by rule`. Requests that failed (HTTP 4xx/5xx or a network error, e.g. a `Link` header preload that 404s on an aem.live host) finish early but serve nothing, so they are never preloaded; they are listed under `Failed responses`.
 - **Markup safety:**
   - Stylesheet preloads always use **protocol-relative URLs** (`//host/path`) without `crossorigin`. Site loaders such as Acrobat's `loadLink` skip a stylesheet when any `link[href="<the URL they load>"]` exists, whatever its `rel`; they load by path on www.adobe.com (`/libs/...`) but by absolute URL on aem.live (`https://main--milo--adobecom.aem.live/libs/...`). `//host/path` resolves to the same URL, so the no-CORS stylesheet fetch reuses the preload, but never equals either string (an absolute preload on aem.live left the page unstyled and hidden).
   - Data preloads (`as="fetch" crossorigin`) assume standard CORS `fetch()`/XHR with default credentials; review and remove any link whose consumer sends custom headers or `credentials: 'include'`.
