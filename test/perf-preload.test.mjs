@@ -379,3 +379,32 @@ test('fetchpriority: data fetches high, scripts high in the first half of the ti
   assert.match(stdout, /utilities\.js +\[low\]/);
   assert.match(stdout, /scripts first requested by 5000 ms \(50% of the median LCP\) high, later ones low/);
 });
+
+test('manifest rows keep the page\'s own stylesheets root-relative so the manifest works on any host serving the page', () => {
+  const live = 'https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans';
+  const own = 'https://main--da-dc--adobecom.aem.live/acrobat/styles/styles.css';
+  const milo = 'https://main--milo--adobecom.aem.live/libs/styles/styles.css';
+  const t = dataTrace([
+    { url: own, type: 'Stylesheet', fetchType: 'link', mime: 'text/css' },
+    { url: milo, type: 'Stylesheet', fetchType: 'link', mime: 'text/css' },
+  ]);
+  t.traceEvents[0].args.data.documentLoaderURL = live;
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'perf-preload-test-'));
+  try {
+    const f = path.join(dir, 't1.json');
+    fs.writeFileSync(f, JSON.stringify(t));
+    const r = spawnSync(process.execPath, [CLI, live, '--from', f, '-o', dir], { encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    // The snippet is for this host: protocol-relative stylesheets never equal the href a site loader looks for.
+    assert.deepEqual(fs.readFileSync(path.join(dir, 'drafts--ilyas--acrobat--plans.html'), 'utf8').trim().split('\n'), [
+      '<link rel="preload" href="//main--da-dc--adobecom.aem.live/acrobat/styles/styles.css" as="style">',
+      '<link rel="preload" href="//main--milo--adobecom.aem.live/libs/styles/styles.css" as="style">',
+    ]);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, 'drafts--ilyas--acrobat--plans.json'), 'utf8')).data.map((row) => row.href), [
+      '/acrobat/styles/styles.css',
+      '//main--milo--adobecom.aem.live/libs/styles/styles.css',
+    ]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

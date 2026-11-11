@@ -292,7 +292,7 @@ perf-preload --from Trace-1.json --from Trace-2.json -o ~/perf-ab-runs/photoshop
 Each run writes two files to `-o <dir>` (the page key is the page path with `/` → `--`, e.g. `drafts--ilyas--acrobat--plans`):
 
 - **`<page-key>.html`** — the static `<link>` snippet for `perf-ab --head-inject`.
-- **`<page-key>.json`** — the same links as a **prelink manifest**: a DA sheet (`:type: "sheet"`) whose rows have exactly the columns `rel`, `href`, `as`, `crossorigin`, `fetchpriority` (strings, `""` when unset; `crossorigin` is `anonymous` or `""`). Country/locale specific URLs are left out (the manifest is served to every visitor) and counted in the console.
+- **`<page-key>.json`** — the same links as a **prelink manifest**: a DA sheet (`:type: "sheet"`) whose rows have exactly the columns `rel`, `href`, `as`, `crossorigin`, `fetchpriority` (strings, `""` when unset; `crossorigin` is `anonymous` or `""`). The page's own files are root-relative, stylesheets included, so one manifest works on every host that serves the page (for example an aem.live branch); the loader gives stylesheets their `//host/path` form. Country/locale specific URLs are left out (the manifest is served to every visitor) and counted in the console.
 
 The console also prints where to publish it and the matching prelink: a page `<dir>/<name>` (or `<dir>/<name>.html`) gets `<dir>/preloads/<name>.json` on the page's own origin (`<dir>/` → `<dir>/preloads/index.json`), prelinked with `</dir/preloads/<name>.json>; rel=preload; as=fetch; crossorigin=anonymous`.
 
