@@ -281,8 +281,13 @@ fs.mkdirSync(OUT, { recursive: true });
 const links = picked.map((x) => ({ ...linkOf(x), url: x.url }));
 const snippet = path.join(OUT, `${key}.html`);
 fs.writeFileSync(snippet, `${links.map(tag).join('\n')}\n`);
-// The manifest is served to every visitor, so country/locale specific URLs stay out of it.
-const manifestLinks = links.filter((l) => !isContextual(l.url));
+// The manifest is served to every visitor, so country/locale specific URLs stay out of it. The page's own files are
+// root-relative (stylesheets too), so one manifest works on every host serving the page (e.g. aem.live branches);
+// prelink/head.html resolves them against the page and gives stylesheets their //host/path form.
+const manifestLinks = links.filter((l) => !isContextual(l.url)).map((l) => {
+  const u = new URL(l.url);
+  return u.origin === page.origin ? { ...l, href: `${u.pathname}${u.search}` } : l;
+});
 const manifestFile = path.join(OUT, `${key}.json`);
 fs.writeFileSync(manifestFile, `${JSON.stringify(toManifest(manifestLinks), null, 2)}\n`);
 
