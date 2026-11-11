@@ -221,6 +221,42 @@ test('proxy: unchanged responses keep the original compressed bytes; changed one
   }
 });
 
+test('proxy refuses HTTP/2 server push upstream, like Chrome (a pushing CDN must not crash the run)', { timeout: 30000 }, async () => {
+  const cert = makeCert('perf-ab.test');
+  const pushAllowed = [];
+  const upstream = http2.createSecureServer({ key: cert.key, cert: cert.cert });
+  upstream.on('stream', (s) => {
+    pushAllowed.push(s.pushAllowed);
+    if (s.pushAllowed) s.pushStream({ ':path': '/pushed.css' }, (err, push) => { if (!err) { push.respond({ ':status': 200 }); push.end('x'); } });
+    s.respond({ ':status': 200, 'content-type': 'text/html', link: '</pushed.css>; rel=preload; as=style' });
+    s.end('<!doctype html>');
+  });
+  await new Promise((r) => { upstream.listen(0, '127.0.0.1', r); });
+  const proxy = await startProxy({ host: 'perf-ab.test', key: cert.key, cert: cert.cert, upstreamOrigin: `https://127.0.0.1:${upstream.address().port}`, upstreamOptions: { rejectUnauthorized: false } });
+  const net = await import('node:net');
+  const tls = await import('node:tls');
+  try {
+    const body = await new Promise((resolve, reject) => {
+      const sock = net.connect(proxy.port, '127.0.0.1', () => sock.write('CONNECT perf-ab.test:443 HTTP/1.1\r\nHost: perf-ab.test:443\r\n\r\n'));
+      sock.once('data', () => {
+        const session = http2.connect('https://perf-ab.test', { createConnection: () => tls.connect({ socket: sock, servername: 'perf-ab.test', ALPNProtocols: ['h2'], rejectUnauthorized: false }) });
+        const req = session.request({ ':path': '/page' });
+        const chunks = [];
+        req.on('data', (c) => chunks.push(c));
+        req.on('end', () => { session.close(); resolve(Buffer.concat(chunks).toString()); });
+        req.on('error', reject);
+      });
+      sock.on('error', reject);
+    });
+    assert.equal(body, '<!doctype html>');
+    assert.deepEqual(pushAllowed, [false]);
+  } finally {
+    await proxy.close();
+    upstream.close();
+    cert.cleanup();
+  }
+});
+
 test('proxy refuses tunnels to local/IP targets (SSRF guard)', async () => {
   const cert = makeCert('perf-ab.test');
   const proxy = await startProxy({ host: 'perf-ab.test', key: cert.key, cert: cert.cert });
