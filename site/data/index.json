@@ -1,7 +1,73 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-11T13:12:18.108Z",
+  "updatedAt": "2026-11-12T11:39:02.769Z",
   "runs": [
+    {
+      "id": "43210518651-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-12T11:35:51.000Z",
+      "finishedAt": "2026-11-12T11:38:49.000Z",
+      "status": "partial",
+      "conclusion": "failure",
+      "errorCode": "pairs-incomplete",
+      "url": "https://main--cc--adobecom.aem.live/creativecloud/plans",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "unavailable"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 3,
+        "after": 3,
+        "pairs": 3,
+        "rejected": 2
+      },
+      "medians": {
+        "before": {
+          "FCP": 8748.863,
+          "LCP": 8748.863,
+          "SI": 12650,
+          "CLS": 0.02192678961839356
+        },
+        "after": {
+          "FCP": 8686.955,
+          "LCP": 8686.955,
+          "SI": 13403,
+          "CLS": 0.02192678961839356
+        },
+        "delta": {
+          "FCP": -61.90799999999945,
+          "LCP": -61.90799999999945,
+          "SI": 753,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43210518651/attempts/1",
+        "sha": "63b339f00774913219bfb714b45e63c36906dfca"
+      },
+      "detailPath": "data/runs/43210518651-1.json"
+    },
     {
       "id": "43026503346-1",
       "name": null,
