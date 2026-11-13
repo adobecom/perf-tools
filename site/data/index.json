@@ -1,7 +1,72 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-13T09:32:27.547Z",
+  "updatedAt": "2026-11-13T09:56:27.460Z",
   "runs": [
+    {
+      "id": "43404824945-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-13T09:52:46.000Z",
+      "finishedAt": "2026-11-13T09:56:15.000Z",
+      "status": "ok",
+      "conclusion": "success",
+      "url": "https://www.adobe.com/acrobat/plans.html",
+      "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+      "profile": {
+        "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+        "lighthouseVersion": "13.6.0",
+        "chromeVersion": null,
+        "formFactor": "mobile",
+        "throttlingMethod": "devtools",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.56,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "maxWaitForLoad": null,
+        "width": 412,
+        "height": 823,
+        "deviceScaleFactor": 1.75
+      },
+      "egress": {
+        "country": "US",
+        "verified": true,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 5,
+        "after": 5,
+        "pairs": 5,
+        "rejected": 0
+      },
+      "medians": {
+        "before": {
+          "FCP": 3876.299,
+          "LCP": 3876.299,
+          "SI": 6689,
+          "CLS": 0.001218951304257111
+        },
+        "after": {
+          "FCP": 4132.213,
+          "LCP": 4228.643,
+          "SI": 8421,
+          "CLS": 0.001218951304257111
+        },
+        "delta": {
+          "FCP": 194.9069999999997,
+          "LCP": 291.337,
+          "SI": 1494,
+          "CLS": 0
+        }
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43404824945/attempts/1",
+        "sha": "39fc1f2a1a77edc256a6474b5c0edbd3d79ce7f1"
+      },
+      "detailPath": "data/runs/43404824945-1.json"
+    },
     {
       "id": "43401663163-1",
       "name": null,
