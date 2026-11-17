@@ -516,6 +516,7 @@ test('CLI spec: unchanged URL measures one variant; changes give before=producti
   assert.deepEqual(pr.names, ['before', 'after']);
   assert.deepEqual(pr.variants.before, { url: page });
   assert.deepEqual(pr.variants.after.pullRequests, [{ repo: 'adobecom/milo', number: 7095 }]);
+  assert.deepEqual(buildSpec(cliOpts({ 'da-dc-pr': '320' }), page).variants.after.pullRequests, [{ repo: 'adobecom/da-dc', number: 320 }]);
   assert.throws(() => buildSpec(cliOpts({ 'mas-pr': '0' }), page), /positive PR number/);
   assert.throws(() => buildSpec(cliOpts({ runs: '0' }), page), /--runs/);
   assert.throws(() => buildSpec(cliOpts({ after: 'x' }), page), /together/);

@@ -86,6 +86,7 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" \
 | Option | "Before" Variant | "After" Variant |
 | --- | --- | --- |
 | `--milo-pr <n>` / `--mas-pr <n>` | Unchanged live production page | Pinned PR diff served through the local measuring proxy (`libs/**` → `/libs/**` for `adobecom/milo`, `web-components/dist/**` → `/mas/libs/**` for `adobecom/mas`). Added, modified, removed, and renamed files are handled accurately; unmapped test/docs files are ignored. |
+| `--da-dc-pr <n>` | Unchanged live production page | Pinned `adobecom/da-dc` PR: changed repo files are served at the same path on the page host (dot-files ignored). A `head.html` change is applied to the served document `<head>` as an element-level diff (merge-base → PR head, guarded: the production head must still match the merge-base, otherwise the job stops). Combine with `-b`/`-a` (`?milolibs=`) when the PR depends on a Milo branch. |
 | `--head-inject <file>` | Unchanged live production page (with its existing `Link` header preloads) | Snippet injected into `<head>` before the first `<script>`, with all `rel=preload` and `rel=modulepreload` entries stripped from the document's `Link` response header so the snippet is the **sole source of preloads**. |
 | `--head-inject` + `--milo-pr` / `--mas-pr` | Unchanged live production page | Applies both the `<head>` preload snippet and the pinned PR file changes together. |
 | `--link-add` / `--link-remove` / `--link-replace` | Unchanged live production page (with its existing `Link` response header) | The document's `Link` response header with entries added, removed, or replaced by the measuring proxy (see [Editing `Link` header prelinks](#editing-link-header-prelinks)). Combines with every other option. |
@@ -346,6 +347,7 @@ perf-ab <pageUrl> [options]
 | `-o, --out <dir>` | `./traces` | Output directory for `results.json`, per-pair Lighthouse reports, and traces. |
 | `--milo-pr <number>` | — | Serve mapped files (`libs/**` → `/libs/**`) from an `adobecom/milo` PR in the "after" variant. |
 | `--mas-pr <number>` | — | Serve mapped files (`web-components/dist/**` → `/mas/libs/**`) from an `adobecom/mas` PR in the "after" variant. |
+| `--da-dc-pr <number>` | — | Serve changed `adobecom/da-dc` files at the same path (`head.html` is applied to the document `<head>`) in the "after" variant. |
 | `--head-inject <file>` | — | Inject HTML preload snippet into `<head>` before the first `<script>` and strip `Link` preload headers in "after". |
 | `--link-add <entry>` | — | Repeatable. Append a `Link` entry (e.g. a prelink) to the "after" document's `Link` response header. |
 | `--link-remove <url\|*>` | — | Repeatable. Remove the "after" `Link` entries for a URL; `*` removes every `rel=preload` / `rel=modulepreload` entry. |
@@ -378,7 +380,7 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
 ## Security, Target Scope & Development
 
 - **Allowed targets (`lib/target.mjs`):** Measured URLs (including redirect hops) must use `https://` on a subdomain of `adobe.com` (e.g. `www.adobe.com`) or on an adobecom Edge Delivery Services live host `<ref>--<repo>--adobecom.aem.live` (e.g. `main--da-dc--adobecom.aem.live`; other owners, `aem.page` and lookalike hosts are refused), and must resolve exclusively to public IP addresses. Private, loopback, and reserved IP ranges are blocked both pre-flight and at connection time.
-- **aem.live pages:** Milo loads from `main--milo--adobecom.aem.live/libs` there, not from the page host, so `--milo-pr` / `--mas-pr` (which serve PR files under the page host's `/libs/**` and `/mas/libs/**`) do not reach those requests; test Milo branches with `-b main -a <branch>` (`?milolibs=`) instead. `perf-preload` treats every `*--adobecom.aem.live` host as the page's own site, so the generated links keep those Milo URLs.
+- **aem.live pages:** Milo loads from `main--milo--adobecom.aem.live/libs` there, not from the page host, so `--milo-pr` / `--mas-pr` (which serve PR files under the page host's `/libs/**` and `/mas/libs/**`) do not reach those requests; test Milo branches with `-b main -a <branch>` (`?milolibs=`) instead. `--da-dc-pr` does apply to `*--da-dc--adobecom.aem.live` pages because da-dc files are served from the page host. `perf-preload` treats every `*--adobecom.aem.live` host as the page's own site, so the generated links keep those Milo URLs.
 - **Public repository warning:** `adobecom/perf-tools` is public. Workflow inputs, logs, and artifacts (reports, traces, `results.json`) are readable by any signed-in GitHub user. Never pass credentials or tokens in URLs or `--head-inject` snippets — spec validation rejects URLs containing userinfo or secret-like query parameters (`token`, `api_key`, `secret`, `password`, `sig`, etc.) before dispatch.
 - **Running tests:**
   ```sh

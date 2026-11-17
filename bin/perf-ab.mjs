@@ -15,7 +15,7 @@ import { loadExperiment, CONFIG_PATH } from '../lib/pagespeed/experiment.mjs';
 import { resolveInteractions } from '../lib/pagespeed/interactions.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CHANGE_OPTIONS = ['before', 'after', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'interactions'];
+const CHANGE_OPTIONS = ['before', 'after', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'da-dc-pr', 'interactions'];
 
 // --config: the file must be a committed-style experiments/**.json path of this repository (cwd- or repo-relative).
 export function resolveConfig(file, { root = ROOT, cwd = process.cwd() } = {}) {
@@ -92,8 +92,10 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
                           perf-preload records with --after-only --link-remove '*' so no server Link preload biases its traces.
   --patch <file.json>     {"replacements":[{"path":"/libs/utils/utils.js","find":"...","replace":"..."}]}:
                           guarded edits of live sources (after only); each find must match exactly once or the job fails
-  --milo-pr <n> / --mas-pr <n>   pin the PR's exact commit, locally read only mapped changed files, and serve them
-                          through the proxy in the after variant. Before remains unchanged production.
+  --milo-pr <n> / --mas-pr <n> / --da-dc-pr <n>   pin the PR's exact commit, locally read only mapped changed files, and
+                          serve them through the proxy in the after variant. Before remains unchanged production. da-dc files
+                          map to the same path on the page host; a head.html change is applied to the served document <head>
+                          (guarded: production head.html must match the PR merge-base). Milo/MAS PRs do not apply on aem.live pages.
   --interactions <file.json|auto>   adds INP (Interaction to Next Paint) to the same measurement. "auto" is the pass-partout:
                           it finds the page's own in-page interactions (tabs, expand/collapse toggles, plain buttons, one modal
                           opener; never links, purchases, sign-in, submits or cookie banners) and taps them, no selectors needed;
@@ -137,7 +139,7 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
     if (!Array.isArray(p.replacements) || !p.replacements.length) throw new Error(`--patch ${o.patch}: expected {"replacements":[{path,find,replace}]}`);
     after.patches = p.replacements.map(({ path: p2, find, replace }) => ({ path: p2, find, replace }));
   }
-  for (const [flag, repo] of [['milo-pr', 'adobecom/milo'], ['mas-pr', 'adobecom/mas']]) {
+  for (const [flag, repo] of [['milo-pr', 'adobecom/milo'], ['mas-pr', 'adobecom/mas'], ['da-dc-pr', 'adobecom/da-dc']]) {
     if (!o[flag]) continue;
     const number = Number(o[flag]);
     if (!Number.isInteger(number) || number < 1 || number > 999999) throw new Error(`--${flag} must be a positive PR number`);
@@ -169,6 +171,7 @@ export async function main(argv = process.argv.slice(2)) {
       patch: { type: 'string' },
       'milo-pr': { type: 'string' },
       'mas-pr': { type: 'string' },
+      'da-dc-pr': { type: 'string' },
       interactions: { type: 'string' },
       repo: { type: 'string', default: 'adobecom/perf-tools' },
       ref: { type: 'string', default: 'main' },
@@ -179,7 +182,7 @@ export async function main(argv = process.argv.slice(2)) {
     },
   });
   if (o.help || (!positionals[0] && !o.config)) { console.log(HELP); process.exit(positionals[0] || o.help ? 0 : 1); }
-  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'interactions', 'repo', 'ref', 'timeout', 'local', 'after-only', 'help']);
+  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'da-dc-pr', 'interactions', 'repo', 'ref', 'timeout', 'local', 'after-only', 'help']);
   const unknown = Object.keys(o).filter((k) => !known.has(k));
   if (unknown.length) fail(`unknown option(s): ${unknown.map((k) => `--${k}`).join(', ')}`);
   if (positionals.length > 1) fail(`unexpected arguments: ${positionals.slice(1).join(' ')}`);

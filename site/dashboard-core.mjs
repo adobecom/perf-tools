@@ -101,7 +101,7 @@ export function safeExternalUrl(value) {
   const host = u.hostname.toLowerCase();
   if (host === 'github.com') {
     if (u.pathname === '/adobecom/perf-tools' || u.pathname.startsWith('/adobecom/perf-tools/')) return u.href;
-    return /^\/adobecom\/(?:milo|mas)\/pull\/[1-9][0-9]*$/.test(u.pathname) ? u.href : null;
+    return /^\/adobecom\/(?:milo|mas|da-dc)\/pull\/[1-9][0-9]*$/.test(u.pathname) ? u.href : null;
   }
   if (host === 'adobe.com' || host.endsWith('.adobe.com')) return u.href;
   if (/^[a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*--adobecom\.aem\.live$/.test(host)) return u.href;
@@ -327,7 +327,7 @@ export function parseRun(json, expectedId) {
     if (w.kind !== 'environment-variability') return {
       kind: w.kind,
       path: str(w.path, 300),
-      repo: ['adobecom/milo', 'adobecom/mas'].includes(w.repo) ? w.repo : null,
+      repo: ['adobecom/milo', 'adobecom/mas', 'adobecom/da-dc'].includes(w.repo) ? w.repo : null,
       number: int(w.number),
       pair: int(w.pair),
       expectedMergeBaseSha256: typeof w.expectedMergeBaseSha256 === 'string' && /^[a-f0-9]{64}$/i.test(w.expectedMergeBaseSha256) ? w.expectedMergeBaseSha256.toLowerCase() : null,
@@ -362,11 +362,11 @@ export function parseRun(json, expectedId) {
       patchPaths: strList(c.patchPaths, 100),
       sourcePaths: strList(c.sourcePaths, 100),
       prSources: Array.isArray(c.prSources) ? c.prSources.slice(0, 20).filter(isObject).map((pr) => {
-        if (!['adobecom/milo', 'adobecom/mas'].includes(pr.repo) || !Number.isInteger(pr.number) || pr.number < 1
+        if (!['adobecom/milo', 'adobecom/mas', 'adobecom/da-dc'].includes(pr.repo) || !Number.isInteger(pr.number) || pr.number < 1
           || !safeSha(pr.baseSha) || !safeSha(pr.headSha) || !safeSha(pr.mergeBaseSha)) return null;
         const validPath = (p) => {
           const value = str(p, 300);
-          const prefix = pr.repo === 'adobecom/milo' ? '/libs/' : '/mas/libs/';
+          const prefix = { 'adobecom/milo': '/libs/', 'adobecom/mas': '/mas/libs/', 'adobecom/da-dc': '/' }[pr.repo];
           return value?.startsWith(prefix) ? value : null;
         };
         return {
@@ -382,7 +382,7 @@ export function parseRun(json, expectedId) {
       }).filter(Boolean) : [],
       sourceDrift: Array.isArray(c.sourceDrift) ? c.sourceDrift.slice(0, 300).filter(isObject).map((row) => ({
         path: str(row.path, 300),
-        repo: ['adobecom/milo', 'adobecom/mas'].includes(row.repo) ? row.repo : null,
+        repo: ['adobecom/milo', 'adobecom/mas', 'adobecom/da-dc'].includes(row.repo) ? row.repo : null,
         number: int(row.number), pair: int(row.pair),
         expectedMergeBaseSha256: typeof row.expectedMergeBaseSha256 === 'string' && /^[a-f0-9]{64}$/i.test(row.expectedMergeBaseSha256) ? row.expectedMergeBaseSha256.toLowerCase() : null,
         productionSha256: typeof row.productionSha256 === 'string' && /^[a-f0-9]{64}$/i.test(row.productionSha256) ? row.productionSha256.toLowerCase() : null,
