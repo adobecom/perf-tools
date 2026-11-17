@@ -86,6 +86,7 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" \
 | Option | "Before" Variant | "After" Variant |
 | --- | --- | --- |
 | `--milo-pr <n>` / `--mas-pr <n>` | Unchanged live production page | Pinned PR diff served through the local measuring proxy (`libs/**` → `/libs/**` for `adobecom/milo`, `web-components/dist/**` → `/mas/libs/**` for `adobecom/mas`). Added, modified, removed, and renamed files are handled accurately; unmapped test/docs files are ignored. |
+| `--da-dc-pr <n>` | Unchanged live production page | Pinned `adobecom/da-dc` PR: changed repo files are served at the same path on the page host (dot-files ignored). A `head.html` change is applied to the served document `<head>` as an element-level diff (merge-base → PR head, guarded: the production head must still match the merge-base, otherwise the job stops). Combine with `-b`/`-a` (`?milolibs=`) when the PR depends on a Milo branch. |
 | `--head-inject <file>` | Unchanged live production page (with its existing `Link` header preloads) | Snippet injected into `<head>` before the first `<script>`, with all `rel=preload` and `rel=modulepreload` entries stripped from the document's `Link` response header so the snippet is the **sole source of preloads**. |
 | `--head-inject` + `--milo-pr` / `--mas-pr` | Unchanged live production page | Applies both the `<head>` preload snippet and the pinned PR file changes together. |
 | `--link-add` / `--link-remove` / `--link-replace` | Unchanged live production page (with its existing `Link` response header) | The document's `Link` response header with entries added, removed, or replaced by the measuring proxy (see [Editing `Link` header prelinks](#editing-link-header-prelinks)). Combines with every other option. |
@@ -257,6 +258,57 @@ How `prelink/head.html` behaves:
 - A missing (404) or invalid manifest, or any error, leaves the page unchanged; the script never throws. Without a prelink, the manifest request starts only when the script runs, so it costs one extra request (a 404 on pages without a manifest).
 - With `--head-inject`, perf-ab unsets the production header preloads, so the manifest links (plus the added prelink) are the only preloads, as with a static snippet.
 
+### Site Preloads in `head.html`: Many Pages, Mobile + Desktop, No Request
+
+**Site preloads** put the preload links of many pages into one inline `<script>` in the site's `head.html`. There is no manifest request and no Milo dependency: the links are added while the head is parsed, before `scripts.js` starts. Updating the preloads means regenerating the block and opening a `head.html` pull request.
+
+- **Global rows** apply to every page.
+- **Page rows** apply to the pages their path patterns match.
+- Each row targets all viewports, mobile only or desktop only.
+- Library, locale and country specific URLs carry placeholders that the page resolves for itself.
+
+`perf-site-preloads` builds the block from `perf-preload` recordings of each page on mobile (default) and on desktop (`--desktop`). It fills the template [`prelink/site-head.html`](prelink/site-head.html).
+
+```sh
+R=~/perf-ab-runs/2026-11-16-acrobat
+for p in acrobat/plans acrobat/acrobat-pro; do
+  perf-preload "https://www.adobe.com/$p.html" -n 5 --local -o $R/links
+  perf-preload "https://www.adobe.com/$p.html" -n 5 --local --desktop -o $R/links   # writes <page-key>.desktop.*
+done
+perf-site-preloads $R/links -o $R/site-preloads.html          # review the block
+perf-site-preloads $R/links --into ~/git/da-dc/head.html      # or put it into the site's head.html
+```
+
+`--into` replaces the previously generated block, which is delimited by `<!-- site preloads: ... -->` and `<!-- end of site preloads -->`. On the first run it inserts the block right after `<meta name="viewport">`. That position matters for two reasons:
+
+- EDS renders the page's metadata `<meta>` tags (e.g. `mas-geo-detection`) before `head.html`.
+- The viewport must be set before the mobile/desktop media queries run.
+
+The template's two data lines are filled in, one array literal per row:
+
+- **`LINKS`**: `[pages, viewport, rel, href, as, crossorigin, fetchpriority]`.
+  - `pages` is a comma-separated list of path patterns, matched against the page path without `.html`. `*` alone matches every page; inside a pattern, `*` matches within one path segment and `**` matches anything. For example, `/acrobat/**` matches every page under `/acrobat/`.
+  - A link recorded on every page gets the global pattern (`--global`, default: the pages' common directory). A link recorded on mobile and desktop for the same pages becomes one `all` row; otherwise it becomes a `mobile` row and a `desktop` row.
+  - Rows are ordered global first, then shared rows, then page rows, each by recorded start time.
+- **`LOCALES`**: `[prefix, locale, defaultMarket, supportedRegions]`. These are the root site's markets from Milo's `supported-markets.json`, written when a row uses `{locale}` or `{country}`.
+
+`href` placeholders are resolved on the page itself. A row whose placeholder has no value for this page or visitor is skipped, never guessed:
+
+| Placeholder | Value (the same rule Milo / MAS apply later) |
+| --- | --- |
+| `{milolibs}` | `/libs` on production hosts; on `.aem.` / `.hlx.` / `.stage.` / `.da.` hosts, the `?milolibs=` branch (`https://<branch>--milo--adobecom.aem.live/libs`, default `main`). `local` is never preloaded. |
+| `{maslibs}` | `https://www.adobe.com/mas/libs` on www.adobe.com, where `?maslibs=` is ignored. Elsewhere, the validated `?maslibs=` branch's `/web-components/dist` (default `main--mas--adobecom.aem.live`). |
+| `{locale}` | The MAS locale of the page's `LOCALES` row (`en_US`). With MAS geo detection on, AU, IN and GB visitors of the `en_US` site get `en_GB`. |
+| `{country}` | The MAS market country. Without geo detection, it is the page locale's country. With geo detection (`?mas-geo-detection` or the `mas-geo-detection` meta tag), it is the first value found in `?country`, `?akamaiLocale`, the `country` cookie, `ims_country_code` (only when `mas-ims-login` is `on`), and the `Server-Timing: geo` header or `sessionStorage.akamai`. That value must be a supported region, otherwise the default market is used. Puerto Rico is requested as US, as MAS does. In `/mas/io/fragment` URLs, `&country={country}` is dropped when the locale already ends in `_<country>`, as MAS does. `perf-site-preloads` uses `{locale}` / `{country}` in MAS fragment URLs only; other URLs with country/locale parameters are skipped, since their consumers derive these values differently. |
+
+How the block behaves on the page:
+
+- It runs synchronously and requests nothing. Every value comes from the URL, cookies, session storage, `<meta>` tags and the navigation's `Server-Timing`. If the country is not available synchronously (Milo would look it up over the network), country rows are skipped. This happens on aem.live hosts, which send no geo header.
+- Viewport: `mobile` rows apply up to 599px, `desktop` rows from 1200px; tablets in between get only `all` rows, since neither recording covers them. MAS fragment rows are skipped when the page URL has `mas-io-url`, `instant` or `mas.preview`.
+- A first path segment that looks like a Milo locale (`/fr/`, `/ch_de/`, `/mena_en/`) needs its own `LOCALES` row; otherwise `{locale}` / `{country}` rows are skipped there. `perf-site-preloads` accepts root-site pages only for now.
+- Link rules are the same as in `prelink/head.html`: allowed hosts, `rel` / `as` / `crossorigin` / `fetchpriority` values, the `//host/path` stylesheet form and deduplication. Any error leaves the page unchanged.
+- Recordings describe the code they were taken on. Before generating for a branch that differs from production, check whether it stops loading a recorded file, and leave such files out with `perf-preload --from <traces> --exclude <path>`.
+
 ---
 
 ## `perf-preload`: LCP Preload Generator Details
@@ -293,9 +345,10 @@ perf-preload --from Trace-1.json --from Trace-2.json -o ~/perf-ab-runs/photoshop
 
 ### Outputs: Snippet and Prelink Manifest
 
-Each run writes two files to `-o <dir>` (the page key is the page path with `/` → `--`, e.g. `drafts--ilyas--acrobat--plans`):
+Each run writes these files to `-o <dir>` (the page key is the page path with `/` → `--`, e.g. `drafts--ilyas--acrobat--plans`):
 
 - **`<page-key>.html`** — the static `<link>` snippet for `perf-ab --head-inject`.
+- **`<page-key>.links.json`** — every link (country/locale specific ones included) with its absolute URL, type, median start/end and the recording profile (`device`: `mobile`, `desktop`, or `unknown` for plain DevTools traces): the input of `perf-site-preloads`. A `--desktop` recording writes `<page-key>.desktop.html|json|links.json` and `traces-desktop/`, so a page's mobile and desktop recordings can share one directory.
 - **`<page-key>.json`** — the same links as a **prelink manifest**: a DA sheet (`:type: "sheet"`) whose rows have exactly the columns `rel`, `href`, `as`, `crossorigin`, `fetchpriority` (strings, `""` when unset; `crossorigin` is `anonymous` or `""`). The page's own files are root-relative, stylesheets included, so one manifest works on every host that serves the page (for example an aem.live branch); the loader gives stylesheets their `//host/path` form. Country/locale specific URLs are left out (the manifest is served to every visitor) and counted in the console.
 
 The console also prints where to publish it and the matching prelink: a page `<dir>/<name>` (or `<dir>/<name>.html`) gets `<dir>/preloads/<name>.json` on the page's own origin (`<dir>/` → `<dir>/preloads/index.json`), prelinked with `</dir/preloads/<name>.json>; rel=preload; as=fetch; crossorigin=anonymous`.
@@ -320,6 +373,7 @@ Every design choice in `perf-ab` is aimed at eliminating measurement bias betwee
    - Emulates a Moto G Power (`412x823` @ `1.75x` DPR) with `throttlingMethod: "devtools"` — Chrome itself throttles the network (**Slow 4G**: `562.5 ms` request latency, `1474.56 kb/s` down, `675 kb/s` up) and CPU (**`4x` slowdown**).
    - Because throttling happens inside Chrome rather than via post-hoc Lantern simulation, the trace timestamps, network waterfall, and Lighthouse audits all describe the exact same throttled page load.
    - `profileKey` (e.g. `lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile`) locks the full preset so runs with different profiles are never mixed.
+   - `--desktop` (opt-in, mainly for `perf-preload --desktop`) uses Lighthouse's own desktop preset instead: `1350x940` @ `1x`, the desktop user agent, and "Dense 4G" (`40 ms` RTT, `10 Mbps`) with DevTools throttling. The preset leaves the DevTools values unset, which would mean no throttling, so they are derived with Lighthouse's own adjustment factors: `150 ms` request latency and `9216 kb/s` down and up. There is no CPU slowdown. Its `profileKey` ends in `-desktop`, so it is never compared with mobile. It cannot be combined with `--interactions` (touch replay) or `--config`.
 2. **Paired Matrix & Cold-Run Policy**
    - `-n N` dispatches `N` parallel GitHub Actions jobs. Each job measures **one complete pair** on the **same runner VM**. Odd pair indexes run `before` then `after`; even indexes reverse the order. The same schedule applies locally. Even pair counts balance first/second position exactly; odd counts differ by one. This reduces order bias but does not eliminate changing CPU availability.
    - Country/locale-specific preload hints must resolve against the measured baseline's requests, so those campaigns remain baseline-first and emit `fixed-order-contextual-hints` (no additional discovery loads). Static preload bursts are counterbalanced normally. Auto interactions discover targets in the first variant and replay the exact targets in the second.
@@ -346,11 +400,13 @@ perf-ab <pageUrl> [options]
 | `-o, --out <dir>` | `./traces` | Output directory for `results.json`, per-pair Lighthouse reports, and traces. |
 | `--milo-pr <number>` | — | Serve mapped files (`libs/**` → `/libs/**`) from an `adobecom/milo` PR in the "after" variant. |
 | `--mas-pr <number>` | — | Serve mapped files (`web-components/dist/**` → `/mas/libs/**`) from an `adobecom/mas` PR in the "after" variant. |
+| `--da-dc-pr <number>` | — | Serve changed `adobecom/da-dc` files at the same path (`head.html` is applied to the document `<head>`) in the "after" variant. |
 | `--head-inject <file>` | — | Inject HTML preload snippet into `<head>` before the first `<script>` and strip `Link` preload headers in "after". |
 | `--link-add <entry>` | — | Repeatable. Append a `Link` entry (e.g. a prelink) to the "after" document's `Link` response header. |
 | `--link-remove <url\|*>` | — | Repeatable. Remove the "after" `Link` entries for a URL; `*` removes every `rel=preload` / `rel=modulepreload` entry. |
 | `--link-replace <entry>` | — | Repeatable. Replace the one "after" `Link` entry with the same URL. |
 | `--local` | `false` | Run locally with Chrome on this machine instead of dispatching GitHub Actions. |
+| `--desktop` | `false` | Measure with Lighthouse's desktop preset (`1350x940`, Dense 4G with DevTools throttling, no CPU slowdown) instead of mobile. Not with `--interactions` or `--config`. |
 | `--repo <owner/name>` | `adobecom/perf-tools` | GitHub repository hosting the `perf-ab` workflow. |
 | `--ref <branch>` | `main` | Git branch ref for the workflow. |
 | `--timeout <minutes>` | `75` | Maximum wait time for the GitHub Actions run. |
@@ -365,20 +421,34 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
 | Flag | Default | Description |
 | --- | --- | --- |
 | `-n, --runs <n>` | `3` | Number of cold loads to record through `perf-ab`. |
-| `-o, --out <dir>` | `./preloads` | Output directory for `<page-key>.html` (snippet), `<page-key>.json` (prelink manifest) and recorded traces. |
+| `-o, --out <dir>` | `./preloads` | Output directory for `<page-key>.html` (snippet), `<page-key>.json` (prelink manifest), `<page-key>.links.json` (input of `perf-site-preloads`) and recorded traces. |
 | `--from <path>` | — | Repeatable. Analyze existing trace file(s) or a `perf-ab` output directory instead of recording. |
 | `--min-runs <k>` | Majority (`⌊n/2⌋ + 1`) | Minimum number of traces a resource must finish before LCP in to be included. |
 | `--no-lcp-image` | `false` | Omit the LCP image preload tag (useful when generating viewport-independent snippets). |
 | `--all-origins` | `false` | Include resources from all third-party origins (default keeps same-site + `*.typekit.net`). |
 | `--exclude <rule>` | — | Repeatable. Exclude a path prefix (e.g. `/libs/martech`) or host (e.g. `cdn.example.net`). |
 | `--local` | `false` | Record traces locally via `perf-ab --local` instead of GitHub Actions. |
+| `--desktop` | `false` | Record with `perf-ab --desktop` (Lighthouse desktop preset) to find the resources the desktop layout needs before LCP. |
+
+### `perf-site-preloads`
+
+```txt
+perf-site-preloads <links.json|dir> [...] (-o <site-preloads.html> | --into <head.html>) [--global <pattern|none>] [--markets <url|file>]
+```
+
+| Flag | Default | Description |
+| --- | --- | --- |
+| `-o, --out <file>` | — | Write the inline `<script>` block to a file (outside the repository). |
+| `--into <head.html>` | — | Put the block into a site's `head.html`: replaces the previously generated block, or goes right after `<meta name="viewport">`. |
+| `--global <pattern>` | The pages' common directory (e.g. `/acrobat/**`) | `pages` pattern for links recorded on every page; `none` keeps page lists. |
+| `--markets <url\|file>` | The `supported-markets.json` the pages fetched | Milo supported markets for the root site's `LOCALES` row (only read when a row uses `{locale}` / `{country}`). |
 
 ---
 
 ## Security, Target Scope & Development
 
 - **Allowed targets (`lib/target.mjs`):** Measured URLs (including redirect hops) must use `https://` on a subdomain of `adobe.com` (e.g. `www.adobe.com`) or on an adobecom Edge Delivery Services live host `<ref>--<repo>--adobecom.aem.live` (e.g. `main--da-dc--adobecom.aem.live`; other owners, `aem.page` and lookalike hosts are refused), and must resolve exclusively to public IP addresses. Private, loopback, and reserved IP ranges are blocked both pre-flight and at connection time.
-- **aem.live pages:** Milo loads from `main--milo--adobecom.aem.live/libs` there, not from the page host, so `--milo-pr` / `--mas-pr` (which serve PR files under the page host's `/libs/**` and `/mas/libs/**`) do not reach those requests; test Milo branches with `-b main -a <branch>` (`?milolibs=`) instead. `perf-preload` treats every `*--adobecom.aem.live` host as the page's own site, so the generated links keep those Milo URLs.
+- **aem.live pages:** Milo loads from `main--milo--adobecom.aem.live/libs` there, not from the page host, so `--milo-pr` / `--mas-pr` (which serve PR files under the page host's `/libs/**` and `/mas/libs/**`) do not reach those requests; test Milo branches with `-b main -a <branch>` (`?milolibs=`) instead. `--da-dc-pr` does apply to `*--da-dc--adobecom.aem.live` pages because da-dc files are served from the page host. `perf-preload` treats every `*--adobecom.aem.live` host as the page's own site, so the generated links keep those Milo URLs.
 - **Public repository warning:** `adobecom/perf-tools` is public. Workflow inputs, logs, and artifacts (reports, traces, `results.json`) are readable by any signed-in GitHub user. Never pass credentials or tokens in URLs or `--head-inject` snippets — spec validation rejects URLs containing userinfo or secret-like query parameters (`token`, `api_key`, `secret`, `password`, `sig`, etc.) before dispatch.
 - **Running tests:**
   ```sh

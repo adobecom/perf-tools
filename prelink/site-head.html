@@ -1,0 +1,128 @@
+<script>
+  // Site preloads (adobecom/perf-tools prelink/site-head.html, filled by perf-site-preloads). Place it in head.html
+  // right after <meta name="viewport">: EDS renders the page's metadata <meta> tags before head.html, and the viewport
+  // must be set for the mobile/desktop media queries. LINKS rows apply to the pages their path patterns match and to
+  // their viewport; each becomes a link element while the head is parsed. No request, no Milo: Milo's libs base, MAS's
+  // libs base, the MAS locale and market country are derived here from the URL, cookies, session storage, meta tags and
+  // the document's Server-Timing geo, as Milo and MAS derive them later. A row whose placeholder has no value on this
+  // page (or for this visitor) is skipped; any error leaves the page unchanged.
+  (() => {
+    // LINKS: [pages, viewport, rel, href, as, crossorigin, fetchpriority]. pages: comma-separated path patterns of the
+    // page path without .html ("*" = every page, "*" inside a pattern = within one segment, "**" = anything);
+    // viewport: all | mobile (<= 599px) | desktop (>= 1200px), tablets get "all" rows only. href placeholders:
+    // {milolibs}, {maslibs}, {locale}, {country} (MAS). LOCALES: [prefix, locale, defaultMarket, supportedRegions].
+    const LINKS = [];
+    const LOCALES = [];
+    try {
+      const { origin, hostname, pathname, search } = window.location;
+      const params = new URLSearchParams(search);
+      const page = pathname.replace(/\.html$/, '') || '/';
+      const AS = ['script', 'style', 'font', 'image', 'fetch'];
+      const PRIORITY = ['high', 'low', 'auto'];
+      const allowedHost = (h) => h === hostname || /^[a-z0-9-]+--[a-z0-9-]+--adobecom\.aem\.live$/.test(h)
+        || h.endsWith('.adobe.com') || h === 'use.typekit.net' || h === 'p.typekit.net';
+      const viewport = matchMedia('(min-width: 1200px)').matches ? 'desktop' : (matchMedia('(max-width: 599px)').matches ? 'mobile' : '');
+      const globs = new Map();
+      const glob = (p) => {
+        if (!globs.has(p)) {
+          globs.set(p, p === '*' ? /^/ : new RegExp(`^${p.split('**').map((part) => part.split('*')
+            .map((s) => s.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')).join('.*')}$`));
+        }
+        return globs.get(p);
+      };
+      const meta = (n) => { const m = document.head.querySelector(`meta[name="${n}"]`); return m ? m.content : null; };
+      const cookie = (n) => { const c = document.cookie.split('; ').find((x) => x.startsWith(`${n}=`)); return c ? c.slice(n.length + 1) : ''; };
+      const session = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
+      // {milolibs}: Milo's setLibs. ?milolibs= applies on preview/stage hosts only; "local" is never preloaded.
+      const milolibs = () => {
+        if (!['.aem.', '.hlx.', '.stage.', 'local', '.da.'].some((i) => hostname.includes(i))) return '/libs';
+        const branch = params.get('milolibs') || 'main';
+        if (!/^[a-zA-Z0-9_-]+$/.test(branch) || branch === 'local') return null;
+        if (branch === 'main' && hostname === 'www.stage.adobe.com') return '/libs';
+        return `https://${branch}${branch.includes('--') ? '' : '--milo--adobecom'}.aem.live/libs`;
+      };
+      // {maslibs}: Milo's getMasComponentUrl with MAS's maslibs validation; ?maslibs= is ignored on www.adobe.com.
+      const maslibs = () => {
+        if (hostname === 'www.adobe.com') return 'https://www.adobe.com/mas/libs';
+        const v = (params.get('maslibs') || '').trim().toLowerCase();
+        if (v === 'local') return null;
+        const valid = v && v.length <= 100 && /^([a-z0-9]+(-[a-z0-9]+)*)(--([a-z0-9]+(-[a-z0-9]+)*)){0,2}$/.test(v);
+        return `https://${valid ? `${v.includes('--') ? v : `${v}--mas--adobecom`}` : 'main--mas--adobecom'}.aem.live/web-components/dist`;
+      };
+      // {locale} / {country}: Milo merch's getLocaleSettings + getValidatedMarket (MAS geo detection) and MAS settings
+      // on this page's LOCALES row; null when the page's locale has no row or the country needs Milo's network lookup.
+      const BOT = /GoogleBot|Google-InspectionTool|BingBot|PerplexityBot|Perplexity-User|ClaudeBot|Claude-User|Claude-SearchBot|Tokowaka-AI|ChatGPT-User|GPTBot|OAI-SearchBot|AdobeEdgeOptimize-AI/i;
+      const OVERRIDES = { en: { AU: 'en_GB', IN: 'en_GB', GB: 'en_GB' } };
+      const masContext = () => {
+        const segment = pathname.split('/')[1] || '';
+        const entry = LOCALES.find((l) => l[0] && l[0] === segment)
+          || (/^([a-z]{2}|[a-z]{2,4}_[a-z]{2,3}|africa|langstore)$/.test(segment) ? null : LOCALES.find((l) => !l[0]));
+        if (!entry || !/^[a-z]{2}_[A-Z]{2}$/.test(entry[1])) return null;
+        const [, pageLocale, defaultMarket, supportedRegions] = entry;
+        const [language, pageCountry] = pageLocale.split('_');
+        // MAS settings: Commerce has no PR pricing, Puerto Rico is priced (and requested) as US.
+        const settings = (locale, country) => ({ locale, country: country === 'PR' ? 'US' : country });
+        const geoDetection = String(params.get('mas-geo-detection') ?? meta('mas-geo-detection') ?? '').toLowerCase();
+        if (!['on', 'true'].includes(geoDetection) || BOT.test(navigator.userAgent)) return settings(pageLocale, pageCountry);
+        const norm = (c) => (c ? (c.toLowerCase() === 'uk' ? 'gb' : c.toLowerCase().split('_')[0]) : '');
+        const valid = (c) => (/^[a-zA-Z]{2,6}$/.test(c || '') ? c : '');
+        const nav = performance.getEntriesByType('navigation')[0];
+        const timing = nav && nav.serverTiming && nav.serverTiming.find((t) => t.name === 'geo');
+        const geo = valid(params.get('country')) || valid(params.get('akamaiLocale')) || (timing && timing.description) || session('akamai');
+        // Milo isMasImsLoginEnabled accepts "on" only.
+        const imsLogin = String(params.get('mas-ims-login') ?? meta('mas-ims-login') ?? '').toLowerCase() === 'on';
+        const ims = imsLogin ? norm(cookie('ims_country_code')) : '';
+        const detected = norm(params.get('country')) || norm(params.get('akamaiLocale')) || cookie('country') || ims || norm(geo);
+        if (!detected) return null;
+        const supported = String(supportedRegions || '').split(',').map((r) => r.trim().toLowerCase()).filter(Boolean);
+        const market = ((supported.length && !supported.includes(detected.toLowerCase()) ? defaultMarket : detected) || 'us').toUpperCase();
+        const override = market !== pageCountry && OVERRIDES[language] && OVERRIDES[language][market];
+        if (override) return settings(override, override.endsWith(`_${market}`) ? '' : market);
+        return settings(pageLocale, market);
+      };
+      const values = {};
+      const value = (n) => {
+        if (!(n in values)) {
+          if (n === 'milolibs') values[n] = milolibs();
+          else if (n === 'maslibs') values[n] = maslibs();
+          else if (n === 'locale' || n === 'country') Object.assign(values, masContext() || { locale: null, country: null });
+          else values[n] = null;
+        }
+        return values[n];
+      };
+      // MAS options that change or replace the fragment request.
+      const masOptions = ['mas-io-url', 'instant', 'mas.preview'].some((p) => params.has(p));
+      const present = new Set([...document.querySelectorAll('link[href]')].map((l) => l.href));
+      LINKS.forEach(([pages, rowViewport, rel, rowHref, as, crossorigin, fetchpriority]) => {
+        if (rel !== 'preload' && rel !== 'modulepreload') return;
+        if (rowViewport && rowViewport !== 'all' && rowViewport !== viewport) return;
+        if (!String(pages).split(',').some((p) => p.trim() && glob(p.trim()).test(page))) return;
+        let href = String(rowHref);
+        if (href.includes('/mas/io/fragment?')) {
+          if (masOptions) return;
+          // MAS adds &country= only when the locale does not already end in _<country>.
+          const locale = value('locale');
+          const country = value('country');
+          if (locale && (!country || locale.endsWith(`_${country}`))) href = href.replace('&country={country}', '');
+        }
+        let missing = false;
+        href = href.replace(/\{([a-z]+)\}/g, (m, n) => { const v = value(n); if (!v) missing = true; return v || ''; });
+        if (missing) return;
+        let url;
+        try { url = new URL(href, origin); } catch (e) { return; }
+        if (url.protocol !== 'https:' || !allowedHost(url.hostname) || present.has(url.href)) return;
+        if (rel === 'preload' && !AS.includes(as)) return;
+        const link = document.createElement('link');
+        link.rel = rel;
+        if (rel === 'preload') link.as = as;
+        if (crossorigin === 'anonymous') link.crossOrigin = 'anonymous';
+        if (PRIORITY.includes(fetchpriority)) link.setAttribute('fetchpriority', fetchpriority);
+        // Stylesheet preloads use //host/path: site loaders skip a stylesheet when any link[href="<its URL>"]
+        // exists, whether they load it by path or by absolute URL; this form never equals either string.
+        link.setAttribute('href', as === 'style' ? `//${url.host}${url.pathname}${url.search}` : url.href);
+        present.add(url.href);
+        document.head.append(link);
+      });
+    } catch (e) { /* never break the page */ }
+  })();
+</script>

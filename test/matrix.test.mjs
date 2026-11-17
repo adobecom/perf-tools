@@ -363,6 +363,8 @@ test('prepare CLI writes the step outputs; the workflow passes inputs through en
   assert.match(wf, /mas_pr:\s*\n\s*description: Optional adobecom\/mas PR number/);
   assert.match(wf, /MILO_PR: \$\{\{ inputs\.milo_pr \}\}/);
   assert.match(wf, /MAS_PR: \$\{\{ inputs\.mas_pr \}\}/);
+  assert.match(wf, /da_dc_pr:\s*\n\s*description: Optional adobecom\/da-dc PR number/);
+  assert.match(wf, /DA_DC_PR: \$\{\{ inputs\.da_dc_pr \}\}/);
   assert.match(wf, /fail-fast: false/);
   assert.match(wf, /matrix:\s*\n\s*pair: \$\{\{ fromJSON\(needs\.prepare\.outputs\.pairs\) \}\}/);
   assert.doesNotMatch(wf, /schedule:|pull_request|contents: write|pages: write|id-token/);

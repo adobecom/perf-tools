@@ -23,6 +23,7 @@ const { values: o, positionals } = parseArgs({
     'no-lcp-image': { type: 'boolean', default: false },
     exclude: { type: 'string', multiple: true, default: [] },
     local: { type: 'boolean', default: false },
+    desktop: { type: 'boolean', default: false },
     help: { type: 'boolean', short: 'h' },
   },
 });
@@ -70,10 +71,13 @@ perf-preload --from <trace.json|dir> [--from ...] [options]
   resources that the header preloads today are generated here like any other. --from traces that still had header
   preloads mark them ^ and print a bias warning.
   --local              record with the same Lighthouse job locally (Actions is the default). A known non-US
-                       location is allowed and reported, but local results are not comparable with Actions.`);
+                       location is allowed and reported, but local results are not comparable with Actions.
+  --desktop            record with perf-ab --desktop (Lighthouse's desktop preset, 1350x940) to find the resources
+                       the desktop layout needs before LCP; mobile is the default.`);
   process.exit(positionals[0] || o.from.length ? 0 : 1);
 }
 if (o.local && o.from.length) { console.error('--local applies only when recording a page; it cannot be combined with --from'); process.exit(1); }
+if (o.desktop && o.from.length) { console.error('--desktop applies only when recording a page; it cannot be combined with --from'); process.exit(1); }
 
 let excludeRules;
 try {
@@ -82,6 +86,8 @@ try {
 
 const OUT = path.resolve(o.out);
 const traceFiles = [];
+// Form factor of the recorded traces (perf-ab results.json profile); "unknown" for plain DevTools exports.
+const devices = new Set();
 if (o.from.length) {
   for (const p of o.from) {
     const abs = path.resolve(p);
@@ -89,6 +95,7 @@ if (o.from.length) {
       // Default perf-ab output: only the accepted runs listed in results.json, never rejected/ attempts.
       const results = JSON.parse(fs.readFileSync(path.join(abs, 'results.json'), 'utf8'));
       if (results.status !== 'ok') { console.error(`${p}: perf-ab results status is ${results.status}; not analyzing`); process.exit(1); }
+      devices.add(results.profile?.formFactor ?? 'unknown');
       // A/B outputs: only the unchanged production variant ("before"); the "after" page carries the tested changes.
       // Single-URL outputs measure the page as "after". Paired outputs list pair<i>/<variant><i> dirs.
       const variant = (results.runs ?? []).some((r) => r.variant === 'before') ? 'before' : 'after';
@@ -104,19 +111,22 @@ if (o.from.length) {
       const warmups = files.filter(isLegacyWarmup);
       if (warmups.length) console.warn(`${p}: skipped legacy perf-ab warm-up traces ${warmups.join(', ')} (not measurements)`);
       files.filter((f) => !isLegacyWarmup(f)).forEach((f) => traceFiles.push(path.join(abs, f)));
+      devices.add('unknown');
     } else {
       if (isLegacyWarmup(abs)) console.warn(`WARNING: ${p} looks like a legacy perf-ab warm-up load (warm, not a measurement); analyzing it because it was named explicitly`);
       traceFiles.push(abs);
+      devices.add('unknown');
     }
   }
 } else {
   try {
     assertTargetUrl(positionals[0]);
   } catch (e) { console.error(e.message); process.exit(1); }
-  const traceDir = path.join(OUT, 'traces');
+  const traceDir = path.join(OUT, o.desktop ? 'traces-desktop' : 'traces');
   fs.rmSync(traceDir, { recursive: true, force: true });
   const args = [path.join(path.dirname(fileURLToPath(import.meta.url)), 'perf-ab.mjs'), positionals[0], '-n', o.runs, '-o', traceDir];
   if (o.local) args.push('--local');
+  if (o.desktop) args.push('--desktop');
   // Unbiased recording: a server Link preload starts its file with the document response, so it finishes "before
   // LCP" because it was preloaded, not because the page requests it early. Every load runs with the page's
   // rel=preload/modulepreload Link entries unset, so files are timed as the page itself requests them.
@@ -145,6 +155,8 @@ if (o.from.length) {
     ? results.where === 'local' && results.egress?.where === 'local'
     : results.where !== 'local' && results.egress?.ok === true && results.egress?.country === 'US';
   if (results.status !== 'ok' || !locationOk || !results.profile) { console.error(`perf-ab results are not a complete ${o.local ? 'local' : 'verified US'} Lighthouse run (status ${results.status}); no preloads generated`); process.exit(1); }
+  if ((results.profile.formFactor === 'desktop') !== o.desktop) { console.error(`perf-ab recorded a ${results.profile.formFactor} profile, expected ${o.desktop ? 'desktop' : 'mobile'}; no preloads generated`); process.exit(1); }
+  devices.add(results.profile.formFactor);
   const location = o.local ? 'local (not comparable with Actions)' : 'verified US egress';
   if (serverPreloads.length && !results.linkHeader?.removed?.length) { console.error('perf-ab did not unset the server Link preloads; no preloads generated'); process.exit(1); }
   console.log(`traces: Lighthouse ${results.lighthouseVersion} ${results.profile.name}, ${location}, ${results.runsPerVariant} cold run(s)${serverPreloads.length ? ', server Link preloads unset' : ''}`);
@@ -313,7 +325,10 @@ function linkOf(x) {
 }
 const tag = ({ rel, href, as, crossorigin, fetchpriority }) => `<link rel="${rel}" href="${esc(href)}"${as ? ` as="${as}"` : ''}${crossorigin ? ' crossorigin' : ''}${fetchpriority ? ` fetchpriority="${fetchpriority}"` : ''}>`;
 
-const key = page.pathname.replace(/\.html$/, '').replace(/^\/|\/$/g, '').replace(/\//g, '--') || 'index';
+// A page's mobile and desktop recordings can share one output directory: desktop files are <page-key>.desktop.*.
+const device = devices.size === 1 ? [...devices][0] : 'unknown';
+const desktop = device === 'desktop';
+const key = `${page.pathname.replace(/\.html$/, '').replace(/^\/|\/$/g, '').replace(/\//g, '--') || 'index'}${desktop ? '.desktop' : ''}`;
 fs.mkdirSync(OUT, { recursive: true });
 const links = picked.map((x) => ({ ...linkOf(x), url: x.url }));
 const snippet = path.join(OUT, `${key}.html`);
@@ -327,6 +342,16 @@ const manifestLinks = links.filter((l) => !isContextual(l.url)).map((l) => {
 });
 const manifestFile = path.join(OUT, `${key}.json`);
 fs.writeFileSync(manifestFile, `${JSON.stringify(toManifest(manifestLinks), null, 2)}\n`);
+// Every link with its absolute URL, timing and recording profile (country/locale specific ones included), the
+// input of perf-site-preloads, which merges pages and form factors into the site head.html preloads.
+const linksFile = path.join(OUT, `${key}.links.json`);
+fs.writeFileSync(linksFile, `${JSON.stringify({
+  page: page.href,
+  device,
+  runs: runs.length,
+  lcp: { median: Math.round(median(lcps)), element: runs[0].lcpNode, image: runs[0].lcpImage ?? null },
+  links: links.map((l, i) => ({ ...l, type: picked[i].type, start: Math.round(picked[i].start), end: Math.round(picked[i].end), contextual: isContextual(l.url) })),
+}, null, 2)}\n`);
 
 console.log(`\n${page.href}: ${runs.length} traces, LCP ${lcps.join(' / ')} ms (median ${Math.round(median(lcps))}), element ${runs[0].lcpNode}${runs[0].lcpImage ? ` ${runs[0].lcpImage}` : ''}`);
 console.log(`Resources finished before LCP in >= ${minRuns} traces (median ms):`);
@@ -356,9 +381,12 @@ console.log(`[high]/[low] fetchpriority: data fetches high; scripts first reques
 console.log(`\nSnippet (${picked.length} links): ${snippet}`);
 const contextualDropped = links.length - manifestLinks.length;
 console.log(`Manifest (${manifestLinks.length} rows${contextualDropped ? `, ${contextualDropped} country/locale specific link(s) left out` : ''}): ${manifestFile}`);
-console.log(`  publish as ${manifestPath(page.pathname)} on ${page.origin}; prelink: ${prelinkEntry(manifestPath(page.pathname))}`);
+if (desktop) console.log('  desktop links: serve them to desktop visitors only; merge mobile and desktop recordings with perf-site-preloads');
+else console.log(`  publish as ${manifestPath(page.pathname)} on ${page.origin}; prelink: ${prelinkEntry(manifestPath(page.pathname))}`);
+console.log(`Links (${links.length}, ${device} profile, input of perf-site-preloads): ${linksFile}`);
 const rel = path.relative(process.cwd(), snippet);
-if (positionals[0]) console.log(`Validate: perf-ab "${page.href}" --head-inject ${rel.startsWith('..') ? snippet : rel} -n 5`);
+const deviceFlag = desktop ? ' --desktop' : '';
+if (positionals[0]) console.log(`Validate: perf-ab "${page.href}" --head-inject ${rel.startsWith('..') ? snippet : rel}${deviceFlag} -n 5`);
 const headScript = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'prelink', 'head.html');
 const headRel = path.relative(process.cwd(), headScript);
-if (positionals[0]) console.log(`Validate the published manifest: perf-ab "${page.href}" --head-inject ${headRel.startsWith('..') ? headScript : headRel} --link-add '${prelinkEntry(manifestPath(page.pathname))}' -n 5`);
+if (positionals[0] && !desktop) console.log(`Validate the published manifest: perf-ab "${page.href}" --head-inject ${headRel.startsWith('..') ? headScript : headRel} --link-add '${prelinkEntry(manifestPath(page.pathname))}' -n 5`);

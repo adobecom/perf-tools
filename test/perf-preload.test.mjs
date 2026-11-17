@@ -147,6 +147,14 @@ test('--from <default perf-ab output dir> reads only accepted runs from results.
     const f = spawnSync(process.execPath, [CLI, DOC, '--from', path.join(dir, 'traces'), '-o', dir], { encoding: 'utf8' });
     assert.equal(f.status, 1);
     assert.match(f.stderr, /status is failed/);
+    // A desktop recording in the same directory writes <page-key>.desktop.* and leaves the mobile files alone.
+    fs.writeFileSync(path.join(dir, 'traces', 'results.json'), JSON.stringify({ ...results, profile: { formFactor: 'desktop' } }));
+    const d = spawnSync(process.execPath, [CLI, DOC, '--from', path.join(dir, 'traces'), '-o', dir, '--min-runs', '1'], { encoding: 'utf8' });
+    assert.equal(d.status, 0, d.stderr);
+    assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'acrobat--plans.desktop.links.json'), 'utf8')).device, 'desktop');
+    assert.ok(fs.existsSync(path.join(dir, 'acrobat--plans.desktop.html')) && fs.existsSync(path.join(dir, 'acrobat--plans.links.json')));
+    assert.match(d.stdout, /desktop links: serve them to desktop visitors only/);
+    assert.match(d.stdout, /Validate: perf-ab .* --desktop -n 5/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -214,6 +222,7 @@ function generateFrom(traces, ...flags) {
       ...r,
       lines: fs.readFileSync(path.join(dir, 'acrobat--plans.html'), 'utf8').trim().split('\n').filter(Boolean),
       manifest: JSON.parse(fs.readFileSync(path.join(dir, 'acrobat--plans.json'), 'utf8')),
+      links: JSON.parse(fs.readFileSync(path.join(dir, 'acrobat--plans.links.json'), 'utf8')),
     };
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -224,7 +233,7 @@ const A = 'https://www.adobe.com';
 const MAS = `${A}/mas/io/fragment?id=33a8&api_key=k&locale=en_US&country=CH`;
 
 test('GET JSON/HTML fetches and script as="fetch" preloads recorded as Other become fetch preloads', () => {
-  const { lines, stdout, manifest } = generateFrom([dataTrace([
+  const { lines, stdout, manifest, links } = generateFrom([dataTrace([
     { url: `${A}/dc-shared/placeholders.json`, fetchType: 'link', preload: true },
     { url: `${A}/libs/commerce/checkout-link.json` },
     { url: `${A}/dc-shared/fragments/offer.plain.html`, mime: 'text/html; charset=utf-8'.split(';')[0] },
@@ -245,6 +254,14 @@ test('GET JSON/HTML fetches and script as="fetch" preloads recorded as Other bec
   assert.deepEqual(manifest.data[0], { rel: 'preload', href: '/dc-shared/placeholders.json', as: 'fetch', crossorigin: 'anonymous', fetchpriority: 'high' });
   assert.match(stdout, /Manifest \(4 rows, 1 country\/locale specific link\(s\) left out\)/);
   assert.match(stdout, /publish as \/acrobat\/preloads\/plans\.json on https:\/\/www\.adobe\.com; prelink: <\/acrobat\/preloads\/plans\.json>; rel=preload; as=fetch; crossorigin=anonymous/);
+  // The links file (input of perf-site-preloads) keeps every link, the country/locale specific one included.
+  assert.equal(links.page, DOC);
+  assert.equal(links.device, 'unknown', 'plain DevTools traces carry no perf-ab profile');
+  assert.deepEqual(links.links.map((l) => [l.url, l.contextual]), [
+    [`${A}/dc-shared/placeholders.json`, false], [`${A}/libs/commerce/checkout-link.json`, false],
+    [`${A}/dc-shared/fragments/offer.plain.html`, false], [MAS, true], [`${A}/api/data.json`, false],
+  ]);
+  assert.match(stdout, /Links \(5, unknown profile, input of perf-site-preloads\)/);
 });
 
 test('POST, beacons, non-data MIME, failed, navigation-like and non-preload Other requests never become preloads', () => {

@@ -1,6 +1,6 @@
 ---
 name: perf-preload
-description: Generate static preload `<link>` tags for a page's LCP with the `perf-preload` CLI (adobecom/perf-tools). Records a production page several times through perf-ab (always real Lighthouse 13.6.0, mobile profile with real DevTools throttling; by default on a verified-US GitHub Actions runner, or locally with --local; every load cold with a fresh Chrome and empty profile, no warm-ups), finds the LCP element in each trace and the scripts, stylesheets, fonts, GET JSON/HTML data fetches and LCP image that finished loading before it, and writes a head.html snippet of `<link rel="modulepreload|preload">` tags plus the same links as a JSON prelink manifest (DA sheet) that it can publish to DA (through the DA MCP, only after the user's approval) for the inline `prelink/head.html` loader. Then validates the snippet or the manifest with perf-ab. Also analyzes DevTools trace JSON files attached by the user. Use when asked to "generate preloads", "what should be preloaded for LCP", "find the LCP critical resources", "build a preload list / head.html snippet", "create / publish a preload manifest", or "why is LCP late on this page".
+description: Generate static preload `<link>` tags for a page's LCP with the `perf-preload` CLI (adobecom/perf-tools). Records a production page several times through perf-ab (always real Lighthouse 13.6.0, mobile profile with real DevTools throttling; by default on a verified-US GitHub Actions runner, or locally with --local; every load cold with a fresh Chrome and empty profile, no warm-ups), finds the LCP element in each trace and the scripts, stylesheets, fonts, GET JSON/HTML data fetches and LCP image that finished loading before it, and writes a head.html snippet of `<link rel="modulepreload|preload">` tags plus the same links as a JSON prelink manifest (DA sheet) that it can publish to DA (through the DA MCP, only after the user's approval) for the inline `prelink/head.html` loader. Then validates the snippet or the manifest with perf-ab. Also analyzes DevTools trace JSON files attached by the user. Use when asked to "generate preloads", "what should be preloaded for LCP", "find the LCP critical resources", "build a preload list / head.html snippet", "create / publish a preload manifest", "why is LCP late on this page", or "preloads for these pages / the whole site in head.html", "mobile and desktop preloads" (perf-site-preloads merges mobile and --desktop recordings into one inline head.html block, prelink/site-head.html).
 ---
 
 # LCP preload generator (`perf-preload`)
@@ -37,7 +37,7 @@ Output:
 
 Existing traces (DevTools exports, perf-ab output, user attachments): `perf-preload --from Trace-1.json --from ~/perf-ab-runs/<run>/ab -o ~/perf-ab-runs/<run>/preloads`. Only cold traces taken under the same conditions are comparable. A default perf-ab output directory (with `results.json`, including the paired `pair<i>/` layout) contributes only its accepted runs' `trace.json` and is refused unless `status` is `ok`; for a before/after output only the unchanged "before" runs are used, never the changed "after" page. In other `--from` directories, legacy perf-ab warm-up traces (`before0.json` / `after0.json`) and traces with `metadata.perfAb.warmup: true` are skipped with a warning.
 
-Other flags: `--local`, `--exclude <rule>`, `--no-lcp-image`, `--min-runs <k>`, `--all-origins` (all third parties; by default only the page's site and `*.typekit.net` are kept). See `perf-preload --help`.
+Other flags: `--local`, `--desktop` (record with Lighthouse's desktop preset, see section 6), `--exclude <rule>`, `--no-lcp-image`, `--min-runs <k>`, `--all-origins` (all third parties; by default only the page's site and `*.typekit.net` are kept). See `perf-preload --help`. Every run also writes `<out>/<page-key>.links.json`: all links (country/locale ones included) with URL, timing and the recording profile, the input of `perf-site-preloads`.
 
 ## 2. Review the list before validating
 
@@ -91,3 +91,24 @@ perf-ab "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans" \
 ```
 
 Use the path to `prelink/head.html` in the perf-tools checkout. With `--head-inject` the production header preloads are unset, so manifest links plus the prelink are the only preloads in "after". Report `results.json` `linkHeader` (the served prelink) as well as the usual medians, and check in the "after" report that the manifest and each manifest link are fetched once. Compare against the static snippet result (`--head-inject <page-key>.html`) for the same page: the manifest adds one round trip (prelink → script → links), so it is expected to be somewhat slower than static tags.
+
+## 6. Site preloads in head.html: many pages, mobile and desktop, no request
+
+When the user wants preloads for several pages or a whole site, or mobile/desktop dependencies: record every page twice with the same location (both `--local`, or both on Actions), once on mobile and once with `--desktop`. The two recordings can share one `-o` directory, since desktop files are `<page-key>.desktop.*` with `traces-desktop/`. Then build the inline block:
+
+```sh
+perf-site-preloads ~/perf-ab-runs/<run>/links -o ~/perf-ab-runs/<run>/site-preloads.html      # review
+perf-site-preloads ~/perf-ab-runs/<run>/links --into <site checkout>/head.html                # site PR
+```
+
+- The block is `prelink/site-head.html` with its `LINKS` and `LOCALES` filled in, one array literal per row. It sits in head.html right after `<meta name="viewport">`; `--into` puts it there, or replaces the previous generated block.
+- It runs synchronously while the head is parsed and makes no request: no manifest file, no Milo. Updating the preloads means regenerating the block and opening a head.html PR (e.g. adobecom/da-dc, base `stage`, branch named after the JIRA ticket).
+- `LINKS` rows are `[pages, viewport, rel, href, as, crossorigin, fetchpriority]`. A link recorded on every page gets the global pattern (`--global`, default: the pages' common directory such as `/acrobat/**`; `none` keeps page lists). A link recorded on mobile and desktop for the same pages becomes one `all` row; otherwise it becomes a `mobile` row and/or a `desktop` row. The viewports are mobile up to 599px and desktop from 1200px; tablets get only `all` rows. Report the counts per scope/viewport the CLI prints.
+- Placeholders replace what differs per host or visitor: `{milolibs}` (`/libs/...`), `{maslibs}` (`/mas/libs/...`), and MAS fragment URLs become `https://www.adobe.com/mas/io/fragment?id=..&api_key=..&locale={locale}&country={country}`.
+  - A recorded `country=CH` is the recording machine's geo, never a value to keep.
+  - Other URLs with country/locale parameters are skipped, since their consumers derive the value differently.
+  - `LOCALES` holds the root site's supported markets (Milo `supported-markets.json`).
+  - The block resolves the placeholders with Milo's and MAS's own rules. It skips rows it cannot resolve; for example, MAS rows are skipped on aem.live, which sends no geo header.
+- Only root-site pages (no `/fr/`, `/ch_de/` prefix) are supported for now.
+- Recordings describe the code they ran against (production). Before generating for a branch that differs (e.g. da-dc `stage`), check its diff for files it stops loading. Leave them out with `perf-preload <url> --from <out>/traces --exclude <path>` instead of hand-editing the block.
+- Before the PR, check the block in Chrome on mobile and desktop: links added per page, no "preloaded but not used" warnings, no duplicate downloads. Then measure it with `perf-ab <url> --head-inject <site-preloads.html>` (add `--desktop` for desktop). That injects before the first head script, which in production pages is after the viewport meta.

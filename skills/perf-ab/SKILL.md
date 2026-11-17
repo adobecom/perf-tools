@@ -12,6 +12,7 @@ Needs Node 22.19+; Actions needs `gh` with Actions write access to `adobecom/per
 
 Conditions (identical in both locations; do not substitute others):
 - **Lighthouse 13.6.0**, `throttlingMethod: devtools`, Moto G Power (412x823, DPR 1.75), Slow 4G (562.5 ms request latency, 1474.56 kb/s down, 675 kb/s up), **4x CPU** (`CPU_SLOWDOWN_MULTIPLIER`, `lib/pagespeed/stats.mjs`). No simulated/Lantern mode. Metrics and traces describe the same throttled load: score, FCP, LCP, Speed Index, TBT, CLS; INP only with interactions.
+- Desktop only when the user asks for desktop (e.g. desktop dependencies for site preloads): `--desktop` = Lighthouse's desktop preset (1350x940, DPR 1, desktop UA, Dense 4G with DevTools throttling: 150 ms request latency, 9216 kb/s down/up, 1x CPU; `EXPECTED_DESKTOP`). Its `profileKey` ends in `-desktop`: never compare it with mobile. Not with `--interactions` or `--config`.
 - Actions uses `adobecom/perf-tools`'s `perf-ab` workflow (`workflow_dispatch`). Neutral geo checks verify **US egress** before loading the page; unknown/non-US fails closed. Document `Server-Timing: geo;desc=XX` must also be US when present.
 - A per-run proxy applies after changes, preserving HTTP/2 and compressed sizes: unchanged responses are byte-identical, edited ones use Brotli quality 6. Its certificate is trusted only by that Chrome process and never uploaded.
 
@@ -82,11 +83,12 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" --patch ./market-config.json 
 
 ```sh
 perf-ab "https://www.adobe.com/acrobat/plans.html" --milo-pr 7062 --mas-pr 1487 -n 5
+perf-ab "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans?parallel-sections=1" --da-dc-pr 320 -n 5
 ```
 
-- Milo `libs/**` maps to `/libs/**`; MAS `web-components/dist/**` to `/mas/libs/**`. Both base/head repos must be `adobecom/milo` or `adobecom/mas`, respectively.
+- Milo `libs/**` maps to `/libs/**`; MAS `web-components/dist/**` to `/mas/libs/**`. da-dc (`--da-dc-pr`): every changed file maps to the same path on the page host (dot-files ignored); a `head.html` change is applied to the served document `<head>` as a guarded element diff (merge-base → head), fatal if production's head no longer matches the merge-base. Base/head repos must be `adobecom/milo`, `adobecom/mas` or `adobecom/da-dc`, respectively. A da-dc PR that needs a Milo branch (e.g. `startEarlyTargetInteraction`) must also load it via `?milolibs=` (`-b`/`-a` URLs).
 - Pins base/head/merge-base before workers start; serves changed mapped files from isolated exact-commit checkouts through the proxy, including additions/removals/renames. Before and all other files stay production. No branch code executes; no PR-branch/`aem.live` page fetches; later branch movement cannot affect a run. Verify provenance and drift as above.
-- Actions form: `config` or `url`, `runs`, optional positive `milo_pr`/`mas_pr`. Nonempty PR fields override that repo's config `after.pullRequests`; empty preserves it. URL plus PR makes a production/PR pair. Never combine PR fields with encoded CLI `spec`.
+- Actions form: `config` or `url`, `runs`, optional positive `milo_pr`/`mas_pr`/`da_dc_pr`. Nonempty PR fields override that repo's config `after.pullRequests`; empty preserves it. URL plus PR makes a production/PR pair. Never combine PR fields with encoded CLI `spec`.
 
 ### d. Branch values (pages that honor `?milolibs=`)
 
@@ -115,7 +117,7 @@ Step file: JSON array, max 20, bounded fields, no code. Actions: `tap|click|type
 - Aggregate `interactions`/`interactionsKey` identifies the scenario; compare only matching keys. INP medians/paired delta require complete pairs; missing INP is incomplete, differing replay steps are refused. `run.json` `interaction` and pair `runs[].interaction` identify the slowest step and input/processing/presentation delays.
 - Under 50 interactions, lab INP is the worst interaction. Keep scenarios short/representative; use `-n 5`, treat deltas under ~40 ms as noise, never conclude from one pair.
 
-Other flags: `--local`, `--param`, `--suffix` (`--suffix ""` for raw values), `--repo`, `--ref`, `--timeout`. See `perf-ab --help`.
+Other flags: `--local`, `--desktop`, `--param`, `--suffix` (`--suffix ""` for raw values), `--repo`, `--ref`, `--timeout`. See `perf-ab --help`.
 
 ## 2. Read the results
 
@@ -140,5 +142,5 @@ Parse with Python (`json.load(...)['traceEvents']`):
 - Only `https://*.adobe.com` and `https://<ref>--<repo>--adobecom.aem.live` pages can be benchmarked (no apex, credentials, ports, other aem.live owners, aem.page, lookalike domains or hosts resolving to private addresses); redirects and the final URL are checked too, and a violation fails the run without retries. Third-party subresources load normally. On aem.live pages Milo comes from `main--milo--adobecom.aem.live`, so `--milo-pr` / `--mas-pr` do not apply there; use `-b main -a <branch>`.
 - Never compare a `milolibs` (`*.aem.live`) run with a plain-stage run: it is a separate origin with a cold CDN edge.
 - **Verify `?milolibs=` is honored** before trusting a branch-value result: in the "after" report, `/libs/` requests must go to `<branch>--milo--adobecom.aem.live` and the document status must be 200. Otherwise you are measuring A vs A.
-- This `aem.live` check applies only to the separate branch-value mode above. `--milo-pr` / `--mas-pr` use pinned runner-local source checkouts and keep production as the before control.
+- This `aem.live` check applies only to the separate branch-value mode above. `--milo-pr` / `--mas-pr` / `--da-dc-pr` use pinned runner-local source checkouts and keep production as the before control. `--milo-pr` / `--mas-pr` cannot reach Milo on aem.live pages; `--da-dc-pr` can, since da-dc files come from the page host.
 - Local (`--local`) and Actions results are not comparable; do not put them in one comparison.

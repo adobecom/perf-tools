@@ -16,7 +16,8 @@
   },
   "bin": {
     "perf-ab": "./bin/perf-ab.mjs",
-    "perf-preload": "./bin/perf-preload.mjs"
+    "perf-preload": "./bin/perf-preload.mjs",
+    "perf-site-preloads": "./bin/perf-site-preloads.mjs"
   },
   "dependencies": {
     "lighthouse": "13.6.0",

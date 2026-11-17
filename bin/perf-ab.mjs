@@ -15,7 +15,7 @@ import { loadExperiment, CONFIG_PATH } from '../lib/pagespeed/experiment.mjs';
 import { resolveInteractions } from '../lib/pagespeed/interactions.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CHANGE_OPTIONS = ['before', 'after', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'interactions'];
+const CHANGE_OPTIONS = ['before', 'after', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'da-dc-pr', 'interactions'];
 
 // --config: the file must be a committed-style experiments/**.json path of this repository (cwd- or repo-relative).
 export function resolveConfig(file, { root = ROOT, cwd = process.cwd() } = {}) {
@@ -42,7 +42,7 @@ export function assertConfigPublished(rel, ref, { root = ROOT, git = (args) => e
 
 export const HELP = `perf-ab <pageUrl> [options]
 perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
-  Measurement (always the same): real Lighthouse 13.6.0, mobile (Moto G Power, 412x823 @ 1.75) with real DevTools
+  Measurement (always the same unless --desktop): real Lighthouse 13.6.0, mobile (Moto G Power, 412x823 @ 1.75) with real DevTools
   throttling: Slow 4G (562.5 ms request latency, 1474.56 kb/s down, 675 kb/s up) and 4x CPU slowdown, applied by Chrome
   itself, so the trace, the metrics and the audits describe the same throttled load.
   Default location: GitHub Actions, the adobecom/perf-tools "perf-ab" workflow with
@@ -92,8 +92,10 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
                           perf-preload records with --after-only --link-remove '*' so no server Link preload biases its traces.
   --patch <file.json>     {"replacements":[{"path":"/libs/utils/utils.js","find":"...","replace":"..."}]}:
                           guarded edits of live sources (after only); each find must match exactly once or the job fails
-  --milo-pr <n> / --mas-pr <n>   pin the PR's exact commit, locally read only mapped changed files, and serve them
-                          through the proxy in the after variant. Before remains unchanged production.
+  --milo-pr <n> / --mas-pr <n> / --da-dc-pr <n>   pin the PR's exact commit, locally read only mapped changed files, and
+                          serve them through the proxy in the after variant. Before remains unchanged production. da-dc files
+                          map to the same path on the page host; a head.html change is applied to the served document <head>
+                          (guarded: production head.html must match the PR merge-base). Milo/MAS PRs do not apply on aem.live pages.
   --interactions <file.json|auto>   adds INP (Interaction to Next Paint) to the same measurement. "auto" is the pass-partout:
                           it finds the page's own in-page interactions (tabs, expand/collapse toggles, plain buttons, one modal
                           opener; never links, purchases, sign-in, submits or cookie banners) and taps them, no selectors needed;
@@ -107,6 +109,9 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
                           URL is measured as-is (INP of the page's own scenario). Max 20 steps; use -n 5 for a campaign.
   --repo <owner/name>     workflow repository (default adobecom/perf-tools)   --ref <branch> (default main)
   --timeout <minutes>     wait limit (default 75)
+  --desktop               measure with Lighthouse's desktop preset instead (1350x940 @ 1, desktop UA, Dense 4G with
+                          DevTools throttling: 150 ms request latency, 9216 kb/s down/up, no CPU slowdown). Its
+                          profileKey differs, so it is never compared with mobile. Not with --interactions or --config.
   --local                 run the same Lighthouse measurement locally (Actions is the default)`;
 
 const fail = (m) => { console.error(`perf-ab: ${m}`); process.exit(1); };
@@ -137,7 +142,7 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
     if (!Array.isArray(p.replacements) || !p.replacements.length) throw new Error(`--patch ${o.patch}: expected {"replacements":[{path,find,replace}]}`);
     after.patches = p.replacements.map(({ path: p2, find, replace }) => ({ path: p2, find, replace }));
   }
-  for (const [flag, repo] of [['milo-pr', 'adobecom/milo'], ['mas-pr', 'adobecom/mas']]) {
+  for (const [flag, repo] of [['milo-pr', 'adobecom/milo'], ['mas-pr', 'adobecom/mas'], ['da-dc-pr', 'adobecom/da-dc']]) {
     if (!o[flag]) continue;
     const number = Number(o[flag]);
     if (!Number.isInteger(number) || number < 1 || number > 999999) throw new Error(`--${flag} must be a positive PR number`);
@@ -146,7 +151,8 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
   const changed = o.before != null || after.headInject != null || after.linkHeader || after.patches || after.sources || after.pullRequests;
   if (o['after-only'] && !changed) throw new Error('--after-only needs a change option (e.g. --link-remove \'*\'); without one the URL is already measured as-is');
   const paired = changed && !o['after-only'];
-  return validateSpec({ version: 1, runs, names: paired ? ['before', 'after'] : ['after'], variants: paired ? { before, after } : { after }, ...(interactions ? { interactions } : {}) });
+  const device = o.desktop ? { device: 'desktop' } : {};
+  return validateSpec({ version: 1, runs, names: paired ? ['before', 'after'] : ['after'], variants: paired ? { before, after } : { after }, ...device, ...(interactions ? { interactions } : {}) });
 }
 
 export async function main(argv = process.argv.slice(2)) {
@@ -169,17 +175,19 @@ export async function main(argv = process.argv.slice(2)) {
       patch: { type: 'string' },
       'milo-pr': { type: 'string' },
       'mas-pr': { type: 'string' },
+      'da-dc-pr': { type: 'string' },
       interactions: { type: 'string' },
       repo: { type: 'string', default: 'adobecom/perf-tools' },
       ref: { type: 'string', default: 'main' },
       timeout: { type: 'string', default: '75' },
       local: { type: 'boolean', default: false },
+      desktop: { type: 'boolean', default: false },
       'after-only': { type: 'boolean', default: false },
       help: { type: 'boolean', short: 'h' },
     },
   });
   if (o.help || (!positionals[0] && !o.config)) { console.log(HELP); process.exit(positionals[0] || o.help ? 0 : 1); }
-  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'interactions', 'repo', 'ref', 'timeout', 'local', 'after-only', 'help']);
+  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'da-dc-pr', 'interactions', 'repo', 'ref', 'timeout', 'local', 'desktop', 'after-only', 'help']);
   const unknown = Object.keys(o).filter((k) => !known.has(k));
   if (unknown.length) fail(`unknown option(s): ${unknown.map((k) => `--${k}`).join(', ')}`);
   if (positionals.length > 1) fail(`unexpected arguments: ${positionals.slice(1).join(' ')}`);
@@ -188,6 +196,7 @@ export async function main(argv = process.argv.slice(2)) {
   try {
     if (o.config) {
       if (o['after-only']) throw new Error('--after-only cannot be combined with --config');
+      if (o.desktop) throw new Error('--desktop cannot be combined with --config (experiment configs are measured on mobile)');
       const clash = CHANGE_OPTIONS.filter((k) => k in o && !(Array.isArray(o[k]) && !o[k].length) && o[k] !== '');
       if (positionals.length || clash.length) throw new Error(`--config defines the URL and changes; remove ${[...positionals, ...clash.map((k) => `--${k}`)].join(', ')}`);
       const c = resolveConfig(o.config);
@@ -223,7 +232,7 @@ export async function main(argv = process.argv.slice(2)) {
   const place = results.where === 'local'
     ? 'local; not an Actions run'
     : `egress ${results.egress?.country ?? 'unknown'}`;
-  console.log(`\nLighthouse mobile, DevTools throttling (Lighthouse ${results.lighthouseVersion}, Chrome ${results.chromeVersion}), ${place}, ${results.samples?.pairs ?? pairs.length}/${results.samples?.requested ?? results.runsPerVariant} complete cold pair(s)`);
+  console.log(`\nLighthouse ${results.profile?.formFactor ?? 'mobile'}, DevTools throttling (Lighthouse ${results.lighthouseVersion}, Chrome ${results.chromeVersion}), ${place}, ${results.samples?.pairs ?? pairs.length}/${results.samples?.requested ?? results.runsPerVariant} complete cold pair(s)`);
   for (const p of pairs) {
     const j = p.job ? ` [${p.job.chromeVersion ?? 'Chrome ?'}${p.job.runAttempt != null ? `, attempt ${p.job.runAttempt}` : ''}]` : '';
     if (p.job?.order?.length) console.log(`  pair${p.index} order: ${p.job.order.join(' -> ')} (${p.job.orderPolicy ?? 'recorded'})`);

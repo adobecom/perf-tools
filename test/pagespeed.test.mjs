@@ -13,7 +13,7 @@ import { findChromePath, requireChromePath, chromeCandidates } from '../lib/page
 import { runLocal } from '../lib/pagespeed/local.mjs';
 import { findGithubToken } from '../lib/pagespeed/github-token.mjs';
 import { encodeSpec, decodeSpec, validateSpec, MAX_SPEC_CHARS } from '../lib/pagespeed/spec.mjs';
-import { resolvedProfile, lighthouseConfig, EXPECTED } from '../lib/pagespeed/profile.mjs';
+import { resolvedProfile, lighthouseConfig, EXPECTED, EXPECTED_DESKTOP, profileKey } from '../lib/pagespeed/profile.mjs';
 import { CPU_SLOWDOWN_MULTIPLIER } from '../lib/pagespeed/stats.mjs';
 import {
   injectIntoHead, stripPreloadLinks, applyPatches, resolveContextualHints, hasContextualHints, applyLinkHeaderEdits,
@@ -115,6 +115,21 @@ test('profile: Lighthouse mobile with DevTools throttling is used as-is and veri
   const p = resolvedProfile(lhrWith());
   assert.deepEqual([p.throttlingMethod, p.requestLatencyMs, p.downloadThroughputKbps, p.uploadThroughputKbps, p.cpuSlowdownMultiplier], ['devtools', 562.5, 1474.56, 675, 4]);
   assert.equal(EXPECTED.throttlingMethod, 'devtools');
+});
+
+test('profile: --desktop uses Lighthouse\'s desktop preset with DevTools-adjusted throttling and its own profileKey', () => {
+  const c = lighthouseConfig('desktop');
+  assert.equal(c.settings.formFactor, 'desktop');
+  assert.equal(c.settings.throttlingMethod, 'devtools');
+  assert.deepEqual(c.settings.screenEmulation, { mobile: false, width: 1350, height: 940, deviceScaleFactor: 1, disabled: false });
+  assert.match(c.settings.emulatedUserAgent, /Macintosh/);
+  const t = c.settings.throttling;
+  assert.deepEqual([t.rttMs, t.requestLatencyMs, t.cpuSlowdownMultiplier], [40, 150, 1], 'latency is set: 0 would be unthrottled');
+  const p = resolvedProfile(lhrWith({ formFactor: 'desktop', throttling: t, screenEmulation: c.settings.screenEmulation }));
+  assert.match(p.name, /desktop/);
+  for (const [k, v] of Object.entries(EXPECTED_DESKTOP)) assert.equal(p[k], v, k);
+  assert.notEqual(profileKey(p), profileKey(resolvedProfile(lhrWith())));
+  assert.equal(profileKey(p), profileKey(EXPECTED_DESKTOP));
 });
 
 // ---------- transforms ----------
@@ -516,6 +531,7 @@ test('CLI spec: unchanged URL measures one variant; changes give before=producti
   assert.deepEqual(pr.names, ['before', 'after']);
   assert.deepEqual(pr.variants.before, { url: page });
   assert.deepEqual(pr.variants.after.pullRequests, [{ repo: 'adobecom/milo', number: 7095 }]);
+  assert.deepEqual(buildSpec(cliOpts({ 'da-dc-pr': '320' }), page).variants.after.pullRequests, [{ repo: 'adobecom/da-dc', number: 320 }]);
   assert.throws(() => buildSpec(cliOpts({ 'mas-pr': '0' }), page), /positive PR number/);
   assert.throws(() => buildSpec(cliOpts({ runs: '0' }), page), /--runs/);
   assert.throws(() => buildSpec(cliOpts({ after: 'x' }), page), /together/);
@@ -533,6 +549,10 @@ test('CLI spec: unchanged URL measures one variant; changes give before=producti
   assert.deepEqual(only.names, ['after']);
   assert.deepEqual(only.variants, { after: { url: page, linkHeader: { remove: ['*'] } } });
   assert.throws(() => buildSpec(cliOpts({ 'after-only': true }), page), /--after-only needs a change option/);
+  assert.equal(buildSpec(cliOpts(), page).device, undefined, 'mobile stays the default (no device field)');
+  assert.equal(buildSpec(cliOpts({ desktop: true, 'link-remove': ['*'], 'after-only': true }), page).device, 'desktop');
+  assert.throws(() => buildSpec(cliOpts({ desktop: true, interactions: 'auto' }), page), /interactions are measured on mobile only/);
+  assert.throws(() => validateSpec({ ...buildSpec(cliOpts(), page), device: 'tablet' }), /device must be one of mobile, desktop/);
 });
 
 test('CLI: Actions is the default location, --local opts into the shared Lighthouse job, and legacy flags are gone', async () => {
