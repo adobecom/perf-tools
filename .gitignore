@@ -22,3 +22,6 @@ logs/
 .vscode/
 .idea/
 *.swp
+
+# Generated prelink snippets
+prelink/
