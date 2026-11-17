@@ -331,7 +331,14 @@ function normalizeEvents(v) {
     const after = normalizeEventStat(row.after);
     if (!name || !EVENT_KINDS.includes(row.kind) || (!before && !after)) return null;
     const delta = isObject(row.delta) && num(row.delta.ms) != null ? { ms: num(row.delta.ms), dur: num(row.delta.dur) } : null;
-    return { name, kind: row.kind, before, after, delta };
+    const pairs = Array.isArray(row.pairs) ? row.pairs.slice(0, 500).filter(isObject).map((pair) => {
+      const index = int(pair.index);
+      const b = normalizeEventStat(pair.before);
+      const a = normalizeEventStat(pair.after);
+      const d = isObject(pair.delta) && num(pair.delta.ms) != null ? { ms: num(pair.delta.ms), dur: num(pair.delta.dur) } : null;
+      return index > 0 && (b || a) ? { index, before: b, after: a, delta: d } : null;
+    }).filter(Boolean) : [];
+    return { name, kind: row.kind, before, after, delta, pairs };
   }).filter(Boolean);
 }
 
@@ -671,6 +678,42 @@ export function formatEventMs(v, signed = false) {
 export const EVENT_KIND_LABELS = Object.freeze({
   navigation: 'Navigation', paint: 'Paint', mark: 'Mark', measure: 'Measure', timestamp: 'Timestamp', console: 'console.time',
 });
+
+const EVENT_PRIORITY = [
+  /^(?:fcp|firstContentfulPaint)$/i,
+  /^(?:lcp|largestContentfulPaint(?:::Candidate)?)$/i,
+  /^interact/i,
+  /^mas(?:[-:]|$)/i,
+  /^gnav(?:[-:]|$)/i,
+];
+
+function preferredEventOrder(a, b) {
+  const priority = (row) => {
+    const rank = EVENT_PRIORITY.findIndex((pattern) => pattern.test(row.name));
+    return rank >= 0 ? rank : EVENT_PRIORITY.length + ['measure', 'mark', 'paint', 'navigation', 'timestamp', 'console'].indexOf(row.kind);
+  };
+  const time = (row) => row.after?.ms ?? row.before?.ms ?? 0;
+  return priority(a) - priority(b) || time(a) - time(b) || a.name.localeCompare(b.name) || a.kind.localeCompare(b.kind);
+}
+
+export function sortEvents(rows, key = 'preferred', direction = 'ascending') {
+  if (key === 'preferred') return [...rows].sort(preferredEventOrder);
+  const value = (row) => {
+    if (key === 'name') return row.name;
+    if (key === 'kind') return EVENT_KIND_LABELS[row.kind];
+    if (key === 'duration') return row.after?.dur ?? row.before?.dur;
+    if (key === 'delta') return row.delta?.ms;
+    return row[key]?.ms;
+  };
+  return [...rows].sort((a, b) => {
+    const av = value(a);
+    const bv = value(b);
+    // Missing values stay last, including when descending.
+    if (av == null || bv == null) return av == null && bv == null ? preferredEventOrder(a, b) : av == null ? 1 : -1;
+    const comparison = typeof av === 'number' ? av - bv : av.localeCompare(bv, undefined, { numeric: true, sensitivity: 'base' });
+    return comparison * (direction === 'descending' ? -1 : 1) || preferredEventOrder(a, b);
+  });
+}
 
 export function formatDateTime(t, timeZone) {
   if (t == null) return '—';

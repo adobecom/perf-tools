@@ -73,10 +73,24 @@ test('timing events: published as one table of per-event medians and median pair
       run('after', 2, [{ name: 'Gnav-Start', kind: 'mark', ms: 260, count: 1 }, { name: 'bad', kind: 'script', ms: 1, count: 1 }, { name: 'neg', kind: 'mark', ms: -5, count: 1 }]),
     ],
   }), ghRun(), artifact, Date.parse('2026-11-03T00:00:00Z'));
-  assert.deepEqual(detail.events, [
+  assert.deepEqual(detail.events.map(({ pairs, ...row }) => row), [
     { name: 'Gnav-Start', kind: 'mark', before: { ms: 310, n: 2 }, after: { ms: 255, n: 2 }, delta: { ms: -55 } },
     { name: 'total', kind: 'measure', before: { ms: 1000, dur: 600, n: 1 }, after: { ms: 900, dur: 500, n: 1 }, delta: { ms: -100, dur: -100 } },
   ]);
+  assert.deepEqual(detail.events[0].pairs, [
+    { index: 1, before: { ms: 300, n: 1 }, after: { ms: 250, n: 1 }, delta: { ms: -50 } },
+    { index: 2, before: { ms: 320, n: 1 }, after: { ms: 260, n: 1 }, delta: { ms: -60 } },
+  ]);
+  assert.deepEqual(detail.events[1].pairs, [
+    { index: 1, before: { ms: 1000, dur: 600, n: 1 }, after: { ms: 900, dur: 500, n: 1 }, delta: { ms: -100, dur: -100 } },
+  ]);
+  const republished = mergeHistory(
+    { schema: 'perf-ab/history-v1', runs: [summaryFromDetail(detail)] }, [], Date.now(), { [detail.id]: detail },
+  ).details.get(detail.id);
+  assert.deepEqual(republished.events, detail.events, 'republishing preserves per-pair timing data');
+  const parsed = dashboard.parseRun(republished);
+  assert.equal(parsed.events[0].pairs[1].delta.ms, -60);
+  assert.equal(parsed.events[1].pairs[0].before.dur, 600);
   assert.equal(summaryFromDetail(detail).events, undefined, 'the run list stays small');
   assert.equal(normalizeResult(result(), ghRun(), artifact).events, undefined);
 });

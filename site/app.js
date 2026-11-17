@@ -34,7 +34,7 @@ let sectionIds = new Map();
 
 const ATTRS = new Set([
   'id', 'role', 'title', 'colspan', 'rowspan', 'scope', 'type', 'datetime', 'tabindex', 'hidden', 'value', 'lang',
-  'aria-label', 'aria-live', 'aria-busy', 'aria-current', 'aria-describedby', 'aria-labelledby', 'aria-hidden',
+  'aria-label', 'aria-live', 'aria-busy', 'aria-current', 'aria-describedby', 'aria-labelledby', 'aria-hidden', 'aria-sort',
   'data-label', 'data-tone', 'data-run', 'data-state', 'data-verdict', 'data-dir', 'data-kind',
   'placeholder', 'autocomplete', 'spellcheck', 'name',
 ]);
@@ -477,8 +477,8 @@ function renderDetail() {
     add(inner, [
       section('Medians', mediansTable(run, run.pairs)),
       preloadsSection(run),
-      eventsSection(run),
       pairsSection(run),
+      eventsSection(run),
       changesSection(run),
       interactionsSection(run),
       provenanceSection(run, run),
@@ -659,7 +659,7 @@ function preloadsSection(run) {
 
 // ---------------------------------------------------------------- timing events
 
-// Every mark, measure and milestone found in the traces: median time since navigation start, per variant.
+// The aggregate and individual pairs share name/type filters without replacing the controls.
 function eventsSection(run) {
   const rows = run.events ?? [];
   if (!rows.length) return null;
@@ -671,6 +671,37 @@ function eventsSection(run) {
   const kind = h('select', { name: 'event-kind', 'aria-label': 'Filter timing events by type' },
     h('option', { value: '', text: 'All types' }),
     ...kinds.map((k) => h('option', { value: k, text: core.EVENT_KIND_LABELS[k] })));
+  const pair = h('select', { name: 'event-pair', 'aria-label': single ? 'Filter timing events by load' : 'Filter timing events by pair' },
+    h('option', { value: '', text: single ? 'All loads · medians' : 'All pairs · medians' }),
+    ...run.pairs.map((p) => h('option', { value: p.index, text: `${single ? 'Load' : 'Pair'} #${p.index}` })));
+  let sortKey = 'preferred';
+  let sortDirection = 'ascending';
+  const headers = new Map();
+  const heading = (key, label, title) => {
+    const text = h('span', { text: label });
+    const th = h('th', { scope: 'col', class: ['name', 'kind'].includes(key) ? null : 'num' },
+      h('button', { type: 'button', class: 'event-sort', title, on: { click: () => {
+        sortDirection = sortKey === key && sortDirection === 'ascending' ? 'descending' : 'ascending';
+        sortKey = key;
+        apply();
+      } } }, text, h('span', { class: 'sort-icon', 'aria-hidden': 'true' })));
+    headers.set(key, { th, text });
+    return th;
+  };
+  const columns = [
+    heading('name', 'Event', 'Sort by event name. Preferred order: FCP, LCP, interactions, MAS, Gnav, then other events.'),
+    heading('kind', 'Type', 'Sort by event type'),
+    ...(single ? [] : [heading('before', 'Before', 'Sort by before time')]),
+    heading('after', 'After', 'Sort by after time'),
+    ...(single ? [] : [heading('delta', 'Median paired Δ', 'Sort by signed time difference')]),
+    heading('duration', 'Duration', 'Sort by after duration, or before duration when after is unavailable'),
+  ];
+  const resetOrder = h('button', { type: 'button', class: 'btn btn-quiet event-order-reset', text: 'reset sort', on: { click: () => {
+    sortKey = 'preferred';
+    sortDirection = 'ascending';
+    apply();
+  } } });
+  const description = h('p', { class: 'note event-context' });
   const time = (stat, label) => h('td', { class: 'num', 'data-label': label, title: stat ? `${stat.n} load${stat.n === 1 ? '' : 's'}` : null },
     stat ? core.formatEventMs(stat.ms) : '—');
   const duration = (row) => {
@@ -680,8 +711,13 @@ function eventsSection(run) {
     return single || b == null ? core.formatEventMs(a) : a == null ? core.formatEventMs(b) : `${core.formatEventMs(b)} → ${core.formatEventMs(a)}`;
   };
   const apply = () => {
+    const selected = pair.value ? Number(pair.value) : null;
+    const available = selected == null ? rows : rows.flatMap((r) => {
+      const values = r.pairs.find((p) => p.index === selected);
+      return values ? [{ ...r, ...values }] : [];
+    });
     const q = search.value.trim().toLowerCase();
-    const shown = rows.filter((r) => (!kind.value || r.kind === kind.value) && (!q || r.name.toLowerCase().includes(q)));
+    const shown = core.sortEvents(available.filter((r) => (!kind.value || r.kind === kind.value) && (!q || r.name.toLowerCase().includes(q))), sortKey, sortDirection);
     fill(body, shown.map((r) => h('tr', { 'data-kind': r.kind },
       h('th', { scope: 'row', class: 'event-name' }, mono(r.name)),
       h('td', { 'data-label': 'Type', text: core.EVENT_KIND_LABELS[r.kind] }),
@@ -689,25 +725,32 @@ function eventsSection(run) {
       time(r.after, 'After'),
       ...(single ? [] : [h('td', { class: 'num delta', 'data-label': 'Δ', text: r.delta ? core.formatEventMs(r.delta.ms, true) : '—' })]),
       h('td', { class: 'num', 'data-label': 'Duration', text: duration(r) }))));
-    fill(count, `${shown.length} of ${rows.length} events`);
-    if (!shown.length) fill(body, h('tr', {}, h('td', { colspan: single ? 4 : 6, class: 'note', text: 'No events match.' })));
+    fill(count, `${shown.length} of ${available.length} events`);
+    if (!single) fill(headers.get('delta').text, selected == null ? 'Median paired Δ' : 'Δ');
+    for (const [key, { th }] of headers) {
+      th.removeAttribute('aria-sort');
+      if (key === sortKey) th.setAttribute('aria-sort', sortDirection);
+      else if (key === 'name' && sortKey === 'preferred') th.setAttribute('aria-sort', 'other');
+    }
+    resetOrder.hidden = sortKey === 'preferred';
+    fill(description, selected == null
+      ? `Median time since navigation start.${single ? '' : ' Δ is the median paired difference.'}`
+      : `${single ? 'Load' : 'Pair'} #${selected} · time since navigation start.${single ? '' : ' Δ = after − before.'}`);
+    if (!shown.length) fill(body, h('tr', {}, h('td', {
+      colspan: single ? 4 : 6, class: 'note',
+      text: selected != null && !available.length ? `Timing data was not published for this ${single ? 'load' : 'pair'}.` : 'No events match.',
+    })));
   };
   search.addEventListener('input', apply);
   kind.addEventListener('change', apply);
+  pair.addEventListener('change', apply);
   apply();
   return section('Timing events',
-    h('p', { class: 'note', text: single
-      ? 'Marks, measures and browser milestones found in the traces; times are medians since navigation start.'
-      : 'Marks, measures and browser milestones found in the traces; times are medians since navigation start. Δ = median of per-pair (after − before) differences.' }),
-    h('div', { class: 'event-filters' }, search, kind, count),
+    h('div', { class: 'event-filters' }, pair, search, kind, count),
+    h('div', { class: 'event-order' }, description, resetOrder),
     h('div', { class: 'table-scroll' }, h('table', { class: 'data events' },
-      h('thead', {}, h('tr', {},
-        h('th', { scope: 'col', text: 'Event' }),
-        h('th', { scope: 'col', text: 'Type' }),
-        ...(single ? [] : [h('th', { scope: 'col', class: 'num', text: 'Before' })]),
-        h('th', { scope: 'col', class: 'num', text: 'After' }),
-        ...(single ? [] : [h('th', { scope: 'col', class: 'num', text: 'Median paired Δ' })]),
-        h('th', { scope: 'col', class: 'num', text: 'Duration', title: 'performance.measure duration (before → after)' }))),
+      h('caption', { class: 'sr-only', text: 'Timing events. Default priority: FCP, LCP, interactions, MAS, Gnav, then other measures, marks and milestones. Select a column heading to sort; select it again to reverse. Duration sorts by after, or before when unavailable.' }),
+      h('thead', {}, h('tr', {}, columns)),
       body)));
 }
 
@@ -748,7 +791,7 @@ function pairsSection(run) {
         const text = name === 'Δ' ? core.formatDelta(key, v, false) : values ? core.formatMetric(key, v, false) : 'missing';
         tr.append(h('td', { class: ['num', !values && 'missing'], text }));
       }
-      if (vi === 0) tr.append(h('td', { rowspan: variants.length, class: 'job', text: jobText(p.job) }));
+      if (vi === 0) tr.append(h('td', { rowspan: variants.length, class: 'job' }, disclosure('Runner details', h('p', { text: jobText(p.job) }))));
       tbody.append(tr);
     });
   }
