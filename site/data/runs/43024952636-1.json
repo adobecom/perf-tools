@@ -1,0 +1,382 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "43024952636-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-11T12:58:29.000Z",
+  "finishedAt": "2026-11-11T13:01:20.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://main--da-dc--adobecom.aem.live/drafts/ilyas/acrobat/plans",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "unavailable"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 5,
+    "after": 5,
+    "pairs": 5,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 8641.664,
+      "LCP": 8718.947,
+      "SI": 12742,
+      "CLS": 0.001218951304257111,
+      "performance": 48,
+      "TBT": 331.30899999998474
+    },
+    "after": {
+      "FCP": 7299.439,
+      "LCP": 7397.822,
+      "SI": 11435,
+      "CLS": 0.001218951304257111,
+      "performance": 51,
+      "TBT": 279.85299999999006
+    },
+    "delta": {
+      "FCP": -1342.2250000000004,
+      "LCP": -1321.125,
+      "SI": -1371,
+      "CLS": 0,
+      "performance": 3,
+      "TBT": -51.455999999994674
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/43024952636/attempts/1",
+    "sha": "b3a2d3f5ea2855e69605e210b8700427d8e025ac"
+  },
+  "detailPath": "data/runs/43024952636-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "performance": 37,
+        "FCP": 9015.816,
+        "LCP": 9109.484,
+        "SI": 13348,
+        "TBT": 796.7509999999984,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "performance": 42,
+        "FCP": 7280.563,
+        "LCP": 7375.596,
+        "SI": 11435,
+        "TBT": 587.1570000000047,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "performance": 5,
+        "FCP": -1735.2530000000006,
+        "LCP": -1733.8880000000008,
+        "SI": -1913,
+        "TBT": -209.59399999999368,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1893,
+          "after": 2478.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "performance": 55,
+        "FCP": 8523.213,
+        "LCP": 8620.346,
+        "SI": 12548,
+        "TBT": 117.73400000000038,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "performance": 51,
+        "FCP": 7951.914,
+        "LCP": 8005.062,
+        "SI": 12092,
+        "TBT": 241.99600000000282,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "performance": -4,
+        "FCP": -571.299,
+        "LCP": -615.2839999999997,
+        "SI": -456,
+        "TBT": 124.26200000000244,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 4264,
+          "after": 1042
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": {
+        "performance": 48,
+        "FCP": 8641.664,
+        "LCP": 8718.947,
+        "SI": 12742,
+        "TBT": 331.30899999998474,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "performance": 51,
+        "FCP": 7299.439,
+        "LCP": 7397.822,
+        "SI": 11371,
+        "TBT": 279.85299999999006,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "performance": 3,
+        "FCP": -1342.2250000000004,
+        "LCP": -1321.125,
+        "SI": -1371,
+        "TBT": -51.455999999994674,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 3010,
+          "after": 3092.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "performance": 48,
+        "FCP": 8500.072,
+        "LCP": 8594.076,
+        "SI": 12624,
+        "TBT": 340.4340000000011,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "performance": 44,
+        "FCP": 7784.903,
+        "LCP": 7878.356,
+        "SI": 12051,
+        "TBT": 490.7610000000168,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "performance": -4,
+        "FCP": -715.1689999999999,
+        "LCP": -715.7199999999993,
+        "SI": -573,
+        "TBT": 150.3270000000157,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 3064,
+          "after": 2682
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 5,
+      "before": {
+        "performance": 49,
+        "FCP": 9056.113,
+        "LCP": 9118.009,
+        "SI": 13170,
+        "TBT": 317.96399999999267,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "performance": 54,
+        "FCP": 7224.889,
+        "LCP": 7321.614,
+        "SI": 11269,
+        "TBT": 174.78800000000047,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "performance": 5,
+        "FCP": -1831.2239999999993,
+        "LCP": -1796.3950000000004,
+        "SI": -1901,
+        "TBT": -143.1759999999922,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/156.0.8078.79",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2342.5,
+          "after": 2967
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "headInject",
+      "query"
+    ],
+    "hints": {
+      "requested": 1,
+      "used": 1,
+      "contextual": 0,
+      "dropped": 0,
+      "pairs": [
+        {
+          "pair": 1,
+          "used": 1,
+          "contextual": 0,
+          "dropped": 0
+        },
+        {
+          "pair": 2,
+          "used": 1,
+          "contextual": 0,
+          "dropped": 0
+        },
+        {
+          "pair": 3,
+          "used": 1,
+          "contextual": 0,
+          "dropped": 0
+        },
+        {
+          "pair": 4,
+          "used": 1,
+          "contextual": 0,
+          "dropped": 0
+        },
+        {
+          "pair": 5,
+          "used": 1,
+          "contextual": 0,
+          "dropped": 0
+        }
+      ]
+    },
+    "patchPaths": [],
+    "sourcePaths": [],
+    "prSources": [],
+    "sourceDrift": []
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1042,
+        "max": 4264,
+        "ratio": 4.092,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 1893,
+          "after": 2478.5,
+          "ratio": 1.309
+        },
+        {
+          "pair": 2,
+          "before": 4264,
+          "after": 1042,
+          "ratio": 4.092
+        },
+        {
+          "pair": 3,
+          "before": 3010,
+          "after": 3092.5,
+          "ratio": 1.027
+        },
+        {
+          "pair": 4,
+          "before": 3064,
+          "after": 2682,
+          "ratio": 1.142
+        },
+        {
+          "pair": 5,
+          "before": 2342.5,
+          "after": 2967,
+          "ratio": 1.267
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mwc4kcgk-r0ofszme",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/43024952636/artifacts/13857121476",
+    "expiresAt": "2027-02-09T12:58:30.000Z",
+    "expired": false
+  }
+}
