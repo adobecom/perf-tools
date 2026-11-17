@@ -379,6 +379,17 @@ table.compact th, table.compact td { padding: 6px 10px; }
 .verdict[data-verdict="inconclusive"] .verdict-label,
 .verdict[data-verdict="noise"] .verdict-label { color: var(--ink-2); }
 
+/* ------------------------------------------------------------------ timing events */
+
+.event-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.event-filters input[type="search"] { width: min(320px, 100%); }
+.event-filters select { width: auto; min-width: 140px; }
+.event-filters .note { margin: 0; }
+.events { min-width: 640px; }
+.events .event-name { font-weight: 400; word-break: break-all; }
+.table-scroll:has(.events) { max-height: 480px; overflow-y: auto; }
+.events thead th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+
 /* ------------------------------------------------------------------ per-pair table */
 
 .pairs { min-width: 640px; }

@@ -312,6 +312,61 @@ function normalizePair(raw, i) {
 
 const strList = (v, max = 50) => (Array.isArray(v) ? v.map((x) => str(x, 300)).filter(Boolean).slice(0, max) : []);
 
+const EVENT_KINDS = ['navigation', 'paint', 'mark', 'measure', 'timestamp', 'console'];
+
+function normalizeEventStat(v) {
+  if (!isObject(v)) return null;
+  const ms = num(v.ms);
+  const n = int(v.n);
+  if (ms == null || ms < 0 || !n) return null;
+  const dur = num(v.dur);
+  return { ms, dur: dur != null && dur >= 0 ? dur : null, n };
+}
+
+function normalizeEvents(v) {
+  if (!Array.isArray(v)) return [];
+  return v.slice(0, 400).filter(isObject).map((row) => {
+    const name = str(row.name, 200);
+    const before = normalizeEventStat(row.before);
+    const after = normalizeEventStat(row.after);
+    if (!name || !EVENT_KINDS.includes(row.kind) || (!before && !after)) return null;
+    const delta = isObject(row.delta) && num(row.delta.ms) != null ? { ms: num(row.delta.ms), dur: num(row.delta.dur) } : null;
+    return { name, kind: row.kind, before, after, delta };
+  }).filter(Boolean);
+}
+
+const PRELOAD_SOURCES = ['link-header', 'html', 'script', 'other'];
+export const PRELOAD_SOURCE_LABELS = Object.freeze({ 'link-header': 'Link header', html: 'HTML', script: 'Script', other: 'Other' });
+
+function normalizePreloadStat(v) {
+  if (!isObject(v)) return null;
+  const loads = int(v.loads);
+  const unused = int(v.unused);
+  return loads ? { loads, unused: Math.min(unused ?? 0, loads) } : null;
+}
+
+function normalizePreloadTotals(v) {
+  if (!isObject(v)) return null;
+  const total = int(v.total);
+  const unused = int(v.unused);
+  return total == null || unused == null ? null : { total, unused: Math.min(unused, total) };
+}
+
+function normalizePreloads(v) {
+  if (!isObject(v)) return null;
+  const before = normalizePreloadTotals(v.before);
+  const after = normalizePreloadTotals(v.after);
+  if (!before && !after) return null;
+  const rows = (Array.isArray(v.rows) ? v.rows : []).slice(0, 100).filter(isObject).map((row) => {
+    const url = str(row.url, 300);
+    const b = normalizePreloadStat(row.before);
+    const a = normalizePreloadStat(row.after);
+    if (!url || !/^https:\/\//.test(url) || (!a && !b)) return null;
+    return { url, source: PRELOAD_SOURCES.includes(row.source) ? row.source : 'other', type: str(row.type, 30), before: b, after: a };
+  }).filter(Boolean);
+  return { before, after, rows };
+}
+
 export function parseRun(json, expectedId) {
   if (!isObject(json)) throw new SchemaError('run detail is not a JSON object');
   if (json.schema !== RUN_SCHEMA) {
@@ -346,6 +401,8 @@ export function parseRun(json, expectedId) {
   return {
     ...summary,
     interactions: summary.interactionsKey ? normalizeSteps(json.interactions) : [],
+    events: normalizeEvents(json.events),
+    preloads: normalizePreloads(json.preloads),
     pairs,
     incompletePairs: summary.single ? 0 : pairs.filter((p) => !p.complete).length,
     rejectedAttempts: Array.isArray(json.rejectedAttempts) ? json.rejectedAttempts.filter(isObject).slice(0, 200).map((r) => ({
@@ -601,6 +658,19 @@ export function formatPercent(key, d, before) {
   if (Math.abs(pct) < 0.05) return '±0.0%';
   return `${pct > 0 ? '+' : MINUS}${NF1.format(Math.abs(pct))}%`;
 }
+
+// Event times are milliseconds since navigation start; sub-100 ms values keep one decimal.
+export function formatEventMs(v, signed = false) {
+  if (v == null) return '—';
+  const abs = Math.abs(v);
+  const body = `${(abs < 100 ? NF1 : NF0).format(abs)}\u00a0ms`;
+  if (!signed) return body;
+  return v === 0 ? '±0\u00a0ms' : `${v > 0 ? '+' : MINUS}${body}`;
+}
+
+export const EVENT_KIND_LABELS = Object.freeze({
+  navigation: 'Navigation', paint: 'Paint', mark: 'Mark', measure: 'Measure', timestamp: 'Timestamp', console: 'console.time',
+});
 
 export function formatDateTime(t, timeZone) {
   if (t == null) return '—';

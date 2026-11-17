@@ -63,6 +63,47 @@ function result(overrides = {}) {
   };
 }
 
+test('timing events: published as one table of per-event medians and median paired deltas, from sanitized runs only', () => {
+  const run = (variant, i, events) => ({ variant, run: i, events, metrics: {} });
+  const detail = normalizeResult(result({
+    runs: [
+      run('before', 1, [{ name: 'Gnav-Start', kind: 'mark', ms: 300, count: 1 }, { name: 'total', kind: 'measure', ms: 1000, dur: 600, count: 1 }]),
+      run('after', 1, [{ name: 'Gnav-Start', kind: 'mark', ms: 250, count: 1 }, { name: 'total', kind: 'measure', ms: 900, dur: 500, count: 1 }]),
+      run('before', 2, [{ name: 'Gnav-Start', kind: 'mark', ms: 320, count: 1 }]),
+      run('after', 2, [{ name: 'Gnav-Start', kind: 'mark', ms: 260, count: 1 }, { name: 'bad', kind: 'script', ms: 1, count: 1 }, { name: 'neg', kind: 'mark', ms: -5, count: 1 }]),
+    ],
+  }), ghRun(), artifact, Date.parse('2026-11-03T00:00:00Z'));
+  assert.deepEqual(detail.events, [
+    { name: 'Gnav-Start', kind: 'mark', before: { ms: 310, n: 2 }, after: { ms: 255, n: 2 }, delta: { ms: -55 } },
+    { name: 'total', kind: 'measure', before: { ms: 1000, dur: 600, n: 1 }, after: { ms: 900, dur: 500, n: 1 }, delta: { ms: -100, dur: -100 } },
+  ]);
+  assert.equal(summaryFromDetail(detail).events, undefined, 'the run list stays small');
+  assert.equal(normalizeResult(result(), ghRun(), artifact).events, undefined);
+});
+
+test('unused preloads: per-variant totals and the preloads Chrome reported unused, without query strings', () => {
+  const pl = (url, unused, source = 'html') => ({ url, source, type: 'Script', unused });
+  const run = (variant, i, preloads) => ({ variant, run: i, preloads, metrics: {} });
+  const A = 'https://www.adobe.com/libs/a.js?token=SECRET';
+  const detail = normalizeResult(result({
+    runs: [
+      run('before', 1, [pl(A, false), pl('https://www.adobe.com/libs/b.js', false, 'link-header')]),
+      run('after', 1, [pl(A, true), pl('https://www.adobe.com/libs/b.js', false, 'link-header'), pl('http://insecure.example/x.js', true)]),
+      run('after', 2, [pl(A, true), pl('https://www.adobe.com/libs/b.js', true, 'link-header')]),
+    ],
+  }), ghRun(), artifact, Date.parse('2026-11-03T00:00:00Z'));
+  assert.deepEqual(detail.preloads, {
+    before: { total: 2, unused: 0 },
+    after: { total: 2, unused: 2 },
+    rows: [
+      { url: 'https://www.adobe.com/libs/a.js', source: 'html', type: 'Script', before: { loads: 1, unused: 0 }, after: { loads: 2, unused: 2 } },
+      { url: 'https://www.adobe.com/libs/b.js', source: 'link-header', type: 'Script', before: { loads: 1, unused: 0 }, after: { loads: 2, unused: 1 } },
+    ],
+  });
+  assert.equal(summaryFromDetail(detail).preloads, undefined);
+  assert.equal(normalizeResult(result(), ghRun(), artifact).preloads, undefined, 'runs recorded before the report exist without it');
+});
+
 test('sanitizes target URLs to strict HTTPS adobe subdomains without credentials or query data', () => {
   assert.equal(sanitizeTargetUrl('https://user:pass@www.adobe.com/a?api_key=secret#frag'), 'https://www.adobe.com/a');
   for (const url of [

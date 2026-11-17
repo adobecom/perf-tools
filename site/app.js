@@ -35,7 +35,8 @@ let sectionIds = new Map();
 const ATTRS = new Set([
   'id', 'role', 'title', 'colspan', 'rowspan', 'scope', 'type', 'datetime', 'tabindex', 'hidden', 'value', 'lang',
   'aria-label', 'aria-live', 'aria-busy', 'aria-current', 'aria-describedby', 'aria-labelledby', 'aria-hidden',
-  'data-label', 'data-tone', 'data-run', 'data-state', 'data-verdict', 'data-dir',
+  'data-label', 'data-tone', 'data-run', 'data-state', 'data-verdict', 'data-dir', 'data-kind',
+  'placeholder', 'autocomplete', 'spellcheck', 'name',
 ]);
 
 function h(tag, opts, ...children) {
@@ -475,6 +476,8 @@ function renderDetail() {
   } else {
     add(inner, [
       section('Medians', mediansTable(run, run.pairs)),
+      preloadsSection(run),
+      eventsSection(run),
       pairsSection(run),
       changesSection(run),
       interactionsSection(run),
@@ -622,6 +625,90 @@ function mediansTable(run, pairs) {
 
 function noiseThresholds(keys = METRIC_KEYS) {
   return keys.map((k) => `${METRICS[k].short} ${core.formatNoise(k)}`).join(', ');
+}
+
+// ---------------------------------------------------------------- unused preloads
+
+// Preloads (Link header, HTML or script created) that Chrome reported as not used within a few seconds of the load event.
+function preloadsSection(run) {
+  const report = run.preloads;
+  if (!report) return null;
+  const single = run.single;
+  const totals = (t) => (t ? `${t.unused} of ${t.total} unused` : '—');
+  const stat = (s) => (s ? `unused in ${s.unused}/${s.loads} load${s.loads === 1 ? '' : 's'}` : '—');
+  const summary = single
+    ? `Median per load: ${totals(report.after)}.`
+    : `Median per load: before ${totals(report.before)}; after ${totals(report.after)}.`;
+  const body = report.rows.length
+    ? h('div', { class: 'table-scroll' }, h('table', { class: 'data preloads' },
+      h('thead', {}, h('tr', {},
+        h('th', { scope: 'col', text: 'Preloaded URL' }),
+        h('th', { scope: 'col', text: 'Declared in' }),
+        ...(single ? [] : [h('th', { scope: 'col', class: 'num', text: 'Before' })]),
+        h('th', { scope: 'col', class: 'num', text: 'After' }))),
+      h('tbody', {}, report.rows.map((row) => h('tr', {},
+        h('th', { scope: 'row', class: 'event-name' }, mono(row.url)),
+        h('td', { 'data-label': 'Declared in', text: core.PRELOAD_SOURCE_LABELS[row.source] }),
+        ...(single ? [] : [h('td', { class: 'num', 'data-label': 'Before', text: stat(row.before) })]),
+        h('td', { class: 'num', 'data-label': 'After', text: stat(row.after) }))))))
+    : h('p', { class: 'note', text: 'Chrome reported no unused preloads.' });
+  return section('Unused preloads',
+    h('p', { class: 'note', text: `${summary} Chrome warns about a preload the page did not use within a few seconds of its load event.` }),
+    body);
+}
+
+// ---------------------------------------------------------------- timing events
+
+// Every mark, measure and milestone found in the traces: median time since navigation start, per variant.
+function eventsSection(run) {
+  const rows = run.events ?? [];
+  if (!rows.length) return null;
+  const single = run.single;
+  const kinds = [...new Set(rows.map((r) => r.kind))];
+  const body = h('tbody');
+  const count = h('p', { class: 'note', 'aria-live': 'polite' });
+  const search = h('input', { type: 'search', name: 'event-q', autocomplete: 'off', spellcheck: 'false', placeholder: 'Filter by event name…', 'aria-label': 'Filter timing events by name' });
+  const kind = h('select', { name: 'event-kind', 'aria-label': 'Filter timing events by type' },
+    h('option', { value: '', text: 'All types' }),
+    ...kinds.map((k) => h('option', { value: k, text: core.EVENT_KIND_LABELS[k] })));
+  const time = (stat, label) => h('td', { class: 'num', 'data-label': label, title: stat ? `${stat.n} load${stat.n === 1 ? '' : 's'}` : null },
+    stat ? core.formatEventMs(stat.ms) : '—');
+  const duration = (row) => {
+    const b = row.before?.dur;
+    const a = row.after?.dur;
+    if (b == null && a == null) return '—';
+    return single || b == null ? core.formatEventMs(a) : a == null ? core.formatEventMs(b) : `${core.formatEventMs(b)} → ${core.formatEventMs(a)}`;
+  };
+  const apply = () => {
+    const q = search.value.trim().toLowerCase();
+    const shown = rows.filter((r) => (!kind.value || r.kind === kind.value) && (!q || r.name.toLowerCase().includes(q)));
+    fill(body, shown.map((r) => h('tr', { 'data-kind': r.kind },
+      h('th', { scope: 'row', class: 'event-name' }, mono(r.name)),
+      h('td', { 'data-label': 'Type', text: core.EVENT_KIND_LABELS[r.kind] }),
+      ...(single ? [] : [time(r.before, 'Before')]),
+      time(r.after, 'After'),
+      ...(single ? [] : [h('td', { class: 'num delta', 'data-label': 'Δ', text: r.delta ? core.formatEventMs(r.delta.ms, true) : '—' })]),
+      h('td', { class: 'num', 'data-label': 'Duration', text: duration(r) }))));
+    fill(count, `${shown.length} of ${rows.length} events`);
+    if (!shown.length) fill(body, h('tr', {}, h('td', { colspan: single ? 4 : 6, class: 'note', text: 'No events match.' })));
+  };
+  search.addEventListener('input', apply);
+  kind.addEventListener('change', apply);
+  apply();
+  return section('Timing events',
+    h('p', { class: 'note', text: single
+      ? 'Marks, measures and browser milestones found in the traces; times are medians since navigation start.'
+      : 'Marks, measures and browser milestones found in the traces; times are medians since navigation start. Δ = median of per-pair (after − before) differences.' }),
+    h('div', { class: 'event-filters' }, search, kind, count),
+    h('div', { class: 'table-scroll' }, h('table', { class: 'data events' },
+      h('thead', {}, h('tr', {},
+        h('th', { scope: 'col', text: 'Event' }),
+        h('th', { scope: 'col', text: 'Type' }),
+        ...(single ? [] : [h('th', { scope: 'col', class: 'num', text: 'Before' })]),
+        h('th', { scope: 'col', class: 'num', text: 'After' }),
+        ...(single ? [] : [h('th', { scope: 'col', class: 'num', text: 'Median paired Δ' })]),
+        h('th', { scope: 'col', class: 'num', text: 'Duration', title: 'performance.measure duration (before → after)' }))),
+      body)));
 }
 
 // ---------------------------------------------------------------- per-pair table

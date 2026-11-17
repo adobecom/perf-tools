@@ -19,7 +19,7 @@ const SHOTS = process.env.DASHBOARD_SCREENSHOTS || '';
 const skip = fs.existsSync(chromium.executablePath()) ? false : 'Playwright Chromium is not installed (npx playwright install chromium)';
 
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' };
-const MODES = new Set(['populated', 'empty', 'schema', 'badjson', 'missing', 'slow', 'warning', 'inp', 'order', 'contextual']);
+const MODES = new Set(['populated', 'empty', 'schema', 'badjson', 'missing', 'slow', 'warning', 'inp', 'order', 'contextual', 'events']);
 
 // A synthetic INP run derived from a fixture run: the shared fixtures stay INP-free, so every other mode keeps proving that
 // runs without an interaction scenario show no INP column or row.
@@ -79,6 +79,23 @@ function startServer() {
     if (mode === 'missing') return send(res, 404, 'not found', 'text/plain');
     if (mode === 'inp' && data === 'index.json') return send(res, 200, JSON.stringify(inpIndex()));
     if (mode === 'inp' && data === `runs/${INP_RUN}.json`) return send(res, 200, JSON.stringify(inpRun()));
+    if (mode === 'events' && data === 'runs/41700000001-1.json') {
+      const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
+      detail.events = [
+        { name: 'firstContentfulPaint', kind: 'paint', before: { ms: 3730, n: 5 }, after: { ms: 3685, n: 5 }, delta: { ms: -45 } },
+        { name: 'Gnav-Start', kind: 'mark', before: { ms: 912.4, n: 5 }, after: { ms: 905, n: 5 }, delta: { ms: -7.4 } },
+        { name: 'merch-card:abc:duration', kind: 'measure', before: { ms: 4300, dur: 620, n: 5 }, after: { ms: 4290, dur: 590.4, n: 4 }, delta: { ms: -10, dur: -29.6 } },
+        { name: 'only-after', kind: 'mark', before: null, after: { ms: 50, n: 1 }, delta: null },
+      ];
+      detail.preloads = {
+        before: { total: 9, unused: 1 }, after: { total: 9, unused: 2 },
+        rows: [
+          { url: 'https://www.adobe.com/libs/blocks/video/video.js', source: 'html', type: 'Script', before: null, after: { loads: 5, unused: 5 } },
+          { url: 'https://www.adobe.com/mas/libs/commerce.js', source: 'link-header', type: 'Script', before: { loads: 5, unused: 1 }, after: { loads: 5, unused: 2 } },
+        ],
+      };
+      return send(res, 200, JSON.stringify(detail));
+    }
     if (['order', 'contextual'].includes(mode) && data === 'runs/41700000001-1.json') {
       const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
       for (const p of detail.pairs) Object.assign(p.job, {
@@ -304,6 +321,32 @@ describe('history dashboard in a real browser', { skip }, () => {
     await assertSafe(page);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-improvement.png'), fullPage: true });
     await page.context().close();
+  });
+
+  test('timing events: marks, measures and milestones are listed and filterable', async () => {
+    const page = await newPage();
+    await open(page, 'events', '?run=41700000001-1');
+    const rows = () => page.$$eval('#detail table.events tbody tr', (trs) => trs.map((tr) => tr.innerText.replace(/\s+/g, ' ').trim()));
+    assert.equal((await rows()).length, 4);
+    assert.match((await rows())[1], /^Gnav-Start Mark 912 ms 905 ms −7\.4 ms —$/);
+    assert.match((await rows())[2], /^merch-card:abc:duration Measure 4,300 ms 4,290 ms −10.0 ms 620 ms → 590 ms$/);
+    assert.match((await rows())[3], /only-after Mark — 50\.0 ms — —/);
+    assert.match(await text(page, '#detail'), /Median per load: before 1 of 9 unused; after 2 of 9 unused\./);
+    const preloads = await page.$$eval('#detail table.preloads tbody tr', (trs) => trs.map((tr) => tr.innerText.replace(/\s+/g, ' ').trim()));
+    assert.deepEqual(preloads, [
+      'https://www.adobe.com/libs/blocks/video/video.js HTML — unused in 5/5 loads',
+      'https://www.adobe.com/mas/libs/commerce.js Link header unused in 1/5 loads unused in 2/5 loads',
+    ]);
+    await page.fill('#detail input[name="event-q"]', 'gnav');
+    assert.deepEqual((await rows()).map((r) => r.split(' ')[0]), ['Gnav-Start']);
+    assert.match(await text(page, '#detail .event-filters'), /1 of 4 events/);
+    await page.fill('#detail input[name="event-q"]', '');
+    await page.selectOption('#detail select[name="event-kind"]', 'measure');
+    assert.equal((await rows()).length, 1);
+    await open(page, 'populated', '?run=41700000001-1');
+    assert.equal(await page.locator('#detail table.events').count(), 0, 'runs without published events show no table');
+    assert.equal(await page.locator('#detail table.preloads').count(), 0);
+    await assertSafe(page);
   });
 
   test('INP: the column, row and scenario appear only for runs with an interaction scenario', async () => {
