@@ -1,0 +1,2779 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "44059207594-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-17T09:50:09.000Z",
+  "finishedAt": "2026-11-17T09:53:49.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/acrobat/plans.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 5,
+    "after": 5,
+    "pairs": 5,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 3675.955,
+      "LCP": 3675.955,
+      "SI": 6458,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "after": {
+      "FCP": 3650.538,
+      "LCP": 3650.538,
+      "SI": 6406,
+      "CLS": 0.001218951304257111,
+      "performance": null,
+      "TBT": null
+    },
+    "delta": {
+      "FCP": -25.56800000000021,
+      "LCP": -25.56800000000021,
+      "SI": -39,
+      "CLS": 0,
+      "performance": null,
+      "TBT": null
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/44059207594/attempts/1",
+    "sha": "566d1d5e3cccdbd0a1714202e410cf5f1cbe0b98"
+  },
+  "detailPath": "data/runs/44059207594-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "FCP": 3675.955,
+        "LCP": 3675.955,
+        "SI": 6589,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 3644.244,
+        "LCP": 3644.244,
+        "SI": 6406,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -31.710999999999785,
+        "LCP": -31.710999999999785,
+        "SI": -183,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.50",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2476,
+          "after": 2444.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "FCP": 3648.163,
+        "LCP": 3648.163,
+        "SI": 6469,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 4160.832,
+        "LCP": 4160.832,
+        "SI": 7413,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 512.6690000000003,
+        "LCP": 512.6690000000003,
+        "SI": 944,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.50",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2452.5,
+          "after": 1465
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": {
+        "FCP": 3676.106,
+        "LCP": 3676.106,
+        "SI": 6391,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 3650.538,
+        "LCP": 3650.538,
+        "SI": 6352,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -25.56800000000021,
+        "LCP": -25.56800000000021,
+        "SI": -39,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.50",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2959.5,
+          "after": 2965.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "FCP": 3606.307,
+        "LCP": 3606.307,
+        "SI": 6160,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 3846.743,
+        "LCP": 3846.743,
+        "SI": 6589,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": 240.43600000000015,
+        "LCP": 240.43600000000015,
+        "SI": 429,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.50",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 4127.5,
+          "after": 2896.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 5,
+      "before": {
+        "FCP": 3755.923,
+        "LCP": 3755.923,
+        "SI": 6458,
+        "CLS": 0.001218951304257111
+      },
+      "after": {
+        "FCP": 3608.506,
+        "LCP": 3608.506,
+        "SI": 6224,
+        "CLS": 0.001218951304257111
+      },
+      "delta": {
+        "FCP": -147.41699999999992,
+        "LCP": -147.41699999999992,
+        "SI": -234,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.78",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2847,
+          "after": 3403.5
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "navigationStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 0,
+        "n": 5
+      },
+      "after": {
+        "ms": 0,
+        "n": 5
+      },
+      "delta": {
+        "ms": 0
+      }
+    },
+    {
+      "name": "fetchStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 1.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -0.7
+      }
+    },
+    {
+      "name": "commitNavigationEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 633.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 619.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -7.6
+      }
+    },
+    {
+      "name": "domLoading",
+      "kind": "navigation",
+      "before": {
+        "ms": 633.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 620.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -8.2
+      }
+    },
+    {
+      "name": "responseEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 640.1,
+        "n": 5
+      },
+      "after": {
+        "ms": 626.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -13.2
+      }
+    },
+    {
+      "name": "domInteractive",
+      "kind": "navigation",
+      "before": {
+        "ms": 692.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 667,
+        "n": 5
+      },
+      "delta": {
+        "ms": -45.6
+      }
+    },
+    {
+      "name": "domContentLoadedEventStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 1634.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 1628.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -12.6
+      }
+    },
+    {
+      "name": "domContentLoadedEventEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 1635.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 1629.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -11.9
+      }
+    },
+    {
+      "name": "domComplete",
+      "kind": "navigation",
+      "before": {
+        "ms": 1670.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 1673.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -18.1
+      }
+    },
+    {
+      "name": "loadEventStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 1670.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 1673.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -18
+      }
+    },
+    {
+      "name": "loadEventEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 1670.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 1673.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -18.1
+      }
+    },
+    {
+      "name": "interaction-start",
+      "kind": "mark",
+      "before": {
+        "ms": 2119.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 1727.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -401.7
+      }
+    },
+    {
+      "name": "total-time",
+      "kind": "measure",
+      "before": {
+        "ms": 2119.8,
+        "dur": 781,
+        "n": 5
+      },
+      "after": {
+        "ms": 1727.9,
+        "dur": 647.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -401.7,
+        "dur": -137.4
+      }
+    },
+    {
+      "name": "interaction-end",
+      "kind": "mark",
+      "before": {
+        "ms": 2900.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 2365.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -548.8
+      }
+    },
+    {
+      "name": "mas-commerce-service:ready",
+      "kind": "measure",
+      "before": {
+        "ms": 3145.5,
+        "dur": 9.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 3145.5,
+        "dur": 8.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": 0,
+        "dur": -0.4
+      }
+    },
+    {
+      "name": "mas-commerce-service:start",
+      "kind": "mark",
+      "before": {
+        "ms": 3145.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 3145.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": 0
+      }
+    },
+    {
+      "name": "mas-commerce-service:ready",
+      "kind": "mark",
+      "before": {
+        "ms": 3157.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 3155.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -1.4
+      }
+    },
+    {
+      "name": "firstContentfulPaint",
+      "kind": "paint",
+      "before": {
+        "ms": 3676,
+        "n": 5
+      },
+      "after": {
+        "ms": 3650.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -25.6
+      }
+    },
+    {
+      "name": "firstMeaningfulPaintCandidate",
+      "kind": "paint",
+      "before": {
+        "ms": 3676,
+        "n": 5
+      },
+      "after": {
+        "ms": 3650.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -25.6
+      }
+    },
+    {
+      "name": "firstPaint",
+      "kind": "paint",
+      "before": {
+        "ms": 3676,
+        "n": 5
+      },
+      "after": {
+        "ms": 3650.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -25.6
+      }
+    },
+    {
+      "name": "largestContentfulPaint::Candidate",
+      "kind": "paint",
+      "before": {
+        "ms": 3676,
+        "n": 5
+      },
+      "after": {
+        "ms": 3650.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -25.6
+      }
+    },
+    {
+      "name": "LargestTextPaint::Candidate",
+      "kind": "paint",
+      "before": {
+        "ms": 3676,
+        "n": 5
+      },
+      "after": {
+        "ms": 3650.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -25.6
+      }
+    },
+    {
+      "name": "firstMeaningfulPaint",
+      "kind": "paint",
+      "before": {
+        "ms": 3736.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 3703.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -33.6
+      }
+    },
+    {
+      "name": "aem-fragment:64d14337-662b-4744-8771-cb8661f4fa58:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 4275.6,
+        "dur": 617.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 4252.8,
+        "dur": 618.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -22.8,
+        "dur": 1.1
+      }
+    },
+    {
+      "name": "aem-fragment:64d14337-662b-4744-8771-cb8661f4fa58:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 4275.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 4252.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -22.8
+      }
+    },
+    {
+      "name": "aem-fragment:33a827f5-4fb1-4755-bd4e-717b1e7e9e1c:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 5867.1,
+        "dur": 576,
+        "n": 5
+      },
+      "after": {
+        "ms": 5857.9,
+        "dur": 573.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -0.7,
+        "dur": -4
+      }
+    },
+    {
+      "name": "aem-fragment:33a827f5-4fb1-4755-bd4e-717b1e7e9e1c:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 5867.1,
+        "n": 5
+      },
+      "after": {
+        "ms": 5857.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -0.7
+      }
+    },
+    {
+      "name": "merch-card:7eeb4b05-62f7-418b-a705-b7c18c728bf9:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 6475.7,
+        "dur": 172.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 6463.3,
+        "dur": 164.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -5.5,
+        "dur": -2.3
+      }
+    },
+    {
+      "name": "merch-card:7eeb4b05-62f7-418b-a705-b7c18c728bf9:start",
+      "kind": "mark",
+      "before": {
+        "ms": 6475.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 6463.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -5.5
+      }
+    },
+    {
+      "name": "merch-card:e46c1dc3-49c2-47ca-9393-fec68cdb2b45:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 6477.4,
+        "dur": 183.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 6465.1,
+        "dur": 176.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -5.3,
+        "dur": -2.4
+      }
+    },
+    {
+      "name": "merch-card:e46c1dc3-49c2-47ca-9393-fec68cdb2b45:start",
+      "kind": "mark",
+      "before": {
+        "ms": 6477.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 6465.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -5.3
+      }
+    },
+    {
+      "name": "merch-card:95e7b26c-55b1-4b96-af35-c1b880918087:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 6478.2,
+        "dur": 187.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 6466,
+        "dur": 183.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -5.7,
+        "dur": -2.5
+      }
+    },
+    {
+      "name": "merch-card:95e7b26c-55b1-4b96-af35-c1b880918087:start",
+      "kind": "mark",
+      "before": {
+        "ms": 6478.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 6466,
+        "n": 5
+      },
+      "delta": {
+        "ms": -5.7
+      }
+    },
+    {
+      "name": "Gnav-Start",
+      "kind": "mark",
+      "before": {
+        "ms": 6707.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 6662.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -7.2
+      }
+    },
+    {
+      "name": "firstImagePaint",
+      "kind": "paint",
+      "before": {
+        "ms": 6826.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 6774.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -33.5
+      }
+    },
+    {
+      "name": "LargestImagePaint::Candidate",
+      "kind": "paint",
+      "before": {
+        "ms": 7404.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 7360.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -29.7
+      }
+    },
+    {
+      "name": "aem-fragment:e8ed0a47-40bf-4c18-877e-6bbe671e4131:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 7969.9,
+        "dur": 576.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 7940,
+        "dur": 579.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -12.6,
+        "dur": -0.2
+      }
+    },
+    {
+      "name": "aem-fragment:e8ed0a47-40bf-4c18-877e-6bbe671e4131:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 7969.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 7940,
+        "n": 5
+      },
+      "delta": {
+        "ms": -12.6
+      }
+    },
+    {
+      "name": "aem-fragment:e5daff81-3d80-44a5-b943-a466a0103a44:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 7975.9,
+        "dur": 584.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 7949.1,
+        "dur": 585.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -11.2,
+        "dur": -1.3
+      }
+    },
+    {
+      "name": "aem-fragment:e5daff81-3d80-44a5-b943-a466a0103a44:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 7975.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 7949.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -11.2
+      }
+    },
+    {
+      "name": "aem-fragment:9d381933-0bbf-417e-957d-dde5e41f2489:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 7981,
+        "dur": 594.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 7956.2,
+        "dur": 604.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -10.4,
+        "dur": -0.1
+      }
+    },
+    {
+      "name": "aem-fragment:9d381933-0bbf-417e-957d-dde5e41f2489:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 7981,
+        "n": 5
+      },
+      "after": {
+        "ms": 7956.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -10.4
+      }
+    },
+    {
+      "name": "aem-fragment:919ae6fc-56f9-4291-a9fb-b16eb31446c5:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10306.2,
+        "dur": 570.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 10360.9,
+        "dur": 574.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -50.7,
+        "dur": 2.8
+      }
+    },
+    {
+      "name": "aem-fragment:919ae6fc-56f9-4291-a9fb-b16eb31446c5:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10306.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 10360.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -50.7
+      }
+    },
+    {
+      "name": "merch-card:2b3e4143-520c-402a-82d8-cee96afe1300:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10905,
+        "dur": 179.1,
+        "n": 5
+      },
+      "after": {
+        "ms": 10960.3,
+        "dur": 170.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -47.1,
+        "dur": 1.8
+      }
+    },
+    {
+      "name": "merch-card:2b3e4143-520c-402a-82d8-cee96afe1300:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10905,
+        "n": 5
+      },
+      "after": {
+        "ms": 10960.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -47.1
+      }
+    },
+    {
+      "name": "merch-card:52cc36c5-8bab-4e25-9dd1-9c85902bbfa7:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10906.3,
+        "dur": 186.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 10961.4,
+        "dur": 178.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -47.6,
+        "dur": 1.8
+      }
+    },
+    {
+      "name": "merch-card:52cc36c5-8bab-4e25-9dd1-9c85902bbfa7:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10906.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 10961.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -47.6
+      }
+    },
+    {
+      "name": "merch-card:d88def14-8a1c-4b07-acb0-8eb0b6982748:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10907.7,
+        "dur": 191.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 10962,
+        "dur": 227.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -48.1,
+        "dur": 13.7
+      }
+    },
+    {
+      "name": "merch-card:d88def14-8a1c-4b07-acb0-8eb0b6982748:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10907.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 10962,
+        "n": 5
+      },
+      "delta": {
+        "ms": -48.1
+      }
+    },
+    {
+      "name": "aem-fragment:fe6a599a-27a8-41e4-bc17-837b3955a5e8:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 12158.2,
+        "dur": 570.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 12069.4,
+        "dur": 573,
+        "n": 5
+      },
+      "delta": {
+        "ms": -88.8,
+        "dur": 2.9
+      }
+    },
+    {
+      "name": "aem-fragment:fe6a599a-27a8-41e4-bc17-837b3955a5e8:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 12158.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 12069.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -88.8
+      }
+    },
+    {
+      "name": "merch-card:2c4ae4f7-142d-4d5e-89ce-478981c64653:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 12755.4,
+        "dur": 156.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 12669.7,
+        "dur": 169.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -85.7,
+        "dur": -0.2
+      }
+    },
+    {
+      "name": "merch-card:2c4ae4f7-142d-4d5e-89ce-478981c64653:start",
+      "kind": "mark",
+      "before": {
+        "ms": 12755.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 12669.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -85.7
+      }
+    },
+    {
+      "name": "merch-card:0a722fd1-fda7-42ae-a0ef-9af90ef68a28:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 12756.8,
+        "dur": 166,
+        "n": 5
+      },
+      "after": {
+        "ms": 12671.2,
+        "dur": 178,
+        "n": 5
+      },
+      "delta": {
+        "ms": -85.6,
+        "dur": -0.5
+      }
+    },
+    {
+      "name": "merch-card:0a722fd1-fda7-42ae-a0ef-9af90ef68a28:start",
+      "kind": "mark",
+      "before": {
+        "ms": 12756.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 12671.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -85.6
+      }
+    },
+    {
+      "name": "merch-card:a45f3e2b-9f3e-4e2c-a999-9db9126cb91b:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 12758.1,
+        "dur": 171.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 12672.5,
+        "dur": 185.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -85.6,
+        "dur": 0.1
+      }
+    },
+    {
+      "name": "merch-card:a45f3e2b-9f3e-4e2c-a999-9db9126cb91b:start",
+      "kind": "mark",
+      "before": {
+        "ms": 12758.1,
+        "n": 5
+      },
+      "after": {
+        "ms": 12672.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -85.6
+      }
+    },
+    {
+      "name": "aem-fragment:d3fe832c-5c44-4169-a92f-186d30a15d5b:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 14267.2,
+        "dur": 570.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 14224.9,
+        "dur": 572.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -42.3,
+        "dur": 1.9
+      }
+    },
+    {
+      "name": "aem-fragment:d3fe832c-5c44-4169-a92f-186d30a15d5b:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 14267.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 14224.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -42.3
+      }
+    },
+    {
+      "name": "merch-card:17daa2d9-b4eb-4e93-8304-03242e5f48ee:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 14870.4,
+        "dur": 211.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 14823.5,
+        "dur": 241.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -46.9,
+        "dur": -9.7
+      }
+    },
+    {
+      "name": "merch-card:17daa2d9-b4eb-4e93-8304-03242e5f48ee:start",
+      "kind": "mark",
+      "before": {
+        "ms": 14870.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 14823.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -46.9
+      }
+    },
+    {
+      "name": "merch-card:c04d1669-fc89-4fc6-b3d5-19b13f36455d:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 14872.3,
+        "dur": 218.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 14824.3,
+        "dur": 245.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -48,
+        "dur": -5.5
+      }
+    },
+    {
+      "name": "merch-card:c04d1669-fc89-4fc6-b3d5-19b13f36455d:start",
+      "kind": "mark",
+      "before": {
+        "ms": 14872.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 14824.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -48
+      }
+    },
+    {
+      "name": "merch-card:0a1fb174-fc95-4712-9f7d-0aea79d30113:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 14873.1,
+        "dur": 222.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 14825.3,
+        "dur": 254.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -47.8,
+        "dur": -7.1
+      }
+    },
+    {
+      "name": "merch-card:0a1fb174-fc95-4712-9f7d-0aea79d30113:start",
+      "kind": "mark",
+      "before": {
+        "ms": 14873.1,
+        "n": 5
+      },
+      "after": {
+        "ms": 14825.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -47.8
+      }
+    },
+    {
+      "name": "aem-fragment:f12d6bb5-90f5-4f1c-b4b1-3d3f472035fb:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 15315.3,
+        "dur": 576.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 15251.7,
+        "dur": 578,
+        "n": 5
+      },
+      "delta": {
+        "ms": -63.6,
+        "dur": 6.2
+      }
+    },
+    {
+      "name": "aem-fragment:f12d6bb5-90f5-4f1c-b4b1-3d3f472035fb:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 15315.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 15251.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -63.6
+      }
+    },
+    {
+      "name": "aem-fragment:89ea8c53-d7f3-4aef-b772-1dc34795e229:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 15323.4,
+        "dur": 608.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 15259.1,
+        "dur": 590.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -64.3,
+        "dur": -10.7
+      }
+    },
+    {
+      "name": "aem-fragment:89ea8c53-d7f3-4aef-b772-1dc34795e229:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 15323.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 15259.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -64.3
+      }
+    },
+    {
+      "name": "aem-fragment:82f3a042-bb85-444a-bd68-4ed239e0e361:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 15330.7,
+        "dur": 614.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 15266.3,
+        "dur": 618.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -64.4,
+        "dur": 3.8
+      }
+    },
+    {
+      "name": "aem-fragment:82f3a042-bb85-444a-bd68-4ed239e0e361:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 15330.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 15266.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -64.4
+      }
+    },
+    {
+      "name": "sherlock:3fb9a48e-a429-479a-bdf4-320e8c9d5fd6:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16279.6,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:3fb9a48e-a429-479a-bdf4-320e8c9d5fd6:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16279.6,
+        "dur": 1049.7,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:3fb9a48e-a429-479a-bdf4-320e8c9d5fd6:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16280.7,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:3fb9a48e-a429-479a-bdf4-320e8c9d5fd6:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16280.7,
+        "dur": 1049.3,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:3fb9a48e-a429-479a-bdf4-320e8c9d5fd6:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16295.5,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:3fb9a48e-a429-479a-bdf4-320e8c9d5fd6:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16295.5,
+        "dur": 4177.1,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:86ed538a-9cc1-40ae-8cd7-3e2e9c369e3c:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16336,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:86ed538a-9cc1-40ae-8cd7-3e2e9c369e3c:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16336,
+        "dur": 1012.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:86ed538a-9cc1-40ae-8cd7-3e2e9c369e3c:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16337,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:86ed538a-9cc1-40ae-8cd7-3e2e9c369e3c:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16337,
+        "dur": 1011.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:86ed538a-9cc1-40ae-8cd7-3e2e9c369e3c:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16348.9,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:86ed538a-9cc1-40ae-8cd7-3e2e9c369e3c:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16348.9,
+        "dur": 3776.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:05208b2e-e52f-4796-9810-dc53b63ada4c:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16496.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:05208b2e-e52f-4796-9810-dc53b63ada4c:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16496.8,
+        "dur": 1058.9,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:05208b2e-e52f-4796-9810-dc53b63ada4c:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16497.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:05208b2e-e52f-4796-9810-dc53b63ada4c:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16497.8,
+        "dur": 1058.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:05208b2e-e52f-4796-9810-dc53b63ada4c:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16512.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:05208b2e-e52f-4796-9810-dc53b63ada4c:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16512.5,
+        "dur": 4221.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:a778a630-a51e-49b5-9721-baf48d64c9ff:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16726.3,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:a778a630-a51e-49b5-9721-baf48d64c9ff:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16726.3,
+        "dur": 1082.2,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:a778a630-a51e-49b5-9721-baf48d64c9ff:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16727.2,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:a778a630-a51e-49b5-9721-baf48d64c9ff:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16727.2,
+        "dur": 1081.3,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:a778a630-a51e-49b5-9721-baf48d64c9ff:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16744.7,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:a778a630-a51e-49b5-9721-baf48d64c9ff:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16744.7,
+        "dur": 5515.5,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:1d2659e4-16ab-4408-9f78-21ce4cd74c2c:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16860.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:1d2659e4-16ab-4408-9f78-21ce4cd74c2c:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16860.5,
+        "dur": 1071,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:1d2659e4-16ab-4408-9f78-21ce4cd74c2c:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16861.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:1d2659e4-16ab-4408-9f78-21ce4cd74c2c:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16861.8,
+        "dur": 1070.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "aem-fragment:28f08b61-28cc-4675-a7f1-dcc2423f6998:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 17029.2,
+        "dur": 585.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 16866.4,
+        "dur": 575,
+        "n": 5
+      },
+      "delta": {
+        "ms": -162.8,
+        "dur": -4.7
+      }
+    },
+    {
+      "name": "aem-fragment:28f08b61-28cc-4675-a7f1-dcc2423f6998:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 17029.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 16866.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -162.8
+      }
+    },
+    {
+      "name": "sherlock:1d2659e4-16ab-4408-9f78-21ce4cd74c2c:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16881.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:1d2659e4-16ab-4408-9f78-21ce4cd74c2c:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16881.5,
+        "dur": 5609.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:c63a6dc1-3696-4f0e-bcbe-dc3a6d5b40d9:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16902.9,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:c63a6dc1-3696-4f0e-bcbe-dc3a6d5b40d9:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16902.9,
+        "dur": 1118.6,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:c63a6dc1-3696-4f0e-bcbe-dc3a6d5b40d9:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16905.8,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:c63a6dc1-3696-4f0e-bcbe-dc3a6d5b40d9:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16905.8,
+        "dur": 1116.2,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:21609f23-63be-4309-90d2-8af26b8893bd:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16911.9,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:21609f23-63be-4309-90d2-8af26b8893bd:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16911.9,
+        "dur": 1015.9,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:21609f23-63be-4309-90d2-8af26b8893bd:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16912.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:21609f23-63be-4309-90d2-8af26b8893bd:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16912.4,
+        "dur": 1016.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:c63a6dc1-3696-4f0e-bcbe-dc3a6d5b40d9:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16924.9,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:c63a6dc1-3696-4f0e-bcbe-dc3a6d5b40d9:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16924.9,
+        "dur": 6093.7,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:21609f23-63be-4309-90d2-8af26b8893bd:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16930.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:21609f23-63be-4309-90d2-8af26b8893bd:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16930.5,
+        "dur": 5140.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:60a96759-524a-405e-99c4-ff2c2eb753d4:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16992,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:60a96759-524a-405e-99c4-ff2c2eb753d4:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16992,
+        "dur": 1012.7,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:60a96759-524a-405e-99c4-ff2c2eb753d4:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16992.6,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:60a96759-524a-405e-99c4-ff2c2eb753d4:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16992.6,
+        "dur": 1012.2,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:60a96759-524a-405e-99c4-ff2c2eb753d4:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 17005.9,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:60a96759-524a-405e-99c4-ff2c2eb753d4:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 17005.9,
+        "dur": 2887.5,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:0d00a0c6-8b6c-44d3-ac5b-4afec1d4221e:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 17227.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:0d00a0c6-8b6c-44d3-ac5b-4afec1d4221e:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 17227.2,
+        "dur": 1017,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:0d00a0c6-8b6c-44d3-ac5b-4afec1d4221e:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 17228.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:0d00a0c6-8b6c-44d3-ac5b-4afec1d4221e:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 17228.6,
+        "dur": 1016.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:0d00a0c6-8b6c-44d3-ac5b-4afec1d4221e:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 17248.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "sherlock:0d00a0c6-8b6c-44d3-ac5b-4afec1d4221e:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 17248.2,
+        "dur": 6459.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null
+    },
+    {
+      "name": "merch-card:6fd53472-41d9-4bbf-854c-57b11501e005:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 17692.1,
+        "dur": 210.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 17525,
+        "dur": 191.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -167.1,
+        "dur": -6.2
+      }
+    },
+    {
+      "name": "merch-card:6fd53472-41d9-4bbf-854c-57b11501e005:start",
+      "kind": "mark",
+      "before": {
+        "ms": 17692.1,
+        "n": 5
+      },
+      "after": {
+        "ms": 17525,
+        "n": 5
+      },
+      "delta": {
+        "ms": -167.1
+      }
+    },
+    {
+      "name": "merch-card:76c16087-cd83-43a8-95d4-987f83052d53:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 17693.9,
+        "dur": 215.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 17526.1,
+        "dur": 198,
+        "n": 5
+      },
+      "delta": {
+        "ms": -167.8,
+        "dur": -6.3
+      }
+    },
+    {
+      "name": "merch-card:76c16087-cd83-43a8-95d4-987f83052d53:start",
+      "kind": "mark",
+      "before": {
+        "ms": 17693.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 17526.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -167.8
+      }
+    },
+    {
+      "name": "merch-card:a3e55182-d4f0-4765-875d-a21aef53855e:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 17695.4,
+        "dur": 220.1,
+        "n": 5
+      },
+      "after": {
+        "ms": 17527,
+        "dur": 202.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -168.4,
+        "dur": -6.7
+      }
+    },
+    {
+      "name": "merch-card:a3e55182-d4f0-4765-875d-a21aef53855e:start",
+      "kind": "mark",
+      "before": {
+        "ms": 17695.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 17527,
+        "n": 5
+      },
+      "delta": {
+        "ms": -168.4
+      }
+    },
+    {
+      "name": "sherlock:693b7547-b69c-4cc3-a1c7-8df281b5af70:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 18178.5,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:693b7547-b69c-4cc3-a1c7-8df281b5af70:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 18178.5,
+        "dur": 1018.3,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:693b7547-b69c-4cc3-a1c7-8df281b5af70:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 18180,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:693b7547-b69c-4cc3-a1c7-8df281b5af70:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 18180,
+        "dur": 1017.6,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:693b7547-b69c-4cc3-a1c7-8df281b5af70:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 18200.1,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "sherlock:693b7547-b69c-4cc3-a1c7-8df281b5af70:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 18200.1,
+        "dur": 6450.1,
+        "n": 1
+      },
+      "delta": null
+    },
+    {
+      "name": "aem-fragment:d58cf3bc-4495-427b-a8af-c834498896b1:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 19288.9,
+        "dur": 625.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 18985.6,
+        "dur": 617.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -289.6,
+        "dur": -1.6
+      }
+    },
+    {
+      "name": "aem-fragment:d58cf3bc-4495-427b-a8af-c834498896b1:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 19288.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 18985.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -289.6
+      }
+    },
+    {
+      "name": "merch-card:1e41df62-45d0-412d-ab96-59d90eb15b33:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 19957.6,
+        "dur": 255.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 19633,
+        "dur": 311.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -324.6,
+        "dur": 56.1
+      }
+    },
+    {
+      "name": "merch-card:1e41df62-45d0-412d-ab96-59d90eb15b33:start",
+      "kind": "mark",
+      "before": {
+        "ms": 19957.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 19633,
+        "n": 5
+      },
+      "delta": {
+        "ms": -324.6
+      }
+    },
+    {
+      "name": "merch-card:97ab1bd0-19ab-4c5f-b00a-3181ec823203:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 19958.6,
+        "dur": 266.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 19639.8,
+        "dur": 322,
+        "n": 5
+      },
+      "delta": {
+        "ms": -318.8,
+        "dur": 50.3
+      }
+    },
+    {
+      "name": "merch-card:97ab1bd0-19ab-4c5f-b00a-3181ec823203:start",
+      "kind": "mark",
+      "before": {
+        "ms": 19958.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 19639.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -318.8
+      }
+    },
+    {
+      "name": "aem-fragment:4160de5d-c9b4-4f9d-9747-ad284785f742:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20326.9,
+        "dur": 581.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 20076.4,
+        "dur": 591,
+        "n": 5
+      },
+      "delta": {
+        "ms": -250.5,
+        "dur": 2.8
+      }
+    },
+    {
+      "name": "aem-fragment:4160de5d-c9b4-4f9d-9747-ad284785f742:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20326.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 20076.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -250.5
+      }
+    },
+    {
+      "name": "merch-card:b457ace6-6d5e-4242-b81f-0eea1a33faf6:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20986.5,
+        "dur": 258.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 20775.9,
+        "dur": 251.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -210.6,
+        "dur": -1.5
+      }
+    },
+    {
+      "name": "merch-card:b457ace6-6d5e-4242-b81f-0eea1a33faf6:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20986.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 20775.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -210.6
+      }
+    },
+    {
+      "name": "merch-card:bd5f256e-97c5-40d2-bb5d-3934ece4c757:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20988,
+        "dur": 264.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 20777.4,
+        "dur": 272.5,
+        "n": 5
+      },
+      "delta": {
+        "ms": -210.6,
+        "dur": 7.9
+      }
+    },
+    {
+      "name": "merch-card:bd5f256e-97c5-40d2-bb5d-3934ece4c757:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20988,
+        "n": 5
+      },
+      "after": {
+        "ms": 20777.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -210.6
+      }
+    },
+    {
+      "name": "TypeKitCss:load",
+      "kind": "measure",
+      "before": {
+        "ms": 26848.9,
+        "dur": 0.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 26609.8,
+        "dur": 0.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -239.1,
+        "dur": 0
+      }
+    },
+    {
+      "name": "TypeKitCss:load",
+      "kind": "mark",
+      "before": {
+        "ms": 26849.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 26609.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -239.5
+      }
+    },
+    {
+      "name": "TypeKitCss:start",
+      "kind": "mark",
+      "before": {
+        "ms": 26848.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 26609.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -239.1
+      }
+    },
+    {
+      "name": "TypeKitCss:wf-inactive",
+      "kind": "measure",
+      "before": {
+        "ms": 26849.3,
+        "dur": 3035.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 26609.8,
+        "dur": 3021.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -239.5,
+        "dur": -13.1
+      }
+    },
+    {
+      "name": "TypeKitCss:wf-inactive",
+      "kind": "mark",
+      "before": {
+        "ms": 29877,
+        "n": 5
+      },
+      "after": {
+        "ms": 29624.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -252.1
+      }
+    },
+    {
+      "name": "snaptr",
+      "kind": "mark",
+      "before": {
+        "ms": 36835.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 36573.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -261.6
+      }
+    }
+  ],
+  "preloads": {
+    "before": {
+      "total": 32,
+      "unused": 0
+    },
+    "after": {
+      "total": 32,
+      "unused": 0
+    },
+    "rows": []
+  },
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "sources"
+    ],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [
+      "/libs/martech/helpers.js",
+      "/libs/utils/utils.js",
+      "/head.html"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "baseRef": "stage",
+        "headRef": "MWPW-214394-early-target",
+        "baseSha": "249f4dcd3693235ffc76285ac361ca8ef65ad69d",
+        "headSha": "0bc3908d2c50cfdfe287463148c84dc40b49ba52",
+        "mergeBaseSha": "249f4dcd3693235ffc76285ac361ca8ef65ad69d",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/libs/martech/helpers.js",
+            "previousPath": null,
+            "blobSha": "44b266bcea7a867e7f65edf5e9506652e19beb1e"
+          },
+          {
+            "status": "modified",
+            "path": "/libs/utils/utils.js",
+            "previousPath": null,
+            "blobSha": "f021e9e9b3343c991f3c27dcc51e3abd6ffac572"
+          }
+        ]
+      },
+      {
+        "repo": "adobecom/da-dc",
+        "number": 320,
+        "baseRef": "stage",
+        "headRef": "MWPW-214394-early-target",
+        "baseSha": "95c3cdcf6346480c268e0042b03483192534d5ac",
+        "headSha": "25b92eb9324da3927f3d4311d4e0d49b01e83aec",
+        "mergeBaseSha": "95c3cdcf6346480c268e0042b03483192534d5ac",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/head.html",
+            "previousPath": null,
+            "blobSha": "e44698d325b7296e77d80ddb7c0825cc282e372b"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/libs/martech/helpers.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 1,
+        "expectedMergeBaseSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 1,
+        "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+        "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 320,
+        "pair": 1,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/martech/helpers.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 2,
+        "expectedMergeBaseSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 2,
+        "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+        "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 320,
+        "pair": 2,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/martech/helpers.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 3,
+        "expectedMergeBaseSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 3,
+        "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+        "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 320,
+        "pair": 3,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/martech/helpers.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 4,
+        "expectedMergeBaseSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 4,
+        "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+        "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 320,
+        "pair": 4,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/martech/helpers.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 5,
+        "expectedMergeBaseSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionSha256": "b17363b1b3ff94ea5ad46bd57fcd0545c4b20390f2b27c92640ade96970be144",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7181,
+        "pair": 5,
+        "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+        "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 320,
+        "pair": 5,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1465,
+        "max": 4127.5,
+        "ratio": 2.817,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 2476,
+          "after": 2444.5,
+          "ratio": 1.013
+        },
+        {
+          "pair": 2,
+          "before": 2452.5,
+          "after": 1465,
+          "ratio": 1.674
+        },
+        {
+          "pair": 3,
+          "before": 2959.5,
+          "after": 2965.5,
+          "ratio": 1.002
+        },
+        {
+          "pair": 4,
+          "before": 4127.5,
+          "after": 2896.5,
+          "ratio": 1.425
+        },
+        {
+          "pair": 5,
+          "before": 2847,
+          "after": 3403.5,
+          "ratio": 1.195
+        }
+      ]
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7181,
+      "pair": 1,
+      "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+      "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7181,
+      "pair": 2,
+      "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+      "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7181,
+      "pair": 3,
+      "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+      "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7181,
+      "pair": 4,
+      "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+      "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7181,
+      "pair": 5,
+      "expectedMergeBaseSha256": "70c189cdf8ecc6e60111cdc960d632554953c02f0d951ea1ab71f147be658da9",
+      "productionSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93"
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mwkih9m6-68wc3uzc",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/44059207594/artifacts/14316444581",
+    "expiresAt": "2027-02-15T09:50:10.000Z",
+    "expired": false
+  }
+}
