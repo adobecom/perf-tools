@@ -1,7 +1,42 @@
 {
   "schema": "perf-ab/history-v1",
-  "updatedAt": "2026-11-17T08:58:28.862Z",
+  "updatedAt": "2026-11-17T09:01:16.731Z",
   "runs": [
+    {
+      "id": "44051283691-1",
+      "name": null,
+      "config": null,
+      "createdAt": "2026-11-17T08:58:19.000Z",
+      "finishedAt": "2026-11-17T09:00:56.000Z",
+      "status": "failed",
+      "conclusion": "failure",
+      "errorCode": "profile-mismatch",
+      "url": "https://www.adobe.com/creativecloud/pro/plans.html",
+      "profileKey": null,
+      "profile": null,
+      "egress": {
+        "country": null,
+        "verified": false,
+        "documentGeo": "US"
+      },
+      "samples": {
+        "requested": 5,
+        "before": 0,
+        "after": 0,
+        "pairs": 0,
+        "rejected": 5
+      },
+      "medians": {
+        "before": null,
+        "after": null,
+        "delta": null
+      },
+      "github": {
+        "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/44051283691/attempts/1",
+        "sha": "7237cd02c0a4aa868abf75b7777b99c34e69b204"
+      },
+      "detailPath": "data/runs/44051283691-1.json"
+    },
     {
       "id": "43404824945-1",
       "name": null,
