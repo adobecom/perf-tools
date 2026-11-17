@@ -79,6 +79,14 @@ function startServer() {
     if (mode === 'missing') return send(res, 404, 'not found', 'text/plain');
     if (mode === 'inp' && data === 'index.json') return send(res, 200, JSON.stringify(inpIndex()));
     if (mode === 'inp' && data === `runs/${INP_RUN}.json`) return send(res, 200, JSON.stringify(inpRun()));
+    if (mode === 'events' && data === 'runs/41700000008-1.json') {
+      const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
+      detail.events = [{
+        name: 'loaded', kind: 'mark', before: null, after: { ms: 120, n: 3 }, delta: null,
+        pairs: [{ index: 2, before: null, after: { ms: 150, n: 1 }, delta: null }],
+      }];
+      return send(res, 200, JSON.stringify(detail));
+    }
     if (mode === 'events' && data === 'runs/41700000001-1.json') {
       const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, data), 'utf8'));
       detail.events = [
@@ -87,6 +95,14 @@ function startServer() {
         { name: 'merch-card:abc:duration', kind: 'measure', before: { ms: 4300, dur: 620, n: 5 }, after: { ms: 4290, dur: 590.4, n: 4 }, delta: { ms: -10, dur: -29.6 } },
         { name: 'only-after', kind: 'mark', before: null, after: { ms: 50, n: 1 }, delta: null },
       ];
+      detail.events[1].pairs = [
+        { index: 1, before: { ms: 888, n: 1 }, after: { ms: 222, n: 1 }, delta: { ms: -666 } },
+        { index: 2, before: { ms: 950, n: 1 }, after: null, delta: null },
+      ];
+      detail.events[2].pairs = [
+        { index: 1, before: { ms: 4000, dur: 500, n: 1 }, after: { ms: 3900, dur: 400, n: 1 }, delta: { ms: -100, dur: -100 } },
+      ];
+      detail.events[3].pairs = [{ index: 2, before: null, after: { ms: 50, n: 1 }, delta: null }];
       detail.preloads = {
         before: { total: 9, unused: 1 }, after: { total: 9, unused: 2 },
         rows: [
@@ -328,6 +344,8 @@ describe('history dashboard in a real browser', { skip }, () => {
     await open(page, 'events', '?run=41700000001-1');
     const rows = () => page.$$eval('#detail table.events tbody tr', (trs) => trs.map((tr) => tr.innerText.replace(/\s+/g, ' ').trim()));
     assert.equal((await rows()).length, 4);
+    assert.equal(await page.$eval('#sec-per-pair-numbers', (el) => el.parentElement.nextElementSibling.querySelector('h3').textContent), 'Timing events');
+    assert.deepEqual(await page.locator('select[name="event-pair"] option').allTextContents(), ['All pairs · medians', 'Pair #1', 'Pair #2', 'Pair #3', 'Pair #4', 'Pair #5']);
     assert.match((await rows())[1], /^Gnav-Start Mark 912 ms 905 ms −7\.4 ms —$/);
     assert.match((await rows())[2], /^merch-card:abc:duration Measure 4,300 ms 4,290 ms −10.0 ms 620 ms → 590 ms$/);
     assert.match((await rows())[3], /only-after Mark — 50\.0 ms — —/);
@@ -343,10 +361,78 @@ describe('history dashboard in a real browser', { skip }, () => {
     await page.fill('#detail input[name="event-q"]', '');
     await page.selectOption('#detail select[name="event-kind"]', 'measure');
     assert.equal((await rows()).length, 1);
+    await page.selectOption('#detail select[name="event-pair"]', '1');
+    assert.match((await rows())[0], /4,000 ms 3,900 ms −100 ms 500 ms → 400 ms/);
+    assert.match(await text(page, '.event-context'), /Pair #1/);
+    assert.match(await text(page, 'table.events thead'), /AfterΔDuration/);
+    await page.selectOption('#detail select[name="event-kind"]', '');
+    await page.fill('#detail input[name="event-q"]', 'gnav');
+    assert.deepEqual(await rows(), ['Gnav-Start Mark 888 ms 222 ms −666 ms —']);
+    await page.selectOption('#detail select[name="event-pair"]', '2');
+    assert.deepEqual(await rows(), ['Gnav-Start Mark 950 ms — — —']);
+    await page.fill('#detail input[name="event-q"]', '');
+    assert.equal((await rows()).length, 2);
+    await page.selectOption('#detail select[name="event-pair"]', '3');
+    assert.match((await rows())[0], /Timing data was not published for this pair/);
+    await page.selectOption('#detail select[name="event-pair"]', '');
+    assert.equal((await rows()).length, 4);
+    assert.match(await text(page, 'table.events thead'), /Median paired Δ/);
+    await page.fill('#detail input[name="event-q"]', 'nonexistent');
+    assert.deepEqual(await rows(), ['No events match.']);
     await open(page, 'populated', '?run=41700000001-1');
     assert.equal(await page.locator('#detail table.events').count(), 0, 'runs without published events show no table');
     assert.equal(await page.locator('#detail table.preloads').count(), 0);
     await assertSafe(page);
+    await page.context().close();
+  });
+
+  test('timing headers sort columns, retain filters and restore preferred order without reloading', async () => {
+    const page = await newPage();
+    await open(page, 'events', '?run=41700000001-1');
+    const names = () => page.locator('.events tbody .event-name').allTextContents();
+    const column = (name) => page.locator('.events thead').getByRole('button', { name, exact: true });
+    const reset = page.getByRole('button', { name: 'reset sort', exact: true });
+    assert.deepEqual(await names(), ['firstContentfulPaint', 'Gnav-Start', 'merch-card:abc:duration', 'only-after']);
+    assert.equal(await page.locator('.events th[aria-sort="other"]').count(), 1);
+    assert.equal(await reset.isVisible(), false);
+    await column('After').click();
+    assert.deepEqual(await names(), ['only-after', 'Gnav-Start', 'firstContentfulPaint', 'merch-card:abc:duration']);
+    assert.equal(await page.locator('.events th[aria-sort="ascending"]').textContent(), 'After');
+    await column('After').click();
+    assert.deepEqual(await names(), ['merch-card:abc:duration', 'firstContentfulPaint', 'Gnav-Start', 'only-after']);
+    assert.equal(await page.locator('.events th[aria-sort="descending"]').textContent(), 'After');
+    await page.selectOption('select[name="event-pair"]', '2');
+    assert.deepEqual(await names(), ['only-after', 'Gnav-Start'], 'missing after values remain last even descending');
+    await page.selectOption('select[name="event-kind"]', 'mark');
+    await page.fill('input[name="event-q"]', 'gnav');
+    assert.deepEqual(await names(), ['Gnav-Start']);
+    assert.equal(await page.locator('.events th[aria-sort="descending"]').textContent(), 'After');
+    await reset.click();
+    assert.equal(await page.locator('select[name="event-pair"]').inputValue(), '2');
+    assert.equal(await page.locator('select[name="event-kind"]').inputValue(), 'mark');
+    assert.equal(await page.locator('input[name="event-q"]').inputValue(), 'gnav');
+    await page.fill('input[name="event-q"]', '');
+    assert.deepEqual(await names(), ['Gnav-Start', 'only-after']);
+    await page.selectOption('select[name="event-pair"]', '');
+    await page.selectOption('select[name="event-kind"]', '');
+    await column('Median paired Δ').click();
+    assert.deepEqual(await names(), ['firstContentfulPaint', 'merch-card:abc:duration', 'Gnav-Start', 'only-after']);
+    await column('Before').click();
+    await column('Before').click();
+    assert.deepEqual(await names(), ['merch-card:abc:duration', 'firstContentfulPaint', 'Gnav-Start', 'only-after']);
+    await column('Type').click();
+    assert.deepEqual(await names(), ['Gnav-Start', 'only-after', 'merch-card:abc:duration', 'firstContentfulPaint']);
+    await column('Duration').click();
+    assert.equal((await names())[0], 'merch-card:abc:duration');
+    await column('Event').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('.events th[aria-sort="ascending"]').textContent(), 'Event');
+    await page.keyboard.press('Space');
+    assert.deepEqual(await names(), ['only-after', 'merch-card:abc:duration', 'Gnav-Start', 'firstContentfulPaint']);
+    await reset.click();
+    assert.deepEqual(await names(), ['firstContentfulPaint', 'Gnav-Start', 'merch-card:abc:duration', 'only-after']);
+    await assertSafe(page);
+    await page.context().close();
   });
 
   test('INP: the column, row and scenario appear only for runs with an interaction scenario', async () => {
@@ -377,6 +463,25 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.match(await text(page, '#detail'), /INP 40 ms/, 'the noise threshold is listed with the others');
     await assertSafe(page);
     if (SHOTS) await page.screenshot({ path: path.join(SHOTS, 'desktop-inp.png'), fullPage: true });
+    await page.context().close();
+  });
+
+  test('timing pair filters work on mobile and single-URL reports use load labels', async () => {
+    const page = await newPage({ mobile: true });
+    await open(page, 'events', '?run=41700000001-1');
+    await page.selectOption('select[name="event-pair"]', '1');
+    assert.match(await text(page, '.events tbody'), /888 ms222 ms−666 ms/);
+    await page.locator('.events thead').getByRole('button', { name: 'After', exact: true }).click();
+    assert.equal(await page.locator('.events th[aria-sort="ascending"]').textContent(), 'After');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+    await open(page, 'events', '?run=41700000008-1');
+    assert.equal(await page.getByLabel('Filter timing events by load').count(), 1);
+    await page.selectOption('select[name="event-pair"]', '2');
+    await page.locator('.events thead').getByRole('button', { name: 'After', exact: true }).click();
+    assert.equal(await text(page, '.events tbody'), 'loadedMark150 ms—');
+    assert.doesNotMatch(await text(page, '.events thead'), /Before|Δ/);
+    assert.match(await text(page, '.event-context'), /Load #2/);
+    await assertSafe(page);
     await page.context().close();
   });
 

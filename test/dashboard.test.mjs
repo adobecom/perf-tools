@@ -148,6 +148,64 @@ test('artifactState: missing, expired by flag or date, unlinked, available', () 
   assert.equal(core.artifactState(artifact, now), 'unlinked');
 });
 
+test('timing event pairs validate optional historical data and missing variants', () => {
+  const raw = readFixture('runs/41700000001-1.json');
+  const event = { name: 'mark', kind: 'mark', before: { ms: 100, n: 2 }, after: { ms: 80, n: 2 }, delta: { ms: -20 } };
+  const parse = (row) => core.parseRun({ ...raw, events: [row] }).events[0];
+  assert.deepEqual(parse(event).pairs, [], 'old reports retain aggregate timings');
+  const parsed = parse({ ...event, pairs: [
+    null, { index: 0, after: { ms: 1, n: 1 } }, { index: 2, after: { ms: -1, n: 1 } },
+    { index: 3, before: null, after: { ms: 90, n: 1 }, delta: null },
+    { index: 4, before: { ms: 110, dur: 20, n: 1 }, after: { ms: 70, dur: 10, n: 1 }, delta: { ms: -40, dur: -10 } },
+  ] });
+  assert.deepEqual(parsed.pairs, [
+    { index: 3, before: null, after: { ms: 90, dur: null, n: 1 }, delta: null },
+    { index: 4, before: { ms: 110, dur: 20, n: 1 }, after: { ms: 70, dur: 10, n: 1 }, delta: { ms: -40, dur: -10 } },
+  ]);
+});
+
+test('timing events default to FCP, LCP, interactions, MAS and Gnav before other events', () => {
+  const rows = [
+    { name: 'domInteractive', kind: 'navigation', after: { ms: 1 } },
+    { name: 'custom-mark', kind: 'mark', after: { ms: 2 } },
+    { name: 'Gnav-Start', kind: 'mark', after: { ms: 3 } },
+    { name: 'mas-commerce-service:ready', kind: 'measure', after: { ms: 4 } },
+    { name: 'interaction-end', kind: 'mark', after: { ms: 6 } },
+    { name: 'interaction-start', kind: 'mark', after: { ms: 5 } },
+    { name: 'largestContentfulPaint::Candidate', kind: 'paint', after: { ms: 7 } },
+    { name: 'firstContentfulPaint', kind: 'paint', after: { ms: 8 } },
+    { name: 'custom-duration', kind: 'measure', after: { ms: 9 } },
+  ];
+  assert.deepEqual(core.sortEvents(rows).map((row) => row.name), [
+    'firstContentfulPaint', 'largestContentfulPaint::Candidate', 'interaction-start', 'interaction-end',
+    'mas-commerce-service:ready', 'Gnav-Start', 'custom-duration', 'custom-mark', 'domInteractive',
+  ]);
+  assert.equal(rows[0].name, 'domInteractive', 'sorting does not mutate cached event data');
+});
+
+test('timing column sorting uses raw numbers, keeps missing values last and compares displayed types', () => {
+  const rows = [
+    { name: 'small', kind: 'measure', before: { ms: 50, dur: 9 }, after: { ms: 2, dur: 2 }, delta: { ms: -100 } },
+    { name: 'large', kind: 'paint', before: { ms: 10, dur: 100 }, after: { ms: 100, dur: 100 }, delta: { ms: -2 } },
+    { name: 'zero', kind: 'mark', before: { ms: 0, dur: 0 }, after: { ms: 0, dur: 0 }, delta: { ms: 0 } },
+    { name: 'missing', kind: 'navigation', before: null, after: { ms: 9 }, delta: null },
+  ];
+  const names = (key, direction) => core.sortEvents(rows, key, direction).map((row) => row.name);
+  assert.deepEqual(names('before'), ['zero', 'large', 'small', 'missing']);
+  assert.deepEqual(names('before', 'descending'), ['small', 'large', 'zero', 'missing']);
+  assert.deepEqual(names('after'), ['zero', 'small', 'missing', 'large']);
+  assert.deepEqual(names('after', 'descending'), ['large', 'missing', 'small', 'zero']);
+  assert.deepEqual(names('delta'), ['small', 'large', 'zero', 'missing']);
+  assert.deepEqual(names('delta', 'descending'), ['zero', 'large', 'small', 'missing']);
+  assert.deepEqual(names('duration'), ['zero', 'small', 'large', 'missing']);
+  assert.deepEqual(names('duration', 'descending'), ['large', 'small', 'zero', 'missing']);
+  assert.deepEqual(names('name'), ['large', 'missing', 'small', 'zero']);
+  assert.deepEqual(names('name', 'descending'), ['zero', 'small', 'missing', 'large']);
+  assert.deepEqual(names('kind'), ['zero', 'small', 'missing', 'large']);
+  const fallback = { name: 'fallback', kind: 'measure', before: { ms: 5, dur: 15 }, after: { ms: 10, dur: null } };
+  assert.deepEqual(core.sortEvents([fallback, rows[0], rows[3]], 'duration').map((row) => row.name), ['small', 'fallback', 'missing']);
+});
+
 test('safeExternalUrl allows https links to trusted repos and adobe.com', () => {
   const ok = [
     'https://github.com/adobecom/perf-tools/actions/runs/41631057972',
