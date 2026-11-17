@@ -269,18 +269,6 @@ test('formatting: units, U+2212 minus, display resolution, local timestamps and 
   assert.equal(core.median([4, 1, 2, 3]), 2.5);
 });
 
-test('plot helpers span the data and clamp to valid ranges', () => {
-  const { ticks, step } = core.niceTicks(0, 100, 4);
-  assert.equal(step, 25);
-  assert.deepEqual(ticks, [0, 25, 50, 75, 100]);
-  assert.deepEqual(core.niceTicks(5, 5), { ticks: [5], step: 0 });
-  assert.deepEqual(core.niceTicks(5, 1), { ticks: [], step: 0 });
-  const [lo, hi] = core.plotDomain('performance', [58, 90]);
-  assert.ok(lo >= 0 && lo < 58 && hi > 90 && hi <= 100);
-  assert.equal(core.plotDomain('TBT', [24, 1836])[0], 0);
-  assert.equal(core.plotDomain('LCP', [null]), null);
-});
-
 // ---------------------------------------------------------------- verdict regressions
 
 test('regression: tiny unanimous deltas are Within noise, not consistently better', () => {
@@ -291,12 +279,6 @@ test('regression: tiny unanimous deltas are Within noise, not consistently bette
   assert.equal(core.classify('TBT', -20, pairsOf([-20, -10, -30, -25, -15], 'TBT')).verdict, 'noise');
   assert.equal(core.classify('performance', 1, pairsOf([1, 1, 2, 1, 1], 'performance')).verdict, 'noise');
   assert.equal(core.classify('CLS', 0.005, pairsOf([0.005, 0.005, 0.004], 'CLS')).verdict, 'noise');
-  assert.equal(core.pairDirection('LCP', -40), 'flat');
-  assert.equal(core.pairDirection('LCP', -80), 'flat');
-  assert.equal(core.pairDirection('LCP', -150), 'better');
-  assert.equal(core.pairDirection('TBT', 60), 'worse');
-  assert.equal(core.pairDirection('performance', 2), 'flat');
-  assert.equal(core.pairDirection('performance', -4), 'worse');
 
   const run = detail('41700000002-1');
   for (const key of core.METRIC_KEYS) {

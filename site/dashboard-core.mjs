@@ -555,13 +555,6 @@ export function formatNoise(key) {
   return String(n);
 }
 
-// Direction of one pair for chart colouring; differences inside the noise threshold are 'flat'.
-export function pairDirection(key, delta) {
-  const s = noiseSign(key, delta);
-  if (s === 0) return 'flat';
-  return improves(key, s) ? 'better' : 'worse';
-}
-
 // ---------------------------------------------------------------- formatting
 
 const MINUS = '\u2212';
@@ -607,18 +600,6 @@ export function formatPercent(key, d, before) {
   const pct = (d / before) * 100;
   if (Math.abs(pct) < 0.05) return '±0.0%';
   return `${pct > 0 ? '+' : MINUS}${NF1.format(Math.abs(pct))}%`;
-}
-
-export function formatTick(key, v, step) {
-  const unit = METRICS[key].unit;
-  if (unit === 's') return (step >= 100 ? NF1 : NF2).format(v / 1000);
-  if (unit === '') return (step >= 0.01 ? NF2 : NF3).format(v);
-  return NF0.format(v);
-}
-
-export function axisUnit(key) {
-  const unit = METRICS[key].unit;
-  return unit === 'score' ? 'score' : unit || 'unitless';
 }
 
 export function formatDateTime(t, timeZone) {
@@ -673,31 +654,6 @@ export function sampleSummary(r) {
   const pairs = s.pairs ?? 0;
   if (s.requested == null) return `${pairs} pair${pairs === 1 ? '' : 's'}`;
   return `${pairs}/${s.requested} pair${s.requested === 1 ? '' : 's'}`;
-}
-
-// Axis helpers for the paired-sample plots. The domain spans the data; dot plots need no zero baseline.
-export function niceTicks(min, max, count = 4) {
-  if (!(Number.isFinite(min) && Number.isFinite(max)) || max < min) return { ticks: [], step: 0 };
-  if (max === min) return { ticks: [min], step: 0 };
-  const raw = (max - min) / count;
-  const pow = 10 ** Math.floor(Math.log10(raw));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * pow).find((s) => s >= raw * 0.999) ?? 10 * pow;
-  const ticks = [];
-  for (let v = Math.ceil(min / step - 1e-9) * step; v <= max + step * 1e-9; v += step) ticks.push(Number((Math.round(v / step) * step).toPrecision(12)));
-  return { ticks, step };
-}
-
-export function plotDomain(key, values) {
-  const xs = values.filter((v) => v != null && Number.isFinite(v));
-  if (!xs.length) return null;
-  let lo = Math.min(...xs);
-  let hi = Math.max(...xs);
-  const pad = Math.max((hi - lo) * 0.08, METRICS[key].step * 5);
-  lo -= pad;
-  hi += pad;
-  if (key === 'performance') { lo = Math.max(0, lo); hi = Math.min(100, hi); }
-  if (METRICS[key].better === 'lower') lo = Math.max(0, lo);
-  return [lo, hi];
 }
 
 export function median(values) {

@@ -4,7 +4,6 @@ import * as core from './dashboard-core.mjs';
 
 const { METRICS, METRIC_KEYS, STATUS, VERDICT_LABEL, CHANGE_KINDS } = core;
 const FETCH_TIMEOUT_MS = 15000;
-const SVGNS = 'http://www.w3.org/2000/svg';
 const wide = window.matchMedia('(min-width: 1024px)');
 
 const els = {
@@ -68,17 +67,6 @@ function add(el, children) {
 function fill(el, ...children) {
   el.replaceChildren();
   add(el, children);
-}
-
-function svg(tag, attrs = {}, ...children) {
-  const el = document.createElementNS(SVGNS, tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v == null) continue;
-    if (k === 'text') el.textContent = String(v);
-    else el.setAttribute(k, typeof v === 'number' ? String(Math.round(v * 100) / 100) : String(v));
-  }
-  add(el, children);
-  return el;
 }
 
 // Links only to vetted https URLs; anything else is shown as plain text.
@@ -488,7 +476,6 @@ function renderDetail() {
     add(inner, [
       section('Medians', mediansTable(run, run.pairs)),
       pairsSection(run),
-      plotsSection(run),
       changesSection(run),
       interactionsSection(run),
       provenanceSection(run, run),
@@ -633,85 +620,8 @@ function mediansTable(run, pairs) {
       h('p', { class: 'note', text: `Direction is a descriptive heuristic, not a statistical significance test, and carries no confidence level. A metric reads Consistently better or worse only with at least ${core.MIN_PAIRS} complete pairs, a median Δ at or beyond its noise threshold and at least ${Math.round(core.AGREEMENT * 100)}% of pair differences on the median's side; a smaller median Δ reads Within noise and everything else Inconclusive. Noise thresholds: ${noiseThresholds(keys)}. Lower is better except Performance.` })) : null);
 }
 
-// ---------------------------------------------------------------- paired-sample plots
-
-function plotsSection(run) {
-  const usable = run.pairs.filter((p) => p.before || p.after);
-  const title = run.single ? 'Samples' : 'Paired samples';
-  if (!usable.length) return section(title, h('p', { class: 'note', text: 'No samples published.' }));
-  const legend = h('div', { class: 'legend', 'aria-hidden': 'true' },
-    ...(run.single ? [legendItem('after'), legendItem('median', true)] : [
-      legendItem('before'), legendItem('after'), legendItem('better'), legendItem('worse'), legendItem('median'),
-    ]));
-  return section(title,
-    h('p', { class: 'note', text: run.single
-      ? 'Each row is one load; axes fit the samples.'
-      : 'Each row is a cold before/after pair; lines mark changes beyond noise.' }),
-    legend,
-    h('div', { class: 'plots' }, core.metricKeysFor(run).map((k) => pairPlot(k, run, usable))));
-}
-
 function noiseThresholds(keys = METRIC_KEYS) {
   return keys.map((k) => `${METRICS[k].short} ${core.formatNoise(k)}`).join(', ');
-}
-
-function legendItem(kind, single = false) {
-  const glyph = svg('svg', { viewBox: '0 0 24 12', width: 24, height: 12, class: 'legend-glyph' });
-  const labels = { before: 'Before', after: 'After', better: 'Pair better beyond noise', worse: 'Pair worse beyond noise', median: single ? 'Median' : 'Median (before, after)' };
-  if (kind === 'before') glyph.append(svg('circle', { cx: 12, cy: 6, r: 4, class: 'dot-before' }));
-  if (kind === 'after') glyph.append(svg('circle', { cx: 12, cy: 6, r: 4, class: 'dot-after' }));
-  if (kind === 'better' || kind === 'worse') glyph.append(svg('line', { x1: 2, y1: 6, x2: 22, y2: 6, class: `link dir-${kind}` }));
-  if (kind === 'median') glyph.append(svg('line', { x1: 12, y1: 0, x2: 12, y2: 12, class: 'med-after' }));
-  return h('span', { class: 'legend-item' }, glyph, labels[kind]);
-}
-
-function pairPlot(key, run, pairs) {
-  const m = METRICS[key];
-  const rows = pairs.filter((p) => p.before?.[key] != null || p.after?.[key] != null);
-  const medB = run.medians.before?.[key] ?? null;
-  const medA = run.medians.after?.[key] ?? null;
-  const values = rows.flatMap((p) => [p.before?.[key], p.after?.[key]]);
-  const domain = core.plotDomain(key, [...values, medB, medA]);
-  const unit = core.columnUnit(key);
-  const caption = h('figcaption', {}, h('span', { class: 'plot-title', text: m.label }), unit ? h('span', { class: 'plot-unit', text: unit }) : null);
-  if (!domain) return h('figure', { class: 'plot' }, caption, h('p', { class: 'note', text: 'No samples for this metric.' }));
-  const [lo, hi] = domain;
-  const W = 320;
-  const padL = 30;
-  const padR = 12;
-  const rowH = rows.length > 12 ? 11 : 18;
-  const top = 8;
-  const plotH = rows.length * rowH;
-  const H = top + plotH + 24;
-  const x = (v) => padL + ((v - lo) / (hi - lo || 1)) * (W - padL - padR);
-  const { ticks, step } = core.niceTicks(lo, hi, 4);
-  const label = run.single
-    ? `${m.label}: ${rows.length} load${rows.length === 1 ? '' : 's'}; median ${core.formatMetric(key, medA)}.`
-    : `${m.label}: ${rows.length} pair${rows.length === 1 ? '' : 's'}; before median ${core.formatMetric(key, medB)}, after median ${core.formatMetric(key, medA)}.`;
-  const root = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'plot-svg', role: 'img', 'aria-label': label, preserveAspectRatio: 'xMidYMin meet' });
-  const grid = svg('g', { class: 'grid' });
-  for (const t of ticks) {
-    grid.append(svg('line', { x1: x(t), x2: x(t), y1: top - 4, y2: top + plotH, class: 'gridline' }),
-      svg('text', { x: x(t), y: top + plotH + 16, class: 'tick', 'text-anchor': 'middle', text: core.formatTick(key, t, step) }));
-  }
-  root.append(grid);
-  if (medB != null) root.append(svg('line', { x1: x(medB), x2: x(medB), y1: top - 4, y2: top + plotH, class: 'med-before' }));
-  if (medA != null) root.append(svg('line', { x1: x(medA), x2: x(medA), y1: top - 4, y2: top + plotH, class: 'med-after' }));
-  rows.forEach((p, i) => {
-    const y = top + i * rowH + rowH / 2;
-    const b = p.before?.[key];
-    const a = p.after?.[key];
-    const d = p.delta?.[key];
-    const g = svg('g', { class: 'pair' },
-      svg('title', { text: `Pair ${p.index}: before ${core.formatMetric(key, b)}, after ${core.formatMetric(key, a)}, Δ ${core.formatDelta(key, d)}` }));
-    if (rowH >= 14) g.append(svg('text', { x: padL - 8, y: y + 3.5, class: 'row-label', 'text-anchor': 'end', text: String(p.index) }));
-    if (b != null && a != null) g.append(svg('line', { x1: x(b), x2: x(a), y1: y, y2: y, class: `link dir-${core.pairDirection(key, d ?? a - b)}` }));
-    const r = rowH >= 14 ? 4 : 3;
-    if (b != null) g.append(svg('circle', { cx: x(b), cy: y, r, class: 'dot-before' }));
-    if (a != null) g.append(svg('circle', { cx: x(a), cy: y, r, class: 'dot-after' }));
-    root.append(g);
-  });
-  return h('figure', { class: 'plot' }, caption, root);
 }
 
 // ---------------------------------------------------------------- per-pair table

@@ -22,7 +22,7 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 const MODES = new Set(['populated', 'empty', 'schema', 'badjson', 'missing', 'slow', 'warning', 'inp', 'order', 'contextual']);
 
 // A synthetic INP run derived from a fixture run: the shared fixtures stay INP-free, so every other mode keeps proving that
-// runs without an interaction scenario show no INP column, row or plot.
+// runs without an interaction scenario show no INP column or row.
 const INP_RUN = '41700000200-1';
 function inpRun() {
   const detail = JSON.parse(fs.readFileSync(path.join(FIXTURES, 'runs', '41700000001-1.json'), 'utf8'));
@@ -246,7 +246,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.ok(v.every((x) => x === 'inconclusive'), `smoke verdicts ${v}`);
     assert.match(detail, /Direction is a descriptive heuristic, not a statistical significance test/);
     assert.match(await text(page, '#detail table.medians thead'), /Median paired Δ/);
-    assert.equal(await page.$$eval('#detail svg.plot-svg', (s) => s.length), 6);
+    assert.doesNotMatch(detail, /Paired samples/);
     assert.equal(await page.locator('#detail a', { hasText: 'Download perf-ab-41631000001-1' }).getAttribute('href'),
       'https://github.com/adobecom/perf-tools/actions/runs/41631000001/artifacts/1');
     await assertSafe(page);
@@ -290,7 +290,6 @@ describe('history dashboard in a real browser', { skip }, () => {
     await open(page, 'populated', '?run=41700000002-1');
     assert.deepEqual(await verdicts(page), Array(6).fill('noise'));
     assert.doesNotMatch(await text(page, '#detail table.medians tbody'), /Consistently/);
-    assert.equal(await page.$$eval('#detail svg.plot-svg line.link.dir-better, #detail svg.plot-svg line.link.dir-worse', (l) => l.length), 0, 'tiny pair deltas are drawn neutral');
 
     await open(page, 'populated', '?run=41700000001-1');
     const byMetric = await page.$$eval('#detail table.medians tbody tr', (trs) => Object.fromEntries(trs.map((tr) => [tr.querySelector('.metric-short').textContent, tr.dataset.verdict])));
@@ -298,7 +297,6 @@ describe('history dashboard in a real browser', { skip }, () => {
     const lcpRow = await text(page, '#detail table.medians tbody tr:nth-child(3)');
     assert.match(lcpRow, /Consistently better/);
     assert.match(lcpRow, /5\/5 pairs same direction/);
-    assert.ok(await page.$$eval('#detail svg.plot-svg line.link.dir-better', (l) => l.length) >= 5);
     assert.equal(await page.$eval('a.run-link[aria-current="true"]', (a) => a.dataset.run), '41700000001-1');
     const detail = await text(page, '#detail');
     assert.doesNotMatch(detail, /Comparable runs/);
@@ -308,16 +306,16 @@ describe('history dashboard in a real browser', { skip }, () => {
     await page.context().close();
   });
 
-  test('INP: the column, row, plot and scenario appear only for runs with an interaction scenario', async () => {
+  test('INP: the column, row and scenario appear only for runs with an interaction scenario', async () => {
     const page = await newPage();
     // Runs without a scenario: no INP anywhere.
     await open(page, 'populated', '?run=41700000001-1');
     assert.doesNotMatch(await text(page, '#history-body thead'), /INP/);
     assert.deepEqual(await page.$$eval('#detail table.medians tbody .metric-short', (e) => e.map((x) => x.textContent)), ['Perf', 'FCP', 'LCP', 'SI', 'TBT', 'CLS']);
-    assert.equal(await page.$$eval('#detail svg.plot-svg', (s) => s.length), 6);
+    assert.equal(await page.locator('#detail svg').count(), 0);
     assert.doesNotMatch(await text(page, '#detail'), /Interaction scenario|INP/);
 
-    // A list containing an INP run gets the column (other rows show a dash); the run's detail gets the row, plot and scenario.
+    // A list containing an INP run gets the column (other rows show a dash); the run's detail gets the row and scenario.
     await open(page, 'inp', `?run=${INP_RUN}`);
     assert.match(await text(page, '#history-body thead'), /Δ INP/);
     assert.match(await text(page, `#history-body tr.run-row:has(a[data-run="${INP_RUN}"])`), /−310 ms/);
@@ -325,7 +323,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.deepEqual(await page.$$eval('#detail table.medians tbody .metric-short', (e) => e.map((x) => x.textContent)), ['Perf', 'FCP', 'LCP', 'SI', 'TBT', 'CLS', 'INP']);
     assert.match(await text(page, '#detail table.medians tbody tr:nth-child(7)'), /610 ms300 ms−310 ms/);
     assert.equal(await page.$eval('#detail table.medians tbody tr:nth-child(7)', (tr) => tr.dataset.verdict), 'better');
-    assert.equal(await page.$$eval('#detail svg.plot-svg', (s) => s.length), 7);
+    assert.equal(await page.locator('#detail svg').count(), 0);
     assert.match(await text(page, '#detail table.pairs thead'), /INP/);
     assert.equal(await page.$$eval('#detail table.pairs thead th.num', (t) => t.length), 7);
     const scenario = await text(page, 'section[aria-labelledby="sec-interaction-scenario"]');
@@ -382,9 +380,6 @@ describe('history dashboard in a real browser', { skip }, () => {
     await open(page, 'warning', '?run=41700000008-1');
     detail = await text(page, '#detail');
     assert.match(detail, /Single URL; no before\/after comparison/);
-    assert.equal(await page.locator('#detail .plots svg').count(), 6);
-    assert.equal(await page.locator('#detail .legend').innerText(), 'After\nMedian');
-    assert.ok((await page.locator('#detail .plots svg').first().getAttribute('aria-label')).includes('load'));
     assert.doesNotMatch(detail, /Deltas are indicative|How direction is set/);
     assert.match(detail, /Per-load numbers/);
     assert.deepEqual(await verdicts(page), []);
@@ -405,7 +400,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.match(await warnings.innerText(), /\/libs\/other.js/);
     assert.equal(await page.locator('#detail .medians tbody tr').count(), 6);
     assert.equal(await page.locator('#detail .pairs tr.pair-start').count(), 5);
-    assert.equal(await page.locator('#detail svg.plot-svg').count(), 6);
+    assert.equal(await page.locator('#detail svg').count(), 0);
     assert.equal(await warnings.locator('a').first().textContent(), 'adobecom/milo#7095');
     await assertSafe(page);
     await page.context().close();
