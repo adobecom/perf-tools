@@ -1,0 +1,4522 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "44340852706-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-18T15:53:38.000Z",
+  "finishedAt": "2026-11-18T15:57:32.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/acrobat/acrobat-studio.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 5,
+    "after": 5,
+    "pairs": 5,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 6215.359,
+      "LCP": 6322.194,
+      "SI": 8039,
+      "CLS": 0.0003443700482163757,
+      "performance": null,
+      "TBT": null
+    },
+    "after": {
+      "FCP": 5503.671,
+      "LCP": 5603.31,
+      "SI": 7314,
+      "CLS": 0.0003443700482163757,
+      "performance": null,
+      "TBT": null
+    },
+    "delta": {
+      "FCP": -745.0150000000003,
+      "LCP": -767.0450000000001,
+      "SI": -768,
+      "CLS": 0,
+      "performance": null,
+      "TBT": null
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/44340852706/attempts/1",
+    "sha": "2bc1b7924f8a411aa3b8e49db1e9556d665cdbc2"
+  },
+  "detailPath": "data/runs/44340852706-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "FCP": 6215.359,
+        "LCP": 6322.194,
+        "SI": 8039,
+        "CLS": 0.0003443700482163757
+      },
+      "after": {
+        "FCP": 5470.344,
+        "LCP": 5555.149,
+        "SI": 7271,
+        "CLS": 0.0003443700482163757
+      },
+      "delta": {
+        "FCP": -745.0150000000003,
+        "LCP": -767.0450000000001,
+        "SI": -768,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.78",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2414.5,
+          "after": 2470
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "FCP": 5875.969,
+        "LCP": 5933.127,
+        "SI": 7644,
+        "CLS": 0.0003443700482163757
+      },
+      "after": {
+        "FCP": 5977.797,
+        "LCP": 6101.362,
+        "SI": 7845,
+        "CLS": 0.0003443700482163757
+      },
+      "delta": {
+        "FCP": 101.82799999999952,
+        "LCP": 168.23499999999967,
+        "SI": 201,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.50",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 4096.5,
+          "after": 2761.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": {
+        "FCP": 6368.961,
+        "LCP": 6488.03,
+        "SI": 8218,
+        "CLS": 0.0003443700482163757
+      },
+      "after": {
+        "FCP": 5473.633,
+        "LCP": 5569.084,
+        "SI": 7276,
+        "CLS": 0.0003443700482163757
+      },
+      "delta": {
+        "FCP": -895.3280000000004,
+        "LCP": -918.9459999999999,
+        "SI": -942,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.50",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2004,
+          "after": 2410
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "performance": 42,
+        "FCP": 5926.627,
+        "LCP": 5998.563,
+        "SI": 7707,
+        "TBT": 795.2629999999954,
+        "CLS": 0.0003443700482163757
+      },
+      "after": {
+        "FCP": 5886.755,
+        "LCP": 5995.634,
+        "SI": 7703,
+        "CLS": 0.0003443700482163757
+      },
+      "delta": {
+        "FCP": -39.8720000000003,
+        "LCP": -2.9290000000000873,
+        "SI": -4,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.78",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 3459,
+          "after": 2831
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 5,
+      "before": {
+        "FCP": 7829.972,
+        "LCP": 7829.972,
+        "SI": 9642,
+        "CLS": 0.0003443700482163757
+      },
+      "after": {
+        "FCP": 5503.671,
+        "LCP": 5603.31,
+        "SI": 7314,
+        "CLS": 0.0003443700482163757
+      },
+      "delta": {
+        "FCP": -2326.3009999999995,
+        "LCP": -2226.6619999999994,
+        "SI": -2328,
+        "CLS": 0
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.50",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1301,
+          "after": 2463
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "navigationStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 0,
+        "n": 5
+      },
+      "after": {
+        "ms": 0,
+        "n": 5
+      },
+      "delta": {
+        "ms": 0
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "fetchStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 1.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 0.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 2.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 0.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1.6
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1,
+            "n": 1
+          },
+          "after": {
+            "ms": 5.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 4.9
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 1.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 0.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 0.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 2.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 1.9
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 0.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -6.5
+          }
+        }
+      ]
+    },
+    {
+      "name": "commitNavigationEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 624.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 615.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -35.3
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 623.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 588.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -35.3
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 606.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 689.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": 83
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 645.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 602.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -43.1
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 624.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 672.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": 48
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1332.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 615.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -717.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "domLoading",
+      "kind": "navigation",
+      "before": {
+        "ms": 624.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 616,
+        "n": 5
+      },
+      "delta": {
+        "ms": -35.5
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 624.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 589.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -35.5
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 606.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 689.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 83.6
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 646.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 602.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -43.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 624.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 673.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": 49
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1333.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 616,
+            "n": 1
+          },
+          "delta": {
+            "ms": -717.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "responseEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 632.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 621,
+        "n": 5
+      },
+      "delta": {
+        "ms": -15.1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 634.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 619.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -15.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 628.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 659.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 31.7
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 632.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 616.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -16
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 628,
+            "n": 1
+          },
+          "after": {
+            "ms": 627,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1292.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 621,
+            "n": 1
+          },
+          "delta": {
+            "ms": -671.4
+          }
+        }
+      ]
+    },
+    {
+      "name": "domInteractive",
+      "kind": "navigation",
+      "before": {
+        "ms": 745.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 671.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": -105
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 745.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 640.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -105
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 646.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 936.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": 289.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 785.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 654.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -130.6
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 664,
+            "n": 1
+          },
+          "after": {
+            "ms": 889.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": 225.5
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1764.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 671.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1092.8
+          }
+        }
+      ]
+    },
+    {
+      "name": "domContentLoadedEventStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 1339.8,
+        "n": 5
+      },
+      "after": {
+        "ms": 1292.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -82.5
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 1339.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 1257.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -82.5
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1260.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 1543.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 283.1
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 1392.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 1271,
+            "n": 1
+          },
+          "delta": {
+            "ms": -121.6
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 1278.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 1406.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": 128
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 2320.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 1292.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1028.4
+          }
+        }
+      ]
+    },
+    {
+      "name": "domContentLoadedEventEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 1340.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 1292.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -82.5
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 1340.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 1258,
+            "n": 1
+          },
+          "delta": {
+            "ms": -82.5
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1260.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 1543.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 283.1
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 1392.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 1271.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -120.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 1278.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 1407.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": 128.5
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 2320.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 1292.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1028.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "domComplete",
+      "kind": "navigation",
+      "before": {
+        "ms": 2073.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 2225.6,
+        "n": 5
+      },
+      "delta": {
+        "ms": 126.8
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 2073.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 2200,
+            "n": 1
+          },
+          "delta": {
+            "ms": 126.8
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1981.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 2508.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": 526.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 2138.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 2205.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": 67
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 2000.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 2338.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 338.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 3158.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 2225.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -933.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "loadEventEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 2073.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 2225.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": 126.8
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 2073.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 2200.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": 126.8
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1981.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 2508.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": 526.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 2138.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 2206.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": 67.5
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 2000.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 2339.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": 338.3
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 3159,
+            "n": 1
+          },
+          "after": {
+            "ms": 2225.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -933.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "loadEventStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 2073.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 2225.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": 126.8
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 2073.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 2200.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": 126.8
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1981.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 2508.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": 526.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 2138.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 2206.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": 67.4
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 2000.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 2339.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": 338.3
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 3159,
+            "n": 1
+          },
+          "after": {
+            "ms": 2225.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -933.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "interaction-start",
+      "kind": "mark",
+      "before": {
+        "ms": 3180.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 2481.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -733.3
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 3180.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 2447.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -733.3
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 3072.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 2793.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -279.1
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 3250.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 2460.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -789.8
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 3092,
+            "n": 1
+          },
+          "after": {
+            "ms": 2649.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -442.5
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 4227.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 2481.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1745.6
+          }
+        }
+      ]
+    },
+    {
+      "name": "total-time",
+      "kind": "measure",
+      "before": {
+        "ms": 3180.6,
+        "dur": 761.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 2481.8,
+        "dur": 808.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -733.3,
+        "dur": 46.8
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 3180.6,
+            "dur": 761.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 2447.3,
+            "dur": 808.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -733.3,
+            "dur": 46.8
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 3072.2,
+            "dur": 639.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 2793.1,
+            "dur": 830.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -279.1,
+            "dur": 191.4
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 3250.6,
+            "dur": 800,
+            "n": 1
+          },
+          "after": {
+            "ms": 2460.8,
+            "dur": 807.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -789.8,
+            "dur": 7.7
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 3092,
+            "dur": 657.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 2649.5,
+            "dur": 845,
+            "n": 1
+          },
+          "delta": {
+            "ms": -442.5,
+            "dur": 187.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 4227.4,
+            "dur": 1012.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 2481.8,
+            "dur": 807.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1745.6,
+            "dur": -204.6
+          }
+        }
+      ]
+    },
+    {
+      "name": "interaction-end",
+      "kind": "mark",
+      "before": {
+        "ms": 3942.1,
+        "n": 5
+      },
+      "after": {
+        "ms": 3289.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -686.5
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 3942.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 3255.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -686.5
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 3711.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 3623.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -87.7
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 4050.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 3268.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -782
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 3749.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 3494.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -255.4
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 5239.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 3289.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1950.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "mas-commerce-service:ready",
+      "kind": "measure",
+      "before": {
+        "ms": 5977.2,
+        "dur": 10.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 5339.7,
+        "dur": 11.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -678.9,
+        "dur": 0.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 5977.2,
+            "dur": 10.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 5298.3,
+            "dur": 11.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -678.9,
+            "dur": 0.9
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5762.8,
+            "dur": 6.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 5668.9,
+            "dur": 7.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -93.9,
+            "dur": 0.9
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6097.3,
+            "dur": 11.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 5310.3,
+            "dur": 11.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -787,
+            "dur": -0.4
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5792.3,
+            "dur": 9.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 5531.6,
+            "dur": 9.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -260.7,
+            "dur": 0.2
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7098.4,
+            "dur": 11.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 5339.7,
+            "dur": 12.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1758.7,
+            "dur": 1.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "mas-commerce-service:start",
+      "kind": "mark",
+      "before": {
+        "ms": 5977.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 5339.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -678.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 5977.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 5298.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -678.9
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5762.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 5668.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -93.9
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6097.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 5310.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -787
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5792.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 5531.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -260.7
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7098.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 5339.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1758.7
+          }
+        }
+      ]
+    },
+    {
+      "name": "mas-commerce-service:ready",
+      "kind": "mark",
+      "before": {
+        "ms": 5988.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 5352,
+        "n": 5
+      },
+      "delta": {
+        "ms": -678.2
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 5988.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 5310,
+            "n": 1
+          },
+          "delta": {
+            "ms": -678.2
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5769.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 5676.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -93.1
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6108.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 5320.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -787.5
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5802,
+            "n": 1
+          },
+          "after": {
+            "ms": 5541.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -260.5
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7109.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 5352,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1757.5
+          }
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:f0895cee-13d3-4b4c-88bd-5c935853b678:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 5997.7,
+        "dur": 14.5,
+        "n": 5
+      },
+      "after": {
+        "ms": 5362,
+        "dur": 12.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -676.3,
+        "dur": -2.4
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 5997.7,
+            "dur": 14.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 5321.4,
+            "dur": 12.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -676.3,
+            "dur": -2.4
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5776.9,
+            "dur": 8.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 5693.3,
+            "dur": 25.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -83.6,
+            "dur": 17.2
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6129.2,
+            "dur": 21.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 5331.2,
+            "dur": 10.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -798,
+            "dur": -10.4
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5810.3,
+            "dur": 9.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 5550.5,
+            "dur": 13.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -259.8,
+            "dur": 3.7
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7126.3,
+            "dur": 80.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 5362,
+            "dur": 10.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1764.3,
+            "dur": -70.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:f0895cee-13d3-4b4c-88bd-5c935853b678:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 5997.7,
+        "n": 5
+      },
+      "after": {
+        "ms": 5362,
+        "n": 5
+      },
+      "delta": {
+        "ms": -676.3
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 5997.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 5321.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -676.3
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5776.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 5693.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -83.6
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6129.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 5331.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": -798
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5810.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 5550.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -259.8
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7126.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 5362,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1764.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "firstContentfulPaint",
+      "kind": "paint",
+      "before": {
+        "ms": 6215.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 5503.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -745.1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6215.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 5470.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -745.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5876,
+            "n": 1
+          },
+          "after": {
+            "ms": 5977.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 101.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6369,
+            "n": 1
+          },
+          "after": {
+            "ms": 5473.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -895.4
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5926.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 5886.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -39.8
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7830,
+            "n": 1
+          },
+          "after": {
+            "ms": 5503.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2326.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "firstImagePaint",
+      "kind": "paint",
+      "before": {
+        "ms": 6215.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 5503.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -745.1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6215.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 5470.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -745.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5876,
+            "n": 1
+          },
+          "after": {
+            "ms": 5977.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 101.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6369,
+            "n": 1
+          },
+          "after": {
+            "ms": 5473.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -895.4
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5926.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 5886.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -39.8
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7830,
+            "n": 1
+          },
+          "after": {
+            "ms": 5503.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2326.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "firstMeaningfulPaint",
+      "kind": "paint",
+      "before": {
+        "ms": 6215.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 5503.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -745.1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6215.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 5470.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -745.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5876,
+            "n": 1
+          },
+          "after": {
+            "ms": 5977.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 101.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6369,
+            "n": 1
+          },
+          "after": {
+            "ms": 5473.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -895.4
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5926.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 5886.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -39.8
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7830,
+            "n": 1
+          },
+          "after": {
+            "ms": 5503.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2326.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "firstMeaningfulPaintCandidate",
+      "kind": "paint",
+      "before": {
+        "ms": 6215.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 5503.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -745.1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6215.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 5470.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -745.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5876,
+            "n": 1
+          },
+          "after": {
+            "ms": 5977.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 101.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6369,
+            "n": 1
+          },
+          "after": {
+            "ms": 5473.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -895.4
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5926.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 5886.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -39.8
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7830,
+            "n": 1
+          },
+          "after": {
+            "ms": 5503.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2326.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "firstPaint",
+      "kind": "paint",
+      "before": {
+        "ms": 6215.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 5503.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -745.1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6215.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 5470.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -745.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5876,
+            "n": 1
+          },
+          "after": {
+            "ms": 5977.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 101.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6369,
+            "n": 1
+          },
+          "after": {
+            "ms": 5473.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -895.4
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5926.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 5886.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -39.8
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7830,
+            "n": 1
+          },
+          "after": {
+            "ms": 5503.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2326.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "largestContentfulPaint::Candidate",
+      "kind": "paint",
+      "before": {
+        "ms": 6322.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 5603.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -767.1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6322.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 5555.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -767.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5933.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 6101.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": 168.3
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6488,
+            "n": 1
+          },
+          "after": {
+            "ms": 5569.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -918.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5998.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 5995.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -3
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7830,
+            "n": 1
+          },
+          "after": {
+            "ms": 5603.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2226.7
+          }
+        }
+      ]
+    },
+    {
+      "name": "LargestImagePaint::Candidate",
+      "kind": "paint",
+      "before": {
+        "ms": 6322.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 5603.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -767.1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6322.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 5555.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -767.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5933.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 6101.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": 168.3
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6488,
+            "n": 1
+          },
+          "after": {
+            "ms": 5569.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -918.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5998.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 5995.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -3
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7830,
+            "n": 1
+          },
+          "after": {
+            "ms": 5603.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2226.7
+          }
+        }
+      ]
+    },
+    {
+      "name": "LargestTextPaint::Candidate",
+      "kind": "paint",
+      "before": {
+        "ms": 6367,
+        "n": 5
+      },
+      "after": {
+        "ms": 5628.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -780.6
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6367,
+            "n": 1
+          },
+          "after": {
+            "ms": 5586.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -780.6
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5967.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 6127.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": 160.2
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6548.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 5593.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -954.8
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 6041.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 6022,
+            "n": 1
+          },
+          "delta": {
+            "ms": -19.3
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 8026.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 5628.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2398
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gnav-Start",
+      "kind": "mark",
+      "before": {
+        "ms": 6723,
+        "n": 5
+      },
+      "after": {
+        "ms": 6068.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -688.8
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6723,
+            "n": 1
+          },
+          "after": {
+            "ms": 6034.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": -688.8
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 6449.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 6404.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -44.9
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6856.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 6038.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -818.1
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 6501,
+            "n": 1
+          },
+          "after": {
+            "ms": 6285.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -215.5
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 8083.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 6068.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2015.4
+          }
+        }
+      ]
+    },
+    {
+      "name": "sherlock:c91b32dd-6313-43fb-8991-71ab4bfe781a:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20409.5,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 20409.5,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:c91b32dd-6313-43fb-8991-71ab4bfe781a:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20409.5,
+        "dur": 1016.5,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 20409.5,
+            "dur": 1016.5,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:c91b32dd-6313-43fb-8991-71ab4bfe781a:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20410.6,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 20410.6,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:c91b32dd-6313-43fb-8991-71ab4bfe781a:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20410.6,
+        "dur": 1015.5,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 20410.6,
+            "dur": 1015.5,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:c91b32dd-6313-43fb-8991-71ab4bfe781a:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20428.7,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 20428.7,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:c91b32dd-6313-43fb-8991-71ab4bfe781a:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20428.7,
+        "dur": 5040.9,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 20428.7,
+            "dur": 5040.9,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ae65caaf-87f1-4b64-b354-4693d4ea40c8:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20456.4,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 20456.4,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ae65caaf-87f1-4b64-b354-4693d4ea40c8:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20456.4,
+        "dur": 1161,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 20456.4,
+            "dur": 1161,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ae65caaf-87f1-4b64-b354-4693d4ea40c8:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20457.7,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 20457.7,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ae65caaf-87f1-4b64-b354-4693d4ea40c8:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20457.7,
+        "dur": 1161.8,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 20457.7,
+            "dur": 1161.8,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:fb407a3c-a49f-4336-a5bc-3adf880a842a:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20462.7,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 20462.7,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:fb407a3c-a49f-4336-a5bc-3adf880a842a:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20462.7,
+        "dur": 1019.5,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 20462.7,
+            "dur": 1019.5,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:fb407a3c-a49f-4336-a5bc-3adf880a842a:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20463.8,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 20463.8,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:fb407a3c-a49f-4336-a5bc-3adf880a842a:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20463.8,
+        "dur": 1018.5,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 20463.8,
+            "dur": 1018.5,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:dfa543f0-50d4-4b78-b16e-02355d0a5262:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20481.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 20481.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:dfa543f0-50d4-4b78-b16e-02355d0a5262:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20481.6,
+        "dur": 1013.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 20481.6,
+            "dur": 1013.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:dfa543f0-50d4-4b78-b16e-02355d0a5262:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20482.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 20482.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:dfa543f0-50d4-4b78-b16e-02355d0a5262:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20482.6,
+        "dur": 1012.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 20482.6,
+            "dur": 1012.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ae65caaf-87f1-4b64-b354-4693d4ea40c8:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20483,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 20483,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ae65caaf-87f1-4b64-b354-4693d4ea40c8:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20483,
+        "dur": 6700,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 20483,
+            "dur": 6700,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:fb407a3c-a49f-4336-a5bc-3adf880a842a:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20485.1,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 20485.1,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:fb407a3c-a49f-4336-a5bc-3adf880a842a:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20485.1,
+        "dur": 6501.3,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 20485.1,
+            "dur": 6501.3,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:dfa543f0-50d4-4b78-b16e-02355d0a5262:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20495.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 20495.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:dfa543f0-50d4-4b78-b16e-02355d0a5262:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20495.5,
+        "dur": 2969.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 20495.5,
+            "dur": 2969.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:74cb9ac7-058c-4463-8708-434d51c2d10f:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20533.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20533.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:74cb9ac7-058c-4463-8708-434d51c2d10f:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20533.1,
+        "dur": 1092.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20533.1,
+            "dur": 1092.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:74cb9ac7-058c-4463-8708-434d51c2d10f:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20534,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20534,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:74cb9ac7-058c-4463-8708-434d51c2d10f:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20534,
+        "dur": 1092,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20534,
+            "dur": 1092,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:74cb9ac7-058c-4463-8708-434d51c2d10f:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20546.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20546.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:74cb9ac7-058c-4463-8708-434d51c2d10f:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20546.1,
+        "dur": 5111.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20546.1,
+            "dur": 5111.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:659a8fae-d151-4e21-92a8-4eecf52775c5:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20646.9,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 20646.9,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:659a8fae-d151-4e21-92a8-4eecf52775c5:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20646.9,
+        "dur": 1090.8,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 20646.9,
+            "dur": 1090.8,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:659a8fae-d151-4e21-92a8-4eecf52775c5:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20648.7,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 20648.7,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:659a8fae-d151-4e21-92a8-4eecf52775c5:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20648.7,
+        "dur": 1089.8,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 20648.7,
+            "dur": 1089.8,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:659a8fae-d151-4e21-92a8-4eecf52775c5:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20662.4,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 20662.4,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:659a8fae-d151-4e21-92a8-4eecf52775c5:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20662.4,
+        "dur": 5934.3,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 20662.4,
+            "dur": 5934.3,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:3a910f7a-0f57-4cc3-9cae-ac657b2afe13:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20873.9,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 20873.9,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:3a910f7a-0f57-4cc3-9cae-ac657b2afe13:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20873.9,
+        "dur": 1142.9,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 20873.9,
+            "dur": 1142.9,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:3a910f7a-0f57-4cc3-9cae-ac657b2afe13:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20875.2,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 20875.2,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:3a910f7a-0f57-4cc3-9cae-ac657b2afe13:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20875.2,
+        "dur": 1142.4,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 20875.2,
+            "dur": 1142.4,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:3a910f7a-0f57-4cc3-9cae-ac657b2afe13:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 20892.9,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 20892.9,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:3a910f7a-0f57-4cc3-9cae-ac657b2afe13:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 20892.9,
+        "dur": 7056,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 20892.9,
+            "dur": 7056,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:093dd9f8-8e4c-4235-be9e-6207c747b56b:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21326.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21326.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:093dd9f8-8e4c-4235-be9e-6207c747b56b:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21326.1,
+        "dur": 1130.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21326.1,
+            "dur": 1130.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:093dd9f8-8e4c-4235-be9e-6207c747b56b:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21327.9,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21327.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:093dd9f8-8e4c-4235-be9e-6207c747b56b:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21327.9,
+        "dur": 1129.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21327.9,
+            "dur": 1129.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:093dd9f8-8e4c-4235-be9e-6207c747b56b:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21345.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21345.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:093dd9f8-8e4c-4235-be9e-6207c747b56b:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21345.3,
+        "dur": 7801.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21345.3,
+            "dur": 7801.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:8fd9dc43-f23b-4cde-a03e-e3781e15ebff:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21565.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 21565.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:8fd9dc43-f23b-4cde-a03e-e3781e15ebff:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21565.8,
+        "dur": 1064.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 21565.8,
+            "dur": 1064.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:8fd9dc43-f23b-4cde-a03e-e3781e15ebff:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21566.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 21566.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:8fd9dc43-f23b-4cde-a03e-e3781e15ebff:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21566.8,
+        "dur": 1064.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 21566.8,
+            "dur": 1064.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:8fd9dc43-f23b-4cde-a03e-e3781e15ebff:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21586.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 21586.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:8fd9dc43-f23b-4cde-a03e-e3781e15ebff:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21586.6,
+        "dur": 5308.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 21586.6,
+            "dur": 5308.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:517df1bc-4a70-4bb2-a34e-3b6bf4cbf78d:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 23525.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 23525.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:517df1bc-4a70-4bb2-a34e-3b6bf4cbf78d:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 23525.1,
+        "dur": 1101.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 23525.1,
+            "dur": 1101.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:517df1bc-4a70-4bb2-a34e-3b6bf4cbf78d:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 23527,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 23527,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:517df1bc-4a70-4bb2-a34e-3b6bf4cbf78d:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 23527,
+        "dur": 1099.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 23527,
+            "dur": 1099.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:517df1bc-4a70-4bb2-a34e-3b6bf4cbf78d:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 23551.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 23551.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:517df1bc-4a70-4bb2-a34e-3b6bf4cbf78d:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 23551.3,
+        "dur": 7874.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 23551.3,
+            "dur": 7874.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "snaptr",
+      "kind": "mark",
+      "before": {
+        "ms": 26113.3,
+        "n": 4
+      },
+      "after": {
+        "ms": 24841.9,
+        "n": 5
+      },
+      "delta": {
+        "ms": -998.8
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 25693.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 24781.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -911.3
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 25271.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 24841.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -429.6
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 26533.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 25447.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1086.3
+          }
+        },
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 24322.8,
+            "n": 1
+          },
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 28476.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 26046.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": -2430.6
+          }
+        }
+      ]
+    }
+  ],
+  "preloads": {
+    "before": {
+      "total": 14,
+      "unused": 0
+    },
+    "after": {
+      "total": 14,
+      "unused": 0
+    },
+    "rows": [
+      {
+        "url": "https://www.adobe.com/mas/io/fragment",
+        "source": "script",
+        "type": "Other",
+        "before": {
+          "loads": 5,
+          "unused": 2
+        },
+        "after": {
+          "loads": 5,
+          "unused": 0
+        }
+      }
+    ]
+  },
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "sources"
+    ],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [
+      "/acrobat/scripts/scripts.js",
+      "/head.html",
+      "/test/scripts/head-lcp-preloads.jest.js",
+      "/test/scripts/scripts-lcp-preloads.jest.js"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "baseRef": "stage",
+        "headRef": "lcp-head-file-preload",
+        "baseSha": "1b4cef4257c55133adc6f56c5d48727fcdf6211d",
+        "headSha": "439444fde752e7fc5869200906bd0728011bb9b4",
+        "mergeBaseSha": "1b4cef4257c55133adc6f56c5d48727fcdf6211d",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/acrobat/scripts/scripts.js",
+            "previousPath": null,
+            "blobSha": "f3d6dbed8ed69c537edca40f12e618c75874061c"
+          },
+          {
+            "status": "modified",
+            "path": "/head.html",
+            "previousPath": null,
+            "blobSha": "883650ab119265cae7c8015ed89ebc562a25b57a"
+          },
+          {
+            "status": "added",
+            "path": "/test/scripts/head-lcp-preloads.jest.js",
+            "previousPath": null,
+            "blobSha": "5e462773a28dee84a3cea166aac89549d2d241b3"
+          },
+          {
+            "status": "added",
+            "path": "/test/scripts/scripts-lcp-preloads.jest.js",
+            "previousPath": null,
+            "blobSha": "724742c348289291e752a5baded155e8748d7384"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/acrobat/scripts/scripts.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 1,
+        "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+        "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 1,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/test/scripts/head-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 1,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/test/scripts/scripts-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 1,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/acrobat/scripts/scripts.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 2,
+        "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+        "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 2,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/test/scripts/head-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 2,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/test/scripts/scripts-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 2,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/acrobat/scripts/scripts.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 3,
+        "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+        "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 3,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/test/scripts/head-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 3,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/test/scripts/scripts-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 3,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/acrobat/scripts/scripts.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 4,
+        "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+        "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 4,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/test/scripts/head-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 4,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/test/scripts/scripts-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 4,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/acrobat/scripts/scripts.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 5,
+        "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+        "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/head.html",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 5,
+        "expectedMergeBaseSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionSha256": "7e295696d18f9a9e6eccec2353f462859ac7e4e71facdaf9edcd5c1415f3ae16",
+        "productionStatus": 200,
+        "status": "matches-merge-base"
+      },
+      {
+        "path": "/test/scripts/head-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 5,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      },
+      {
+        "path": "/test/scripts/scripts-lcp-preloads.jest.js",
+        "repo": "adobecom/da-dc",
+        "number": 324,
+        "pair": 5,
+        "expectedMergeBaseSha256": null,
+        "productionSha256": null,
+        "productionStatus": null,
+        "status": "unverified"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1301,
+        "max": 4096.5,
+        "ratio": 3.149,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 2414.5,
+          "after": 2470,
+          "ratio": 1.023
+        },
+        {
+          "pair": 2,
+          "before": 4096.5,
+          "after": 2761.5,
+          "ratio": 1.483
+        },
+        {
+          "pair": 3,
+          "before": 2004,
+          "after": 2410,
+          "ratio": 1.203
+        },
+        {
+          "pair": 4,
+          "before": 3459,
+          "after": 2831,
+          "ratio": 1.222
+        },
+        {
+          "pair": 5,
+          "before": 1301,
+          "after": 2463,
+          "ratio": 1.893
+        }
+      ]
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/acrobat/scripts/scripts.js",
+      "repo": "adobecom/da-dc",
+      "number": 324,
+      "pair": 1,
+      "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+      "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/acrobat/scripts/scripts.js",
+      "repo": "adobecom/da-dc",
+      "number": 324,
+      "pair": 2,
+      "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+      "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/acrobat/scripts/scripts.js",
+      "repo": "adobecom/da-dc",
+      "number": 324,
+      "pair": 3,
+      "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+      "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/acrobat/scripts/scripts.js",
+      "repo": "adobecom/da-dc",
+      "number": 324,
+      "pair": 4,
+      "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+      "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/acrobat/scripts/scripts.js",
+      "repo": "adobecom/da-dc",
+      "number": 324,
+      "pair": 5,
+      "expectedMergeBaseSha256": "33a5ef8ec09790a5e7adbc6cf683e28040ee4c4c09e7d4c160dd687712dc14a4",
+      "productionSha256": "551e4645b69877f534a69010782f83a36f05951713d6f7dff7732d4a2a7dd9e9"
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mwmawjvn-op8cflxy",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/44340852706/artifacts/14443104549",
+    "expiresAt": "2027-02-16T15:53:39.000Z",
+    "expired": false
+  }
+}
