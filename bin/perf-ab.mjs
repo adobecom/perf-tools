@@ -15,7 +15,7 @@ import { loadExperiment, CONFIG_PATH } from '../lib/pagespeed/experiment.mjs';
 import { resolveInteractions } from '../lib/pagespeed/interactions.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CHANGE_OPTIONS = ['before', 'after', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'da-dc-pr', 'interactions'];
+const CHANGE_OPTIONS = ['before', 'after', 'head-inject', 'meta', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'da-dc-pr', 'interactions'];
 
 // --config: the file must be a committed-style experiments/**.json path of this repository (cwd- or repo-relative).
 export function resolveConfig(file, { root = ROOT, cwd = process.cwd() } = {}) {
@@ -79,6 +79,10 @@ perf-ab --config experiments/<name>.json [-n <pairs>] [-o <dir>]
                           results.json hints.linkHeaderStripped / linkHeaderEntries and the console. Hints whose
                           URL carries country/locale params are re-resolved against the US baseline's own requests
                           (unmatched ones are dropped and reported). /experienceedge hints are always dropped.
+  --meta <name=content>   repeatable. Sets <meta name content> in the after document's <head>: replaces the content of an
+                          existing tag with that name, otherwise inserts it before the first <script>. Only the document
+                          <head> changes (the Link header is untouched, unlike --head-inject); use it for page metadata that
+                          opts a page into a feature, e.g. --meta preload-c2-resources=on. Reported in results.json metaTags.
   --link-add <entry>      repeatable. Appends a Link entry such as '</page/preloads/x.json>; rel=preload; as=fetch;
                           crossorigin=anonymous' (a prelink) to the after document's Link response header.
   --link-remove <url|*>   repeatable. Removes the after document's Link entries for that URL (root-relative or https,
@@ -128,6 +132,9 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
   const after = { url: withQuery(o.after) };
   const before = { url: withQuery(o.before) };
   if (o['head-inject']) after.headInject = readFile(o['head-inject']);
+  const metaValues = [o.meta ?? []].flat();
+  if (metaValues.some((value) => typeof value !== 'string' || !/^[^=]+=/.test(value))) throw new Error('--meta needs name=content');
+  if (metaValues.length) after.metaTags = metaValues.map((value) => ({ name: value.slice(0, value.indexOf('=')), content: value.slice(value.indexOf('=') + 1) }));
   const linkHeader = {};
   for (const [flag, op] of [['link-remove', 'remove'], ['link-replace', 'replace'], ['link-add', 'add']]) {
     const values = [o[flag] ?? []].flat();
@@ -148,7 +155,7 @@ export function buildSpec(o, pageUrl, { readFile = (f) => fs.readFileSync(f, 'ut
     if (!Number.isInteger(number) || number < 1 || number > 999999) throw new Error(`--${flag} must be a positive PR number`);
     after.pullRequests = [...(after.pullRequests ?? []), { repo, number }];
   }
-  const changed = o.before != null || after.headInject != null || after.linkHeader || after.patches || after.sources || after.pullRequests;
+  const changed = o.before != null || after.headInject != null || after.metaTags || after.linkHeader || after.patches || after.sources || after.pullRequests;
   if (o['after-only'] && !changed) throw new Error('--after-only needs a change option (e.g. --link-remove \'*\'); without one the URL is already measured as-is');
   const paired = changed && !o['after-only'];
   const device = o.desktop ? { device: 'desktop' } : {};
@@ -169,6 +176,7 @@ export async function main(argv = process.argv.slice(2)) {
       param: { type: 'string', default: 'milolibs' },
       suffix: { type: 'string', default: '--milo--adobecom' },
       'head-inject': { type: 'string' },
+      meta: { type: 'string', multiple: true },
       'link-add': { type: 'string', multiple: true },
       'link-remove': { type: 'string', multiple: true },
       'link-replace': { type: 'string', multiple: true },
@@ -187,7 +195,7 @@ export async function main(argv = process.argv.slice(2)) {
     },
   });
   if (o.help || (!positionals[0] && !o.config)) { console.log(HELP); process.exit(positionals[0] || o.help ? 0 : 1); }
-  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'da-dc-pr', 'interactions', 'repo', 'ref', 'timeout', 'local', 'desktop', 'after-only', 'help']);
+  const known = new Set(['config', 'runs', 'out', 'before', 'after', 'param', 'suffix', 'head-inject', 'meta', 'link-add', 'link-remove', 'link-replace', 'patch', 'milo-pr', 'mas-pr', 'da-dc-pr', 'interactions', 'repo', 'ref', 'timeout', 'local', 'desktop', 'after-only', 'help']);
   const unknown = Object.keys(o).filter((k) => !known.has(k));
   if (unknown.length) fail(`unknown option(s): ${unknown.map((k) => `--${k}`).join(', ')}`);
   if (positionals.length > 1) fail(`unexpected arguments: ${positionals.slice(1).join(' ')}`);
@@ -246,6 +254,7 @@ export async function main(argv = process.argv.slice(2)) {
     console.log(`  hints: ${results.hints.usedLinks ?? results.hints.requestedLinks}/${results.hints.requestedLinks} used; contextual ${results.hints.contextual?.length ?? 0}; dropped ${results.hints.dropped?.length ?? 0}; Link header preloads unset in after: ${results.hints.linkHeaderStripped ?? 0}`);
     for (const e of results.hints.linkHeaderEntries ?? []) console.log(`    unset Link: ${e}`);
   }
+  for (const t of results.metaTags ?? []) console.log(`  meta in after: ${t.name}="${t.content}" (${t.action ?? 'not served'}${t.previous != null ? `, was "${t.previous}"` : ''})`);
   if (results.linkHeader) {
     const l = results.linkHeader;
     console.log(`  Link header edits in after: ${l.removed?.length ?? 0} removed, ${l.replaced?.length ?? 0} replaced, ${l.added?.length ?? 0} added`);

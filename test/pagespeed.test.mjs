@@ -16,7 +16,7 @@ import { encodeSpec, decodeSpec, validateSpec, MAX_SPEC_CHARS } from '../lib/pag
 import { resolvedProfile, lighthouseConfig, EXPECTED, EXPECTED_DESKTOP, profileKey } from '../lib/pagespeed/profile.mjs';
 import { CPU_SLOWDOWN_MULTIPLIER } from '../lib/pagespeed/stats.mjs';
 import {
-  injectIntoHead, stripPreloadLinks, applyPatches, resolveContextualHints, hasContextualHints, applyLinkHeaderEdits,
+  injectIntoHead, stripPreloadLinks, applyPatches, resolveContextualHints, hasContextualHints, applyLinkHeaderEdits, applyMetaTags,
 } from '../lib/pagespeed/transforms.mjs';
 import { runRemote } from '../lib/pagespeed/remote.mjs';
 import { runJob, makeCert, scanForKeys, extractMetrics, median } from '../lib/pagespeed/job.mjs';
@@ -708,4 +708,27 @@ test('runLocal: PR resolution gets the local token only when a PR is requested; 
   } finally {
     fs.rmSync(bin, { recursive: true, force: true });
   }
+});
+
+test('applyMetaTags adds a meta before the first head script and replaces an existing one in place', () => {
+  const html = '<html><head><meta charset="utf-8"><meta name="foundation" content="c2"><meta content="off" name="preload-c2-resources"/><script>x()</script></head><body></body></html>';
+  const replaced = applyMetaTags(html, [{ name: 'preload-c2-resources', content: 'on' }]);
+  assert.equal(replaced.html, html.replace('content="off"', 'content="on"'));
+  assert.deepEqual(replaced.report, [{ name: 'preload-c2-resources', content: 'on', action: 'replaced', previous: 'off' }]);
+  const added = applyMetaTags(html.replace('<meta content="off" name="preload-c2-resources"/>', ''), [{ name: 'preload-c2-resources', content: 'a"b' }]);
+  assert.match(added.html, /<meta name="preload-c2-resources" content="a&quot;b">\n<script>x\(\)<\/script>/);
+  assert.equal(added.report[0].action, 'added');
+  assert.equal(applyMetaTags('<p>no head</p>', [{ name: 'a', content: 'b' }]), null);
+});
+
+test('--meta builds after.metaTags, leaves the Link header alone and is validated', () => {
+  const spec = buildSpec({ runs: '1', param: 'milolibs', suffix: '', meta: ['preload-c2-resources=on', 'x=a=b'] }, 'https://www.adobe.com/acrobat.html');
+  assert.deepEqual(spec.names, ['before', 'after']);
+  assert.deepEqual(spec.variants.after.metaTags, [{ name: 'preload-c2-resources', content: 'on' }, { name: 'x', content: 'a=b' }]);
+  assert.equal(spec.variants.after.headInject, undefined);
+  assert.throws(() => buildSpec({ runs: '1', param: 'milolibs', suffix: '', meta: ['novalue'] }, 'https://www.adobe.com/acrobat.html'), /--meta needs name=content/);
+  const bad = (metaTags) => () => validateSpec({ version: 1, runs: 1, names: ['before', 'after'], variants: { before: { url: 'https://www.adobe.com/a.html' }, after: { url: 'https://www.adobe.com/a.html', metaTags } } });
+  assert.throws(bad([{ name: 'a b', content: 'x' }]), /must be a meta name/);
+  assert.throws(bad([{ name: 'a', content: 'x' }, { name: 'A', content: 'y' }]), /twice/);
+  assert.throws(bad([]), /1\.\.20/);
 });

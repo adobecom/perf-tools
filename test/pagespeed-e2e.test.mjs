@@ -399,8 +399,8 @@ test('runner job: Link header edits remove, replace and add entries of the serve
   const prevTmp = process.env.TMPDIR;
   process.env.TMPDIR = jobTmp;
   const url = `https://${HOST}/page`;
-  const job = (requestId, linkHeader) => runJob({
-    spec: { version: 1, runs: 1, names: ['before', 'after'], expect: {}, variants: { before: { url }, after: { url, linkHeader } } },
+  const job = (requestId, linkHeader, metaTags) => runJob({
+    spec: { version: 1, runs: 1, names: ['before', 'after'], expect: {}, variants: { before: { url }, after: { url, linkHeader, metaTags } } },
     requestId, out: path.join(out, requestId), where: 'local', attempts: 1,
     fetchJson: async () => ({ country: 'US', country_iso: 'US', country_code: 'US' }),
     upstreamOrigin: `https://127.0.0.1:${server.address().port}`, upstreamOptions: { rejectUnauthorized: false },
@@ -439,6 +439,14 @@ test('runner job: Link header edits remove, replace and add entries of the serve
       .audits['network-requests'].details.items.map((x) => new URL(x.url).pathname);
     assert.equal(requests('after').filter((p) => p === '/preloads/page.json').length, 1, 'the added prelink is fetched once');
     assert.equal(requests('before').filter((p) => p === '/preloads/page.json').length, 0);
+    // Meta tags change only the after document's head: the Link header stays production's, unlike headInject.
+    const tagged = await job('e2e-meta-1', undefined, [{ name: 'preload-c2-resources', content: 'on' }]);
+    assert.equal(tagged.status, 'ok', tagged.error);
+    assert.deepEqual(tagged.metaTags, [{ name: 'preload-c2-resources', content: 'on', action: 'added', previous: null }]);
+    assert.equal(tagged.hints, null);
+    assert.equal(documentLink(runDir(tagged, 'after')), production);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(runDir(tagged, 'after'), 'run.json'), 'utf8')).editedResponses, ['/page']);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(runDir(tagged, 'before'), 'run.json'), 'utf8')).editedResponses, []);
     // Guarded: a removed URL the production header does not have fails the job instead of measuring something else.
     const guarded = await job('e2e-link-2', { remove: ['/missing.js'] });
     assert.equal(guarded.status, 'failed');

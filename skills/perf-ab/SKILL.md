@@ -57,6 +57,10 @@ perf-ab "https://www.adobe.com/acrobat/plans.html" --head-inject ~/perf-ab-runs/
 - Do not use `?mep=off` on the page URL: it disables the existing `preloadLcpCodeFiles`, which is part of the baseline.
 - Check: `hints.usedLinks` vs `requestedLinks`, and in the "after" report's network requests each preloaded file is fetched once and early.
 
+#### Meta tags (page metadata)
+
+`--meta <name=content>` (repeatable; config `after.meta` object) sets `<meta>` tags in the after document's `<head>`: replaces the content of an existing tag with that name, otherwise inserts it before the first `<script>`. It does not touch the `Link` header (unlike `--head-inject`), so use it to opt a page into a metadata-driven feature, e.g. `perf-ab <url> --da-dc-pr 324 --meta preload-c2-resources=on -n 5`. Report `results.json` `metaTags` (`action`, `previous`).
+
 #### `Link` response header prelinks
 
 ```sh

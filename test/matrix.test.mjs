@@ -288,6 +288,10 @@ test('experiment: unknown fields, traversal, absolute files, /experienceedge hin
     const linked = loadExperiment(write('k.json', { after: { linkHeader: { remove: ['*'], add: [prelink] } } }));
     assert.deepEqual(linked.names, ['before', 'after']);
     assert.deepEqual(linked.variants.after.linkHeader, { remove: ['*'], add: [prelink] });
+    const metaCfg = loadExperiment(write('m.json', { after: { meta: { 'preload-c2-resources': 'on' } } }));
+    assert.deepEqual(metaCfg.names, ['before', 'after']);
+    assert.deepEqual(metaCfg.variants.after.metaTags, [{ name: 'preload-c2-resources', content: 'on' }]);
+    assert.throws(() => loadExperiment(write('n.json', { after: { meta: ['x'] } })), /after\.meta must be an object/);
     assert.throws(() => loadExperiment(write('l.json', { after: { linkHeader: { add: ['/x/preloads/x.json'] } } })), /linkHeader\.add entries must each be one Link entry/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
