@@ -715,18 +715,27 @@ export function sortEvents(rows, key = 'preferred', direction = 'ascending') {
   });
 }
 
+const dateTimeFormats = new Map();
+const localDayFormats = new Map();
+
 export function formatDateTime(t, timeZone) {
   if (t == null) return '—';
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    ...(timeZone ? { timeZone } : {}),
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-    timeZoneName: 'short',
-  }).formatToParts(new Date(t));
+  const tzKey = timeZone ?? '';
+  let fmt = dateTimeFormats.get(tzKey);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('en-CA', {
+      ...(timeZone ? { timeZone } : {}),
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+      timeZoneName: 'short',
+    });
+    dateTimeFormats.set(tzKey, fmt);
+  }
+  const parts = fmt.formatToParts(new Date(t));
   const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
   return `${values.year}-${values.month}-${values.day} ${values.hour}:${values.minute} ${values.timeZoneName}`;
 }
@@ -734,12 +743,18 @@ export function formatDateTime(t, timeZone) {
 export const formatDay = (t) => (t == null ? '—' : new Date(t).toISOString().slice(0, 10));
 export function formatLocalDay(t, timeZone) {
   if (t == null) return '—';
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    ...(timeZone ? { timeZone } : {}),
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date(t));
+  const tzKey = timeZone ?? '';
+  let fmt = localDayFormats.get(tzKey);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('en-CA', {
+      ...(timeZone ? { timeZone } : {}),
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    localDayFormats.set(tzKey, fmt);
+  }
+  const parts = fmt.formatToParts(new Date(t));
   const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
   return `${values.year}-${values.month}-${values.day}`;
 }

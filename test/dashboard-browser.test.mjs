@@ -705,6 +705,21 @@ describe('history dashboard in a real browser', { skip }, () => {
     const page = await newPage();
     await open(page, 'populated');
 
+    // 0. Click Splunk Analyzer button -> opens Splunk page links & custom query builder.
+    await page.click('#splunk-upload-btn');
+    await page.waitForSelector('#detail h2:has-text("Splunk pageperf Explorer")');
+    assert.ok(await page.locator('#detail table tbody tr').count() >= 10);
+    assert.match(await text(page, '#detail table tbody tr:has-text("Creative Cloud Plans")'), /Off/);
+    assert.match(await text(page, '#detail table tbody tr:has-text("Acrobat Plans")'), /20%/);
+    assert.match(await text(page, '#detail table tbody tr:has-text("Products Catalog")'), /30%/);
+    const acrobat1hHref = await page.locator('#detail table tbody tr', { hasText: 'Acrobat Plans' }).locator('a', { hasText: '1 hour' }).getAttribute('href');
+    assert.match(acrobat1hHref, /^https:\/\/splunk-us\.corp\.adobe\.com\/.*earliest=-60m%40m.*acrobat%2Fplans\.html/);
+    await page.fill('#detail input[aria-label="Custom Adobe page URL for Splunk query"]', 'www.adobe.com/products/illustrator.html');
+    await page.check('#detail input[type="checkbox"]');
+    const custom7dHref = await page.locator('.splunk-custom-row a', { hasText: '7 days' }).getAttribute('href');
+    assert.match(custom7dHref, /earliest=-7d%40h.*illustrator\.html/);
+    await assertSafe(page);
+
     // 1. Upload a raw Splunk CSV via the file picker input.
     const rawLine1 = JSON.stringify({
       log_timestamp: '2026-11-19T13:22:45.131Z',
@@ -719,23 +734,34 @@ describe('history dashboard in a real browser', { skip }, () => {
     await page.setInputFiles('#splunk-file', { name: 'acrobat-raw.csv', mimeType: 'text/csv', buffer: Buffer.from(rawCsv) });
     await page.waitForSelector('#detail h2:has-text("www.adobe.com/acrobat/plans.html")');
     assert.equal(await page.locator('#splunk-list .splunk-item').count(), 1);
-    assert.equal(await page.locator('#detail svg').count(), 4);
+    // Human-only filter is enabled by default (1 of 2 shown, 900 ms).
+    assert.equal(await page.isChecked('.splunk-check input[type="checkbox"]'), true);
+    assert.match(await text(page, '#detail .splunk-filters'), /1 of 2 shown/);
+    assert.match(await text(page, '#detail .splunk-kpis'), /900 ms/);
     assert.match(await text(page, '#detail'), /P75 LCP.*Local browser analysis/);
-    assert.match(await text(page, '#detail'), /100% sampling.*Chrome \+ consented only/);
-    assert.match(await text(page, '#detail'), /1 synthetic\/automation event detected/);
+    assert.match(await text(page, '#detail'), /pageperf-rate.*Chrome \+ consented only/);
+
+    // Uncheck "Human-only traffic" to include synthetic events and inspect the slow dot.
+    await page.uncheck('.splunk-check input[type="checkbox"]');
+    assert.match(await text(page, '#detail .splunk-filters'), /2 of 2 shown/);
+    assert.equal(await page.locator('#detail svg').count(), 4);
+    assert.match(await text(page, '#detail'), /1 synthetic\/automation event included/);
 
     // Click the slow timeline dot and verify the event inspector shows root-cause details.
+    assert.equal(await page.isVisible('.event-inspector'), false);
     await page.click('.chart-dot[data-zone="poor"]');
+    assert.equal(await page.isVisible('.event-inspector'), true);
     assert.match(await text(page, '.event-inspector'), /LCP 4\.50 s/);
     assert.match(await text(page, '.event-inspector'), /Slow connection \(downlink 0\.4 Mbps\)/);
     assert.match(await text(page, '.event-inspector'), /Tokowaka/);
     await page.click('.event-inspector button:has-text("Clear selection")');
-    assert.match(await text(page, '.event-inspector'), /Hover or click any dot/);
+    assert.equal(await page.isVisible('.event-inspector'), false);
+    assert.match(await text(page, '.chart-hover-strip'), /Hover a dot to preview/);
 
-    // Toggle "Exclude synthetic" and verify live re-computation.
-    await page.check('.splunk-check input[type="checkbox"]');
+    // Re-enable Human-only traffic via the diagnostic callout button and test MEP filter.
+    await page.click('#detail button:has-text("Show human-only traffic")');
+    assert.equal(await page.isChecked('.splunk-check input[type="checkbox"]'), true);
     assert.match(await text(page, '#detail .splunk-filters'), /1 of 2 shown/);
-    assert.match(await text(page, '#detail .splunk-kpis'), /900 ms/);
     await page.click('.splunk-tabs button:has-text("MEP Manifests")');
     assert.match(await text(page, '#detail'), /\/acrobat\/a\.json \(all\)/);
     // Filter by "No MEP manifest" and verify the <select> persists its chosen value across re-render.
@@ -745,6 +771,23 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.match(await text(page, '#detail .splunk-filters'), /1 of 2 shown/);
     await page.selectOption('select[aria-label="Filter by MEP manifest"]', '');
     assert.equal(await page.inputValue('select[aria-label="Filter by MEP manifest"]'), '');
+    await assertSafe(page);
+
+    // Verify timeline zoom presets, zoom in/out, and reset on extreme outliers.
+    const outlierLine = JSON.stringify({
+      log_timestamp: '2026-11-19T13:50:00.000Z',
+      log_message: 'client=pageperf¦type=e¦sample=100¦user-agent=Mozilla/5.0 Chrome/126.0.0.0¦referer=https://www.adobe.com/acrobat/plans.html¦message=cls=0,country=us,downlink=10,lcp=3638020,lcpEl=&lt;h1&gt;Hero&lt;/h1&gt;,lcpElType=h1,lcpSectionOne=true,loggedIn=false,os=win,url=www.adobe.com/acrobat/plans.html,windowHeight=800,windowWidth=1280',
+    });
+    const outlierCsv = `${rawCsv}"2026-11-19T13:50:00.000+0000","${outlierLine.replace(/"/g, '""')}"\n`;
+    await page.setInputFiles('#splunk-file', { name: 'acrobat-outlier.csv', mimeType: 'text/csv', buffer: Buffer.from(outlierCsv) });
+    await page.waitForSelector('.chart-clipped-badge');
+    assert.match(await text(page, '.chart-clipped-badge'), /1 outlier > \d+s hidden/);
+    await page.click('.chart-clipped-badge');
+    assert.equal(await page.isVisible('.chart-clipped-badge'), false);
+    await page.click('.chart-tool-btn:has-text("+")');
+    assert.equal(await page.isDisabled('.chart-tool-btn:has-text("Reset")'), false);
+    await page.click('.chart-tool-btn:has-text("Reset")');
+    await page.waitForSelector('.chart-clipped-badge');
     await assertSafe(page);
 
     // 2. Drag and drop a non-CSV file directly onto the page -> smooth rejection.
@@ -767,7 +810,7 @@ describe('history dashboard in a real browser', { skip }, () => {
       document.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
     }, statsCsv);
     await page.waitForSelector('#detail h2:has-text("splunk-stats.csv")');
-    assert.equal(await page.locator('#splunk-list .splunk-item').count(), 2);
+    assert.equal(await page.locator('#splunk-list .splunk-item').count(), 3);
     assert.match(await text(page, '#detail'), /Aggregated stats CSV/);
     assert.match(await text(page, '#detail'), /LCP element distribution/);
     await assertSafe(page);

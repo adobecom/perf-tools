@@ -734,7 +734,7 @@ function buildInsights(events, lcpSummary, clsSummary, byElement, byDevice, byNe
     insights.push({
       tone: 'warn',
       action: 'human-only',
-      title: `${botCount} synthetic/automation event${botCount === 1 ? '' : 's'} detected in ${allEventsCount} rows`,
+      title: `${botCount} synthetic/automation event${botCount === 1 ? '' : 's'} included in ${allEventsCount} rows`,
       detail: `Includes test/edge runners (e.g. NALA-Acom or Tokowaka).${humanLcp != null ? ` Human-only P75 LCP is ${formatMsOrSec(humanLcp)}.` : ''}${clsNote} Toggle "Human-only traffic" to isolate real-user visits.`,
     });
   }
@@ -774,7 +774,7 @@ function buildInsights(events, lcpSummary, clsSummary, byElement, byDevice, byNe
 }
 
 export const EMPTY_SPLUNK_FILTERS = Object.freeze({
-  excludeBots: false,
+  excludeBots: true,
   device: '',
   country: '',
   manifest: '',
@@ -891,9 +891,10 @@ export function analyzeSplunk(parsed, filters = EMPTY_SPLUNK_FILTERS) {
 
   const sampleRates = [...new Set(all.map((e) => e.sample).filter((s) => s != null))];
   const realCount = events.filter((e) => !e.bot).length;
-  const samplingText = sampleRates.length
-    ? `${sampleRates.join('/')}% sampling`
-    : 'Unknown sampling rate';
+  const knownRates = [...new Set(urls.map((u) => FEATURED_ADOBE_PAGES.find((p) => p.path === u)?.rate).filter((r) => r != null))];
+  const samplingText = knownRates.length === 1
+    ? `~${knownRates[0]}% pageperf-rate`
+    : 'sampled via pageperf-rate metadata';
 
   let trustTone = 'ok';
   let trustLabel = `Good sample (${realCount} real-user events)`;
@@ -906,10 +907,14 @@ export function analyzeSplunk(parsed, filters = EMPTY_SPLUNK_FILTERS) {
   }
 
   const coverageParts = [
-    `Source: Milo pageperf (Chrome-only, C0002 performance-cookie consented, ${samplingText}). Safari, Firefox, and non-consented visits are not included.`,
+    `Source: Milo pageperf (Chrome-only, C0002 performance-cookie consented; pre-sampled by <meta name="pageperf-rate"> — LANA logs always emit sample=100 regardless of pageperf-rate). Safari, Firefox, and non-consented visits are excluded.`,
   ];
-  if (botCount && !f.excludeBots) {
-    coverageParts.push(`${botCount} of ${events.length} rows are synthetic/automation traffic.`);
+  if (botCount) {
+    coverageParts.push(
+      f.excludeBots
+        ? `${botCount} synthetic/automation event${botCount === 1 ? '' : 's'} excluded (human-only active).`
+        : `${botCount} of ${events.length} rows are synthetic/automation traffic.`,
+    );
   }
   if (parsed.totalRows === 10000) {
     trustTone = 'warn';
@@ -973,6 +978,72 @@ export function eventDriverClues(ev) {
   return clues;
 }
 
+export const SPLUNK_SEARCH_BASE = 'https://splunk-us.corp.adobe.com/en-US/app/app_log_always_never_assume/search';
+
+export const SPLUNK_TIME_RANGES = Object.freeze([
+  { id: '1h', label: '1 hour', earliest: '-60m@m', latest: 'now' },
+  { id: '12h', label: '12 hours', earliest: '-12h@h', latest: 'now' },
+  { id: '1d', label: '1 day', earliest: '-24h@h', latest: 'now' },
+  { id: '7d', label: '7 days', earliest: '-7d@h', latest: 'now' },
+]);
+
+export const FEATURED_ADOBE_PAGES = Object.freeze([
+  { group: 'Plans & Pricing', name: 'Creative Cloud Plans', path: 'www.adobe.com/creativecloud/plans.html', rate: null },
+  { group: 'Plans & Pricing', name: 'Products Catalog', path: 'www.adobe.com/products/catalog.html', rate: 30 },
+  { group: 'Plans & Pricing', name: 'Acrobat Plans', path: 'www.adobe.com/acrobat/plans.html', rate: 20 },
+  { group: 'Plans & Pricing', name: 'Acrobat Pricing', path: 'www.adobe.com/acrobat/pricing.html', rate: 20 },
+  { group: 'Plans & Pricing', name: 'Firefly Plans', path: 'www.adobe.com/products/firefly/plans.html', rate: 20 },
+  { group: 'Product Pages', name: 'Creative Cloud', path: 'www.adobe.com/creativecloud.html', rate: 20 },
+  { group: 'Product Pages', name: 'Creative Cloud Pro', path: 'www.adobe.com/creativecloud/pro.html', rate: 20 },
+  { group: 'Product Pages', name: 'Photoshop', path: 'www.adobe.com/products/photoshop.html', rate: 20 },
+  { group: 'Product Pages', name: 'Illustrator', path: 'www.adobe.com/products/illustrator.html', rate: 20 },
+  { group: 'Product Pages', name: 'Premiere Pro', path: 'www.adobe.com/products/premiere.html', rate: 20 },
+  { group: 'Product Pages', name: 'Acrobat', path: 'www.adobe.com/acrobat.html', rate: 20 },
+  { group: 'Product Pages', name: 'Firefly', path: 'www.adobe.com/products/firefly.html', rate: 20 },
+]);
+
+export function buildSplunkDiscoverUrl(range) {
+  const q = 'search index=lana_prod "client=pageperf"\n| stats count as events, p50(pp_lcp) as p50_lcp, p75(pp_lcp) as p75_lcp, p95(pp_lcp) as p95_lcp by pp_url\n| sort - events';
+  const u = new URL(SPLUNK_SEARCH_BASE);
+  u.searchParams.set('earliest', range.earliest);
+  u.searchParams.set('latest', range.latest);
+  u.searchParams.set('q', q);
+  u.searchParams.set('display.page.search.mode', 'fast');
+  u.searchParams.set('dispatch.sample_ratio', '1');
+  u.searchParams.set('display.page.search.tab', 'statistics');
+  u.searchParams.set('display.general.type', 'statistics');
+  return u.href;
+}
+
+export function normalizePageHostPath(input) {
+  const raw = String(input ?? '').trim();
+  if (!raw) return 'www.adobe.com/acrobat/plans.html';
+  const stripped = raw.replace(/^https?:\/\//i, '').split(/[?#]/)[0];
+  if (stripped.includes('/')) return stripped;
+  return `www.adobe.com/${stripped.replace(/^\/+/, '')}`;
+}
+
+export function buildSplunkQuery(pageHostPath, { allLocales = false } = {}) {
+  const clean = normalizePageHostPath(pageHostPath);
+  const urlFilter = allLocales && clean.startsWith('www.adobe.com/') && !clean.startsWith('www.adobe.com/*/')
+    ? `www.adobe.com/*/${clean.slice('www.adobe.com/'.length)}`
+    : clean;
+  return `index=lana_prod "client=pageperf" "url=${urlFilter}"\n| table _time, _raw`;
+}
+
+export function buildSplunkUrl(pageHostPath, range, opts) {
+  const q = `search ${buildSplunkQuery(pageHostPath, opts)}`;
+  const u = new URL(SPLUNK_SEARCH_BASE);
+  u.searchParams.set('earliest', range.earliest);
+  u.searchParams.set('latest', range.latest);
+  u.searchParams.set('q', q);
+  u.searchParams.set('display.page.search.mode', 'fast');
+  u.searchParams.set('dispatch.sample_ratio', '1');
+  u.searchParams.set('display.page.search.tab', 'statistics');
+  u.searchParams.set('display.general.type', 'statistics');
+  return u.href;
+}
+
 export function formatMsOrSec(ms) {
   if (ms == null || !Number.isFinite(ms)) return '—';
   if (ms >= 1000) return `${(ms / 1000).toFixed(2)}\u00a0s`;
@@ -995,31 +1066,47 @@ function formatDurationFriendly(ms) {
   return `${days} days`;
 }
 
+const friendlyTimeFormats = new Map();
+const friendlyDateFormats = new Map();
+const dayKeyFormats = new Map();
+
+function cachedFormat(cache, key, factory) {
+  let fmt = cache.get(key);
+  if (!fmt) {
+    fmt = factory();
+    cache.set(key, fmt);
+  }
+  return fmt;
+}
+
 export function formatFriendlyTime(ms, { withTz = false, timeZone } = {}) {
   if (ms == null || !Number.isFinite(ms)) return '—';
-  return new Intl.DateTimeFormat('en-US', {
+  const key = `${timeZone ?? ''}:${withTz ? 1 : 0}`;
+  const fmt = cachedFormat(friendlyTimeFormats, key, () => new Intl.DateTimeFormat('en-US', {
     ...(timeZone ? { timeZone } : {}),
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
     ...(withTz ? { timeZoneName: 'short' } : {}),
-  }).format(new Date(ms));
+  }));
+  return fmt.format(new Date(ms));
 }
 
 export function formatFriendlyRange(minMs, maxMs, timeZone) {
   if (minMs == null || maxMs == null) return '';
-  const dateFmt = new Intl.DateTimeFormat('en-US', {
+  const tzKey = timeZone ?? '';
+  const dateFmt = cachedFormat(friendlyDateFormats, tzKey, () => new Intl.DateTimeFormat('en-US', {
     ...(timeZone ? { timeZone } : {}),
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-  });
-  const dayKeyFmt = new Intl.DateTimeFormat('en-CA', {
+  }));
+  const dayKeyFmt = cachedFormat(dayKeyFormats, tzKey, () => new Intl.DateTimeFormat('en-CA', {
     ...(timeZone ? { timeZone } : {}),
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  });
+  }));
   const startDay = dayKeyFmt.format(new Date(minMs));
   const endDay = dayKeyFmt.format(new Date(maxMs));
   const dur = formatDurationFriendly(maxMs - minMs);

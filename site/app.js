@@ -35,6 +35,9 @@ const state = {
   details: new Map(), // id -> { status: 'loading' | 'ready' | 'error', data, error }
   splunkReports: [], // [{ id, fileName, uploadedAt, parsed, filters, activeTab }]
   activeSplunkId: '',
+  splunkLauncher: false,
+  splunkAllLocales: false,
+  splunkCustomUrl: '',
   splunkError: null, // { fileName, message }
 };
 let sectionIds = new Map();
@@ -43,9 +46,9 @@ let splunkSeq = 0;
 // ---------------------------------------------------------------- DOM helpers (text only)
 
 const ATTRS = new Set([
-  'id', 'role', 'title', 'colspan', 'rowspan', 'scope', 'type', 'datetime', 'tabindex', 'hidden', 'value', 'lang',
+  'id', 'role', 'title', 'colspan', 'rowspan', 'scope', 'type', 'datetime', 'tabindex', 'hidden', 'value', 'lang', 'target',
   'aria-label', 'aria-live', 'aria-busy', 'aria-current', 'aria-describedby', 'aria-labelledby', 'aria-hidden', 'aria-sort', 'aria-selected',
-  'data-label', 'data-tone', 'data-run', 'data-state', 'data-verdict', 'data-dir', 'data-kind', 'data-zone', 'data-bot',
+  'data-label', 'data-tone', 'data-run', 'data-state', 'data-verdict', 'data-dir', 'data-kind', 'data-zone', 'data-bot', 'aria-pressed', 'disabled',
   'placeholder', 'autocomplete', 'spellcheck', 'name',
 ]);
 
@@ -96,10 +99,10 @@ function fill(el, ...children) {
 }
 
 // Links only to vetted https URLs; anything else is shown as plain text.
-function extLink(href, text, cls) {
+function extLink(href, text, cls, { newTab = false } = {}) {
   const safe = core.safeExternalUrl(href);
   if (!safe) return h('span', { class: ['unlinked', cls] }, text);
-  const a = h('a', { class: cls }, text);
+  const a = h('a', { class: cls, target: newTab ? '_blank' : null }, text);
   a.href = safe;
   a.rel = 'noopener noreferrer';
   return a;
@@ -273,6 +276,7 @@ function clearFilters() {
 
 function selectRun(id) {
   state.activeSplunkId = '';
+  state.splunkLauncher = false;
   state.splunkError = null;
   state.run = id;
   window.history.pushState(null, '', core.serializeState({ ...state.filters, run: id }) || window.location.pathname);
@@ -282,8 +286,19 @@ function selectRun(id) {
   (heading ?? els.detail).focus({ preventScroll: wide.matches });
 }
 
+function openSplunkLauncher() {
+  state.activeSplunkId = '';
+  state.splunkError = null;
+  state.splunkLauncher = true;
+  render();
+  if (!wide.matches) window.scrollTo({ top: 0 });
+  const heading = els.detail.querySelector('h2');
+  (heading ?? els.detail).focus({ preventScroll: wide.matches });
+}
+
 function selectSplunkReport(id) {
   state.activeSplunkId = id;
+  state.splunkLauncher = false;
   state.splunkError = null;
   render();
   if (!wide.matches) window.scrollTo({ top: 0 });
@@ -300,8 +315,9 @@ function removeSplunkReport(id) {
 }
 
 function backToList() {
-  if (state.activeSplunkId || state.splunkError) {
+  if (state.activeSplunkId || state.splunkError || state.splunkLauncher) {
     state.activeSplunkId = '';
+    state.splunkLauncher = false;
     state.splunkError = null;
     render();
     return;
@@ -319,7 +335,7 @@ function filteredRuns() {
 }
 
 function selectedId() {
-  if (state.activeSplunkId || state.splunkError) return '';
+  if (state.activeSplunkId || state.splunkError || state.splunkLauncher) return '';
   if (state.run) return state.run;
   return wide.matches ? filteredRuns()[0]?.id ?? '' : '';
 }
@@ -335,7 +351,7 @@ function fillProfileOptions() {
 // ---------------------------------------------------------------- rendering
 
 function render() {
-  els.layout.dataset.view = state.run || state.activeSplunkId || state.splunkError ? 'detail' : 'list';
+  els.layout.dataset.view = state.run || state.activeSplunkId || state.splunkError || state.splunkLauncher ? 'detail' : 'list';
   renderMeta();
   renderSplunkList();
   renderHistory();
@@ -539,6 +555,12 @@ function renderDetail() {
       return;
     }
     state.activeSplunkId = '';
+  }
+  if (state.splunkLauncher) {
+    d.removeAttribute('aria-busy');
+    document.title = 'Splunk Analyzer · perf-ab history';
+    renderSplunkLauncher();
+    return;
   }
   const id = selectedId();
   document.title = id ? `Run ${id} · perf-ab history` : 'perf-ab history · adobecom/perf-tools';
@@ -1026,6 +1048,108 @@ function artifactSection(run) {
 
 const CWV_BADGE_TONE = { good: 'ok', ni: 'warn', poor: 'bad', none: 'neutral' };
 
+function renderSplunkLauncher() {
+  const customInput = h('input', {
+    type: 'search',
+    value: state.splunkCustomUrl,
+    placeholder: 'www.adobe.com/products/photoshop.html',
+    'aria-label': 'Custom Adobe page URL for Splunk query',
+    autocomplete: 'off',
+    spellcheck: 'false',
+  });
+  const customLinks = h('div', { class: 'splunk-range-links' });
+  const customQueryPre = h('code', { class: 'mono break' });
+  const updateCustom = () => {
+    state.splunkCustomUrl = customInput.value;
+    const target = state.splunkCustomUrl.trim() || 'www.adobe.com/acrobat/plans.html';
+    const opts = { allLocales: state.splunkAllLocales };
+    fill(customLinks, splunk.SPLUNK_TIME_RANGES.map((range) => extLink(
+      splunk.buildSplunkUrl(target, range, opts),
+      range.label,
+      'btn splunk-range-btn',
+      { newTab: true },
+    )));
+    customQueryPre.textContent = splunk.buildSplunkQuery(target, opts);
+  };
+  customInput.addEventListener('input', updateCustom);
+
+  const localeToggle = h('label', { class: 'splunk-check' },
+    h('input', {
+      type: 'checkbox',
+      checked: state.splunkAllLocales,
+      on: {
+        change: (e) => {
+          state.splunkAllLocales = e.target.checked;
+          renderSplunkLauncher();
+        },
+      },
+    }),
+    'Include all locales (www.adobe.com/*/…)');
+  updateCustom();
+
+  const header = h('header', { class: 'detail-head' },
+    h('h2', { tabindex: '-1', text: 'Splunk pageperf Explorer & CSV Analyzer' }),
+    h('p', { class: 'splunk-window', text: '1. Open a Splunk search below → 2. Export as CSV → 3. Drag & drop the CSV anywhere on this page' }),
+    h('p', { class: 'detail-sub' },
+      h('span', { text: 'All CSV parsing and charts run 100% locally in your browser — nothing is uploaded.' }),
+      extLink('https://wiki.corp.adobe.com/pages/viewpage.action?pageId=3282103361&spaceKey=WP4&title=performance%2Bsplunk%2Bqueries', 'Splunk queries wiki', null, { newTab: true })),
+    h('div', { class: 'badges' },
+      h('button', { type: 'button', class: 'btn splunk-primary-btn', text: 'Upload Splunk CSV', on: { click: () => els.splunkFile.click() } }),
+      badge('Or drop any .csv file anywhere', 'neutral')));
+
+  const tableRows = splunk.FEATURED_ADOBE_PAGES.map((p) => {
+    const opts = { allLocales: state.splunkAllLocales };
+    const samplingCell = p.rate == null
+      ? h('td', { class: 'num', title: 'No <meta name="pageperf" content="on"> found on live page' }, badge('Off', 'warn'))
+      : h('td', { class: 'num', title: `<meta name="pageperf-rate" content="${p.rate}">` }, badge(`${p.rate}%`, 'neutral'));
+    return h('tr', {},
+      h('th', { scope: 'row' },
+        h('span', { text: p.name }),
+        mono(state.splunkAllLocales && p.path.startsWith('www.adobe.com/') ? `www.adobe.com/*/${p.path.slice('www.adobe.com/'.length)}` : p.path, 'sub')),
+      h('td', { text: p.group }),
+      samplingCell,
+      h('td', { class: 'splunk-ranges-cell' },
+        h('div', { class: 'splunk-range-links' },
+          splunk.SPLUNK_TIME_RANGES.map((range) => extLink(
+            splunk.buildSplunkUrl(p.path, range, opts),
+            range.label,
+            'btn splunk-range-btn',
+            { newTab: true },
+          )))));
+  });
+
+  const customSection = section('Custom page query',
+    h('div', { class: 'splunk-custom-row' }, customInput, localeToggle, customLinks),
+    disclosure('Generated Splunk SPL query', h('p', {}, customQueryPre)));
+
+  const pagesSection = section('Adobe product & plans pages',
+    h('p', { class: 'note', text: 'Only pages with <meta name="pageperf" content="on"> send Web Vitals to Splunk (pages marked Off do not currently log). Sampling comes from each page\'s <meta name="pageperf-rate"> tag (default 50%).' }),
+    h('div', { class: 'table-scroll' }, h('table', { class: 'data' },
+      h('thead', {}, h('tr', {},
+        h('th', { scope: 'col', text: 'Page' }),
+        h('th', { scope: 'col', text: 'Category' }),
+        h('th', { scope: 'col', class: 'num', text: 'Sampling', title: 'Client-side sampling from <meta name="pageperf-rate"> (LANA always logs sample=100 after this step)' }),
+        h('th', { scope: 'col', text: 'Open in Splunk (raw export)' }))),
+      h('tbody', {}, tableRows))));
+
+  const discoverSection = section('Discover all active pageperf pages',
+    h('p', { class: 'note', text: 'List the top URLs currently logging client=pageperf in Splunk, ranked by event volume:' }),
+    h('div', { class: 'splunk-range-links' },
+      splunk.SPLUNK_TIME_RANGES.map((range) => extLink(
+        splunk.buildSplunkDiscoverUrl(range),
+        `Top pages (${range.label})`,
+        'btn splunk-range-btn',
+        { newTab: true },
+      ))));
+
+  els.detail.replaceChildren(h('div', { class: 'detail-inner' },
+    backButton(),
+    header,
+    discoverSection,
+    customSection,
+    pagesSection));
+}
+
 function cwvBadge(status) {
   return badge(splunk.CWV_LABELS[status] ?? '—', CWV_BADGE_TONE[status] ?? 'neutral');
 }
@@ -1056,7 +1180,7 @@ function renderSplunkDetail(rep) {
     timeText ? h('p', { class: 'splunk-window', text: timeText }) : null,
     h('p', { class: 'detail-sub' },
       h('span', {}, 'File ', mono(rep.fileName)),
-      analysis.sampleRates.length ? h('span', { text: `Sample ${analysis.sampleRates.join(', ')}%` }) : null,
+      h('span', { text: analysis.coverage.samplingText }),
       pageHref ? extLink(pageHref, 'Open page') : null),
     h('div', { class: 'badges' },
       lcp ? badge(`P75 LCP ${splunk.formatMsOrSec(lcp.p75)} · ${splunk.CWV_LABELS[lcp.status]}`, CWV_BADGE_TONE[lcp.status]) : null,
@@ -1064,7 +1188,8 @@ function renderSplunkDetail(rep) {
       badge('Local browser analysis', 'neutral'),
       analysis.botCount ? badge(`${analysis.botCount} synthetic`, 'warn') : null,
       analysis.skippedRows ? badge(`${analysis.skippedRows} non-pageperf skipped`, 'neutral') : null,
-      h('button', { type: 'button', class: 'btn btn-quiet', text: 'Upload another CSV', on: { click: () => els.splunkFile.click() } })));
+      h('button', { type: 'button', class: 'btn btn-quiet', text: 'Upload another CSV', on: { click: () => els.splunkFile.click() } }),
+      h('button', { type: 'button', class: 'btn btn-quiet', text: 'Splunk queries', on: { click: openSplunkLauncher } })));
 
   const coverageBanner = callout(analysis.coverage.tone, analysis.coverage.title,
     h('p', { text: analysis.coverage.detail }));
@@ -1108,19 +1233,19 @@ function renderSplunkDetail(rep) {
   const inner = h('div', { class: 'detail-inner' },
     backButton(),
     header,
-    coverageBanner,
     filterBar,
+    coverageBanner,
     kpis,
     analysis.matchedEvents ? [
       lcpHistogramSection(analysis),
-      lcpTimelineSection(analysis),
+    lcpTimelineSection(rep, analysis),
       elementsChartSection(analysis.breakdowns.element, 'Top LCP elements (P75 & share)'),
       insightsSec,
       breakdownsSection(rep, analysis),
       slowestEventsSection(analysis),
     ] : callout('warn', 'No events match the current filters',
       h('p', { text: `All ${analysis.totalEvents} events are hidden by the filters above.` }),
-      h('button', { type: 'button', class: 'btn', text: 'Reset filters', on: { click: () => { rep.filters = { ...splunk.EMPTY_SPLUNK_FILTERS }; renderSplunkDetail(rep); } } })));
+    h('button', { type: 'button', class: 'btn', text: 'Show all events', on: { click: () => { rep.filters = { ...splunk.EMPTY_SPLUNK_FILTERS, excludeBots: false }; renderSplunkDetail(rep); } } })));
 
   els.detail.replaceChildren(inner);
 }
@@ -1135,7 +1260,8 @@ function renderSplunkStatsDetail(rep, analysis) {
       badge('Aggregated stats CSV', 'neutral'),
       badge('Local browser analysis', 'neutral'),
       analysis.approxP75 != null ? badge(`Weighted P75 ${splunk.formatMsOrSec(analysis.approxP75)}`, CWV_BADGE_TONE[splunk.cwvLcpStatus(analysis.approxP75)]) : null,
-      h('button', { type: 'button', class: 'btn btn-quiet', text: 'Upload another CSV', on: { click: () => els.splunkFile.click() } })));
+      h('button', { type: 'button', class: 'btn btn-quiet', text: 'Upload another CSV', on: { click: () => els.splunkFile.click() } }),
+      h('button', { type: 'button', class: 'btn btn-quiet', text: 'Splunk queries', on: { click: openSplunkLauncher } })));
 
   const insightsSec = analysis.insights.length
     ? section('Diagnostic analysis',
@@ -1185,7 +1311,7 @@ function splunkFilterBar(rep, analysis) {
     rep.filters = { ...rep.filters, ...patch };
     renderSplunkDetail(rep);
   };
-  const hasAny = f.excludeBots || f.device || f.country || f.manifest || f.url;
+  const hasAny = !f.excludeBots || f.device || f.country || f.manifest || f.url;
   return h('div', { class: 'splunk-filters', role: 'region', 'aria-label': 'Filter Splunk events' },
     analysis.botCount ? h('label', { class: 'splunk-check' },
       h('input', {
@@ -1313,71 +1439,113 @@ function lcpHistogramSection(analysis) {
       svg));
 }
 
-function lcpTimelineSection(analysis) {
+function lcpTimelineSection(rep, analysis) {
   const pts = analysis.timeline;
   if (pts.length < 2 || !analysis.timeRange || analysis.timeRange.max <= analysis.timeRange.min) return null;
   const W = 680;
-  const H = 220;
-  const pad = { top: 20, right: 20, bottom: 30, left: 48 };
+  const H = 228;
+  const pad = { top: 20, right: 20, bottom: 32, left: 52 };
   const plotW = W - pad.left - pad.right;
   const plotH = H - pad.top - pad.bottom;
 
-  const minT = analysis.timeRange.min;
-  const spanT = analysis.timeRange.max - minT;
-  const maxVal = Math.max(4500, analysis.lcp?.max ?? 4500);
-  // Square-root scale keeps 0-4s readable while still showing extreme tail outliers.
-  const yMaxSqrt = Math.sqrt(maxVal);
-  const yOf = (ms) => pad.top + plotH - (Math.sqrt(Math.max(0, ms)) / yMaxSqrt) * plotH;
-  const xOf = (t) => pad.left + ((t - minT) / spanT) * plotW;
+  const fullTMin = analysis.timeRange.min;
+  const fullTMax = analysis.timeRange.max;
+  const rawMax = Math.max(4500, analysis.lcp?.max ?? 4500);
+  const fullYMax = rawMax * 1.06;
+  const hasExtremeOutliers = rawMax > 20000;
+  const focusedYMax = hasExtremeOutliers
+    ? Math.max(6000, Math.min(15000, Math.ceil(((analysis.lcp?.p95 ?? 5000) * 1.5) / 1000) * 1000))
+    : fullYMax;
 
-  const svg = svgEl('svg', { class: 'splunk-chart-svg', viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'LCP over time scatter plot' });
-  const ticks = [0, 1000, 2500, 4000, 10000, 20000, 40000].filter((v) => v <= maxVal * 1.05);
-  for (const ms of ticks) {
-    const y = yOf(ms);
-    const isGood = ms === 2500;
-    const isPoor = ms === 4000;
-    svg.append(
-      svgEl('line', {
-        class: isGood || isPoor ? 'chart-ref' : 'chart-grid',
-        'data-zone': isGood ? 'good' : isPoor ? 'poor' : null,
-        x1: pad.left,
-        y1: y.toFixed(1),
-        x2: W - pad.right,
-        y2: y.toFixed(1),
-      }),
-      svgEl('text', { class: 'chart-label', x: pad.left - 6, y: (y + 3).toFixed(1), 'text-anchor': 'end' }, ms === 0 ? '0' : `${(ms / 1000).toFixed(ms === 2500 ? 1 : 0)}s`),
-    );
+  const filterSig = JSON.stringify(rep.filters) + `:${pts.length}`;
+  if (!rep.timelineView || rep.timelineView.sig !== filterSig) {
+    rep.timelineView = {
+      sig: filterSig,
+      tMin: fullTMin,
+      tMax: fullTMax,
+      yMin: 0,
+      yMax: focusedYMax,
+      mode: 'box',
+      pinnedIndex: null,
+    };
   }
-  if (analysis.lcp?.p75 != null) {
-    const p75Y = yOf(analysis.lcp.p75);
-    svg.append(
-      svgEl('line', { class: 'chart-ref', 'data-zone': 'p75', x1: pad.left, y1: p75Y.toFixed(1), x2: W - pad.right, y2: p75Y.toFixed(1) }),
-      svgEl('text', { class: 'chart-label-ref', x: W - pad.right, y: Math.max(12, p75Y - 4).toFixed(1), 'text-anchor': 'end' }, `P75 ${splunk.formatMsOrSec(analysis.lcp.p75)}`),
-    );
-  }
-  svg.append(svgEl('line', { class: 'chart-axis', x1: pad.left, y1: pad.top + plotH, x2: W - pad.right, y2: pad.top + plotH }));
-  const sameDay = core.formatLocalDay(minT) === core.formatLocalDay(analysis.timeRange.max);
-  svg.append(
-    svgEl('text', { class: 'chart-label', x: pad.left, y: pad.top + plotH + 18, 'text-anchor': 'start' },
-      sameDay ? splunk.formatFriendlyTime(minT) : `${core.formatLocalDay(minT)} ${splunk.formatFriendlyTime(minT)}`),
-    svgEl('text', { class: 'chart-label', x: W - pad.right, y: pad.top + plotH + 18, 'text-anchor': 'end' },
-      sameDay ? splunk.formatFriendlyTime(analysis.timeRange.max, { withTz: true }) : `${core.formatLocalDay(analysis.timeRange.max)} ${splunk.formatFriendlyTime(analysis.timeRange.max, { withTz: true })}`),
-  );
+  const view = rep.timelineView;
 
-  let pinnedIndex = null;
-  const inspector = h('div', { class: 'event-inspector', 'aria-live': 'polite' });
-  const dots = [];
-
-  const renderInspector = (pt, pinned) => {
-    for (const d of dots) {
-      const idx = Number(d.getAttribute('data-index'));
-      if (pinned && idx === pinnedIndex) d.setAttribute('data-selected', 'true');
-      else d.removeAttribute('data-selected');
+  // Keep SVG dot count bounded for smooth 60fps pan/zoom even on 10k-row exports.
+  const MAX_SVG_DOTS = 1200;
+  let renderedPts = pts;
+  let downsampled = false;
+  if (pts.length > MAX_SVG_DOTS) {
+    downsampled = true;
+    const priority = [];
+    const rest = [];
+    for (const p of pts) {
+      if (p.status !== 'good' || p.bot) priority.push(p);
+      else rest.push(p);
     }
+    const budget = Math.max(0, MAX_SVG_DOTS - priority.length);
+    if (budget === 0) {
+      const step = priority.length / MAX_SVG_DOTS;
+      renderedPts = Array.from({ length: MAX_SVG_DOTS }, (_, i) => priority[Math.floor(i * step)]);
+    } else if (rest.length <= budget) {
+      renderedPts = pts;
+      downsampled = false;
+    } else {
+      const step = rest.length / budget;
+      const sampled = Array.from({ length: budget }, (_, i) => rest[Math.floor(i * step)]);
+      renderedPts = [...priority, ...sampled].sort((a, b) => a.index - b.index);
+    }
+  }
+  const ptByIndex = new Map(pts.map((p) => [p.index, p]));
+
+  const wrap = h('div', { class: 'splunk-chart-wrap' });
+  const hoverStrip = h('p', { class: 'note chart-hover-strip', 'aria-live': 'polite' });
+  const inspector = h('div', { class: 'event-inspector', hidden: true, 'aria-live': 'polite' });
+  const svg = svgEl('svg', { class: 'splunk-chart-svg', viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'LCP over time scatter plot' });
+
+  const formatTickMs = (ms) => (ms === 0 ? '0' : ms >= 10000 ? `${Math.round(ms / 1000)}s` : `${(ms / 1000).toFixed(ms % 1000 === 0 ? 0 : 1)}s`);
+
+  const niceTicks = (minV, maxV) => {
+    const span = maxV - minV;
+    const rough = span / 4;
+    const mag = 10 ** Math.floor(Math.log10(Math.max(1, rough)));
+    const norm = rough / mag;
+    const step = norm < 1.5 ? mag : norm < 3.5 ? 2 * mag : norm < 7.5 ? 5 * mag : 10 * mag;
+    const out = [];
+    const start = Math.ceil(minV / step) * step;
+    for (let v = start; v <= maxV + step * 0.001; v += step) out.push(Math.round(v));
+    if (minV === 0 && out[0] !== 0) out.unshift(0);
+    return out;
+  };
+
+  let lastHoverIndex = -1;
+  const setHoverPreview = (pt) => {
+    const idx = pt ? pt.index : -1;
+    if (idx === lastHoverIndex) return;
+    lastHoverIndex = idx;
     if (!pt) {
-      inspector.replaceChildren(h('p', { class: 'note', text: 'Hover or click any dot on the timeline to inspect why that load was fast or slow (referer, downlink, viewport, LCP element, MEP manifests, and user agent).' }));
+      hoverStrip.textContent = 'Hover a dot to preview · click a dot to inspect full details.';
       return;
     }
+    hoverStrip.textContent = `${splunk.formatFriendlyTime(pt.timestamp, { withTz: true })} · LCP ${splunk.formatMsOrSec(pt.lcp)}${pt.cls != null ? ` · CLS ${pt.cls.toFixed(3)}` : ''} · ${pt.device} · ${pt.country.toUpperCase()}${pt.bot ? ` · ${pt.bot}` : ''} — click dot to inspect`;
+  };
+
+  let lastInspectorIndex = -1;
+  const renderInspector = (pt) => {
+    const idx = pt ? pt.index : -1;
+    if (idx === lastInspectorIndex) return;
+    lastInspectorIndex = idx;
+
+    for (const d of dotEls) {
+      if (pt && d.pt.index === pt.index) d.el.setAttribute('data-selected', 'true');
+      else d.el.removeAttribute('data-selected');
+    }
+    if (!pt) {
+      inspector.hidden = true;
+      inspector.replaceChildren();
+      return;
+    }
+    inspector.hidden = false;
     const vp = pt.windowWidth && pt.windowHeight ? `${pt.windowWidth}×${pt.windowHeight}` : null;
     const refererHref = pt.referer ? core.safeExternalUrl(pt.referer) : null;
     const foldText = pt.lcpSectionOne === true ? 'Section 1 (above fold)' : pt.lcpSectionOne === false ? 'Below Section 1 (off-fold)' : 'Unknown';
@@ -1392,12 +1560,12 @@ function lcpTimelineSection(analysis) {
           pt.cls != null ? badge(`CLS ${pt.cls.toFixed(3)}`, CWV_BADGE_TONE[splunk.cwvClsStatus(pt.cls)]) : null,
           pt.bot ? badge(pt.bot, 'warn') : null,
           h('span', { class: 'sub', text: `${core.formatDateTime(pt.timestamp)} (${splunk.formatFriendlyTime(pt.timestamp, { withTz: true })})` })),
-        pinned ? h('button', {
+        h('button', {
           type: 'button',
           class: 'btn btn-quiet',
           text: 'Clear selection',
-          on: { click: () => { pinnedIndex = null; renderInspector(null, false); } },
-        }) : h('span', { class: 'note', text: 'Click dot to pin' })),
+          on: { click: () => { view.pinnedIndex = null; renderInspector(null); } },
+        })),
       pt.clues?.length ? h('div', { class: 'badges' }, pt.clues.map((c) => badge(c, pt.status === 'poor' ? 'warn' : 'neutral'))) : null,
       h('dl', { class: 'kv' },
         kv('LCP Element', mono(pt.lcpEl)),
@@ -1409,57 +1577,333 @@ function lcpTimelineSection(analysis) {
         pt.userAgent ? kv('User-Agent', h('span', { class: 'mono break', text: pt.userAgent })) : null));
   };
 
-  for (const p of pts) {
-    const cx = xOf(p.timestamp).toFixed(1);
-    const cy = yOf(p.lcp).toFixed(1);
-    const tip = `${splunk.formatFriendlyTime(p.timestamp, { withTz: true })} · LCP ${splunk.formatMsOrSec(p.lcp)}${p.cls != null ? ` · CLS ${p.cls.toFixed(3)}` : ''} · ${p.device} · ${p.country.toUpperCase()}${p.bot ? ` · ${p.bot}` : ''}`;
-    const dot = svgEl('circle', {
+  // Build toolbar controls once.
+  const btn6s = h('button', { type: 'button', class: 'tab-btn', text: '0–6 s', on: { click: () => setPreset(6000) } });
+  const btn10s = h('button', { type: 'button', class: 'tab-btn', text: '0–10 s', on: { click: () => setPreset(10000) } });
+  const btnFull = h('button', { type: 'button', class: 'tab-btn', text: 'Full range', on: { click: () => setPreset(fullYMax) } });
+  const btnBox = h('button', { type: 'button', class: 'btn btn-quiet chart-tool-btn', title: 'Drag to select zoom box', text: 'Box zoom', on: { click: () => { view.mode = 'box'; updateToolbar(); bgRect.setAttribute('data-mode', 'box'); } } });
+  const btnPan = h('button', { type: 'button', class: 'btn btn-quiet chart-tool-btn', title: 'Drag to pan chart (or hold Shift while dragging)', text: 'Pan', on: { click: () => { view.mode = 'pan'; updateToolbar(); bgRect.setAttribute('data-mode', 'pan'); } } });
+  const btnZoomIn = h('button', { type: 'button', class: 'btn btn-quiet chart-tool-btn', title: 'Zoom in', 'aria-label': 'Zoom in timeline', text: '+', on: { click: () => zoomBy(0.6) } });
+  const btnZoomOut = h('button', { type: 'button', class: 'btn btn-quiet chart-tool-btn', title: 'Zoom out', 'aria-label': 'Zoom out timeline', text: '−', on: { click: () => zoomBy(1.6) } });
+  const btnReset = h('button', { type: 'button', class: 'btn btn-quiet chart-tool-btn', text: 'Reset', on: { click: () => setPreset(focusedYMax) } });
+  const clippedBtn = h('button', { type: 'button', class: 'badge chart-clipped-badge', 'data-tone': 'warn', hidden: true, on: { click: () => setPreset(fullYMax) } });
+  const toolbar = h('div', { class: 'chart-toolbar' },
+    h('div', { class: 'chart-btn-group' }, btn6s, btn10s, btnFull),
+    h('div', { class: 'chart-btn-group' }, btnBox, btnPan, btnZoomIn, btnZoomOut, btnReset),
+    clippedBtn);
+
+  // Build SVG structure & dot nodes once.
+  const clipId = `splunk-tl-clip-${rep.id}`;
+  const defs = svgEl('defs', {},
+    svgEl('clipPath', { id: clipId },
+      svgEl('rect', { x: pad.left, y: pad.top - 4, width: plotW, height: plotH + 8 })));
+  const bgRect = svgEl('rect', { class: 'chart-plot-bg', 'data-mode': view.mode, x: pad.left, y: pad.top, width: plotW, height: plotH });
+  const gridGroup = svgEl('g');
+  const plotGroup = svgEl('g', { 'clip-path': `url(#${clipId})` });
+  const refGroup = svgEl('g');
+  plotGroup.append(refGroup);
+
+  const dotEls = renderedPts.map((p) => {
+    const el = svgEl('circle', {
       class: 'chart-dot',
       'data-zone': p.status,
       'data-bot': p.bot ? 'true' : null,
       'data-index': p.index,
+      'data-selected': view.pinnedIndex === p.index ? 'true' : null,
       tabindex: '0',
       role: 'button',
-      'aria-label': `Inspect event: ${tip}`,
-      cx,
-      cy,
+      cx: 0,
+      cy: 0,
       r: p.bot ? 4.5 : 4,
-    }, svgEl('title', {}, tip));
-    dot.addEventListener('mouseenter', () => {
-      if (pinnedIndex == null) renderInspector(p, false);
     });
-    dot.addEventListener('focus', () => {
-      if (pinnedIndex == null) renderInspector(p, false);
-    });
-    dot.addEventListener('click', () => {
-      pinnedIndex = pinnedIndex === p.index ? null : p.index;
-      renderInspector(pinnedIndex == null ? null : p, pinnedIndex != null);
-    });
-    dot.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        pinnedIndex = pinnedIndex === p.index ? null : p.index;
-        renderInspector(pinnedIndex == null ? null : p, pinnedIndex != null);
-      }
-    });
-    dots.push(dot);
-    svg.append(dot);
-  }
-  svg.addEventListener('mouseleave', () => {
-    if (pinnedIndex == null) renderInspector(null, false);
+    plotGroup.append(el);
+    return { pt: p, el };
   });
-  renderInspector(null, false);
 
-  return section('LCP timeline',
-    h('div', { class: 'splunk-chart-wrap' },
-      svg,
-      h('div', { class: 'chart-legend' },
-        h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'good' }), 'Good (≤ 2.5 s)'),
-        h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'ni' }), 'Needs Imp. (2.5–4.0 s)'),
-        h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'poor' }), 'Poor (> 4.0 s)'),
-        analysis.botCount ? h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'bot' }), 'Synthetic / bot UA') : null,
-        h('span', { class: 'note', text: 'Square-root vertical scale so both typical loads and tail spikes stay visible.' })),
-      inspector));
+  const selectBox = svgEl('rect', { class: 'chart-select-box', hidden: 'true', x: 0, y: 0, width: 0, height: 0 });
+  const axisLine = svgEl('line', { class: 'chart-axis', x1: pad.left, y1: pad.top + plotH, x2: W - pad.right, y2: pad.top + plotH });
+  const xStartLabel = svgEl('text', { class: 'chart-label', x: pad.left, y: pad.top + plotH + 18, 'text-anchor': 'start' });
+  const xEndLabel = svgEl('text', { class: 'chart-label', x: W - pad.right, y: pad.top + plotH + 18, 'text-anchor': 'end' });
+  svg.append(defs, bgRect, gridGroup, plotGroup, selectBox, axisLine, xStartLabel, xEndLabel);
+
+  // Single delegated handlers for all dots.
+  let dragState = null;
+  const dotPointFromEvent = (e) => {
+    const circle = e.target.closest?.('circle.chart-dot');
+    if (!circle) return null;
+    return ptByIndex.get(Number(circle.getAttribute('data-index'))) ?? null;
+  };
+  plotGroup.addEventListener('mouseover', (e) => {
+    if (dragState) return;
+    const pt = dotPointFromEvent(e);
+    if (pt) setHoverPreview(pt);
+  });
+  plotGroup.addEventListener('focusin', (e) => {
+    const pt = dotPointFromEvent(e);
+    if (pt) setHoverPreview(pt);
+  });
+  plotGroup.addEventListener('click', (e) => {
+    const pt = dotPointFromEvent(e);
+    if (!pt) return;
+    e.stopPropagation();
+    view.pinnedIndex = view.pinnedIndex === pt.index ? null : pt.index;
+    renderInspector(view.pinnedIndex == null ? null : pt);
+  });
+  plotGroup.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const pt = dotPointFromEvent(e);
+    if (!pt) return;
+    e.preventDefault();
+    view.pinnedIndex = view.pinnedIndex === pt.index ? null : pt.index;
+    renderInspector(view.pinnedIndex == null ? null : pt);
+  });
+  svg.addEventListener('mouseleave', () => {
+    if (!dragState) setHoverPreview(null);
+  });
+
+  const clampView = () => {
+    const minTSpan = Math.max(1000, (fullTMax - fullTMin) * 0.005);
+    if (view.tMax - view.tMin < minTSpan) {
+      const mid = (view.tMin + view.tMax) / 2;
+      view.tMin = mid - minTSpan / 2;
+      view.tMax = mid + minTSpan / 2;
+    }
+    if (view.tMin < fullTMin) {
+      view.tMax = Math.min(fullTMax, view.tMax + (fullTMin - view.tMin));
+      view.tMin = fullTMin;
+    }
+    if (view.tMax > fullTMax) {
+      view.tMin = Math.max(fullTMin, view.tMin - (view.tMax - fullTMax));
+      view.tMax = fullTMax;
+    }
+    const minYSpan = 200;
+    if (view.yMax - view.yMin < minYSpan) {
+      const mid = (view.yMin + view.yMax) / 2;
+      view.yMin = Math.max(0, mid - minYSpan / 2);
+      view.yMax = view.yMin + minYSpan;
+    }
+    if (view.yMin < 0) {
+      view.yMax = Math.min(fullYMax, view.yMax - view.yMin);
+      view.yMin = 0;
+    }
+    if (view.yMax > fullYMax) {
+      view.yMin = Math.max(0, view.yMin - (view.yMax - fullYMax));
+      view.yMax = fullYMax;
+    }
+  };
+
+  const updateToolbar = () => {
+    const is6 = Math.abs(view.yMax - 6000) < 50 && view.yMin === 0;
+    const is10 = Math.abs(view.yMax - 10000) < 50 && view.yMin === 0;
+    const isFull = Math.abs(view.yMax - fullYMax) < 50 && view.yMin === 0;
+    btn6s.setAttribute('aria-selected', is6 ? 'true' : 'false');
+    btn10s.setAttribute('aria-selected', is10 ? 'true' : 'false');
+    btnFull.setAttribute('aria-selected', isFull ? 'true' : 'false');
+    btnBox.setAttribute('aria-pressed', view.mode === 'box' ? 'true' : 'false');
+    btnPan.setAttribute('aria-pressed', view.mode === 'pan' ? 'true' : 'false');
+    const isZoomed = view.tMin > fullTMin + 1000 || view.tMax < fullTMax - 1000 || view.yMin > 10 || Math.abs(view.yMax - focusedYMax) > 100;
+    btnReset.disabled = !isZoomed;
+
+    let aboveCount = 0;
+    for (let i = 0; i < pts.length; i += 1) {
+      if (pts[i].lcp > view.yMax) aboveCount += 1;
+    }
+    if (aboveCount > 0) {
+      clippedBtn.hidden = false;
+      clippedBtn.textContent = `${aboveCount} outlier${aboveCount === 1 ? '' : 's'} > ${formatTickMs(view.yMax)} hidden · Show all`;
+    } else {
+      clippedBtn.hidden = true;
+    }
+  };
+
+  const draw = () => {
+    const tSpan = Math.max(1, view.tMax - view.tMin);
+    const ySpan = Math.max(1, view.yMax - view.yMin);
+    const xScale = plotW / tSpan;
+    const yScale = plotH / ySpan;
+    const xOf = (t) => pad.left + (t - view.tMin) * xScale;
+    const yOf = (ms) => pad.top + plotH - (ms - view.yMin) * yScale;
+
+    updateToolbar();
+
+    // Update Y gridlines
+    const gridNodes = [];
+    for (const ms of niceTicks(view.yMin, view.yMax)) {
+      const y = yOf(ms);
+      if (y < pad.top - 2 || y > pad.top + plotH + 2) continue;
+      gridNodes.push(
+        svgEl('line', { class: 'chart-grid', x1: pad.left, y1: y.toFixed(1), x2: W - pad.right, y2: y.toFixed(1) }),
+        svgEl('text', { class: 'chart-label', x: pad.left - 6, y: (y + 3).toFixed(1), 'text-anchor': 'end' }, formatTickMs(ms)),
+      );
+    }
+    gridGroup.replaceChildren(...gridNodes);
+
+    // Update CWV & P75 reference lines
+    const refNodes = [];
+    for (const [ms, zone, lbl] of [[splunk.LCP_GOOD_MS, 'good', '2.5s'], [splunk.LCP_POOR_MS, 'poor', '4.0s']]) {
+      if (ms >= view.yMin && ms <= view.yMax) {
+        const y = yOf(ms);
+        refNodes.push(
+          svgEl('line', { class: 'chart-ref', 'data-zone': zone, x1: pad.left, y1: y.toFixed(1), x2: W - pad.right, y2: y.toFixed(1) }),
+          svgEl('text', { class: 'chart-label-ref', x: pad.left + 4, y: Math.max(pad.top + 10, y - 3).toFixed(1), 'text-anchor': 'start' }, lbl),
+        );
+      }
+    }
+    if (analysis.lcp?.p75 != null && analysis.lcp.p75 >= view.yMin && analysis.lcp.p75 <= view.yMax) {
+      const p75Y = yOf(analysis.lcp.p75);
+      refNodes.push(
+        svgEl('line', { class: 'chart-ref', 'data-zone': 'p75', x1: pad.left, y1: p75Y.toFixed(1), x2: W - pad.right, y2: p75Y.toFixed(1) }),
+        svgEl('text', { class: 'chart-label-ref', x: W - pad.right - 4, y: Math.max(pad.top + 10, p75Y - 4).toFixed(1), 'text-anchor': 'end' }, `P75 ${splunk.formatMsOrSec(analysis.lcp.p75)}`),
+      );
+    }
+    refGroup.replaceChildren(...refNodes);
+
+    // Fast attribute-only update of existing dot nodes.
+    for (let i = 0; i < dotEls.length; i += 1) {
+      const { pt, el } = dotEls[i];
+      if (pt.timestamp < view.tMin || pt.timestamp > view.tMax || pt.lcp < view.yMin || pt.lcp > view.yMax) {
+        el.setAttribute('hidden', 'true');
+      } else {
+        el.removeAttribute('hidden');
+        el.setAttribute('cx', xOf(pt.timestamp).toFixed(1));
+        el.setAttribute('cy', yOf(pt.lcp).toFixed(1));
+      }
+    }
+
+    const sameDay = core.formatLocalDay(view.tMin) === core.formatLocalDay(view.tMax);
+    xStartLabel.textContent = sameDay ? splunk.formatFriendlyTime(view.tMin) : `${core.formatLocalDay(view.tMin)} ${splunk.formatFriendlyTime(view.tMin)}`;
+    xEndLabel.textContent = sameDay ? splunk.formatFriendlyTime(view.tMax, { withTz: true }) : `${core.formatLocalDay(view.tMax)} ${splunk.formatFriendlyTime(view.tMax, { withTz: true })}`;
+  };
+
+  let rafId = 0;
+  const scheduleDraw = () => {
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      draw();
+    });
+  };
+
+  const zoomBy = (factor, anchorTFrac = 0.5, anchorYFrac = 0.5, immediate = true) => {
+    const tSpan = (view.tMax - view.tMin) * factor;
+    const ySpan = (view.yMax - view.yMin) * factor;
+    const anchorT = view.tMin + (view.tMax - view.tMin) * anchorTFrac;
+    const anchorY = view.yMin + (view.yMax - view.yMin) * anchorYFrac;
+    view.tMin = anchorT - tSpan * anchorTFrac;
+    view.tMax = anchorT + tSpan * (1 - anchorTFrac);
+    view.yMin = anchorY - ySpan * anchorYFrac;
+    view.yMax = anchorY + ySpan * (1 - anchorYFrac);
+    clampView();
+    if (immediate) draw();
+    else scheduleDraw();
+  };
+
+  const setPreset = (yMaxVal) => {
+    view.tMin = fullTMin;
+    view.tMax = fullTMax;
+    view.yMin = 0;
+    view.yMax = Math.min(fullYMax, Math.max(1000, yMaxVal));
+    clampView();
+    draw();
+  };
+
+  // Attach pointer & wheel listeners once.
+  const toSvgCoords = (e) => {
+    const rect = svg.getBoundingClientRect();
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * W,
+      y: ((e.clientY - rect.top) / rect.height) * H,
+    };
+  };
+  bgRect.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const pos = toSvgCoords(e);
+    const isPan = view.mode === 'pan' || e.shiftKey;
+    dragState = {
+      mode: isPan ? 'pan' : 'box',
+      startX: Math.max(pad.left, Math.min(W - pad.right, pos.x)),
+      startY: Math.max(pad.top, Math.min(pad.top + plotH, pos.y)),
+      origTMin: view.tMin,
+      origTMax: view.tMax,
+      origYMin: view.yMin,
+      origYMax: view.yMax,
+    };
+    bgRect.setPointerCapture(e.pointerId);
+  });
+  bgRect.addEventListener('pointermove', (e) => {
+    if (!dragState) return;
+    const pos = toSvgCoords(e);
+    const curX = Math.max(pad.left, Math.min(W - pad.right, pos.x));
+    const curY = Math.max(pad.top, Math.min(pad.top + plotH, pos.y));
+    if (dragState.mode === 'box') {
+      const bx = Math.min(dragState.startX, curX);
+      const by = Math.min(dragState.startY, curY);
+      const bw = Math.abs(curX - dragState.startX);
+      const bh = Math.abs(curY - dragState.startY);
+      selectBox.removeAttribute('hidden');
+      selectBox.setAttribute('x', bx.toFixed(1));
+      selectBox.setAttribute('y', by.toFixed(1));
+      selectBox.setAttribute('width', bw.toFixed(1));
+      selectBox.setAttribute('height', bh.toFixed(1));
+    } else {
+      const dx = curX - dragState.startX;
+      const dy = curY - dragState.startY;
+      const origTSpan = dragState.origTMax - dragState.origTMin;
+      const origYSpan = dragState.origYMax - dragState.origYMin;
+      view.tMin = dragState.origTMin - (dx / plotW) * origTSpan;
+      view.tMax = dragState.origTMax - (dx / plotW) * origTSpan;
+      view.yMin = dragState.origYMin + (dy / plotH) * origYSpan;
+      view.yMax = dragState.origYMax + (dy / plotH) * origYSpan;
+      clampView();
+      scheduleDraw();
+    }
+  });
+  bgRect.addEventListener('pointerup', (e) => {
+    if (!dragState) return;
+    const pos = toSvgCoords(e);
+    const curX = Math.max(pad.left, Math.min(W - pad.right, pos.x));
+    const curY = Math.max(pad.top, Math.min(pad.top + plotH, pos.y));
+    if (dragState.mode === 'box') {
+      selectBox.setAttribute('hidden', 'true');
+      if (Math.abs(curX - dragState.startX) >= 8 && Math.abs(curY - dragState.startY) >= 8) {
+        const tSpan = Math.max(1, view.tMax - view.tMin);
+        const ySpan = Math.max(1, view.yMax - view.yMin);
+        const tFromX = (sx) => view.tMin + ((sx - pad.left) / plotW) * tSpan;
+        const yFromY = (sy) => view.yMin + ((pad.top + plotH - sy) / plotH) * ySpan;
+        view.tMin = tFromX(Math.min(dragState.startX, curX));
+        view.tMax = tFromX(Math.max(dragState.startX, curX));
+        view.yMin = Math.max(0, yFromY(Math.max(dragState.startY, curY)));
+        view.yMax = Math.max(view.yMin + 200, yFromY(Math.min(dragState.startY, curY)));
+        clampView();
+        draw();
+      }
+    }
+    dragState = null;
+  });
+  bgRect.addEventListener('dblclick', () => setPreset(focusedYMax));
+  svg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const pos = toSvgCoords(e);
+    const ax = Math.max(0, Math.min(1, (pos.x - pad.left) / plotW));
+    const ay = Math.max(0, Math.min(1, (pad.top + plotH - pos.y) / plotH));
+    zoomBy(e.deltaY < 0 ? 0.85 : 1.18, ax, ay, false);
+  }, { passive: false });
+
+  const legend = h('div', { class: 'chart-legend' },
+    h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'good' }), 'Good (≤ 2.5 s)'),
+    h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'ni' }), 'Needs Imp. (2.5–4.0 s)'),
+    h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'poor' }), 'Poor (> 4.0 s)'),
+    analysis.botCount ? h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'bot' }), 'Synthetic / bot UA') : null,
+    downsampled ? h('span', { class: 'note', text: `Plotting ${renderedPts.length} of ${pts.length} points (all slow/synthetic preserved).` }) : null,
+    h('span', { class: 'note', text: 'Drag to zoom box · Shift+drag or Pan to move · Scroll to zoom · Double-click to reset.' }));
+
+  const pinnedPt = view.pinnedIndex != null ? pts.find((p) => p.index === view.pinnedIndex) : null;
+  setHoverPreview(null);
+  renderInspector(pinnedPt ?? null);
+  draw();
+  wrap.replaceChildren(toolbar, svg, legend, hoverStrip, inspector);
+  return section('LCP timeline', wrap);
 }
 
 function elementsChartSection(rows, title) {
@@ -1649,8 +2093,10 @@ async function handleSplunkFiles(fileList) {
   }
   if (lastValid) {
     state.splunkError = null;
+    state.splunkLauncher = false;
     state.activeSplunkId = lastValid.id;
   } else if (lastErr) {
+    state.splunkLauncher = false;
     state.splunkError = lastErr;
   }
   render();
@@ -1675,7 +2121,7 @@ window.addEventListener('popstate', () => {
 });
 wide.addEventListener('change', render);
 
-els.splunkUploadBtn.addEventListener('click', () => els.splunkFile.click());
+els.splunkUploadBtn.addEventListener('click', openSplunkLauncher);
 els.splunkFile.addEventListener('change', (e) => {
   handleSplunkFiles(e.target.files);
   e.target.value = '';

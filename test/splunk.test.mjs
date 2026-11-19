@@ -49,14 +49,15 @@ test('parseSplunkCsv parses raw _time/_raw Splunk exports including commas in ma
   assert.equal(parsed.events[1].lcpEl, '(Element Was Replaced / Missing)');
   assert.equal(parsed.events[1].bot, 'Tokowaka');
 
-  const all = splunk.analyzeSplunk(parsed);
-  assert.equal(all.botCount, 1);
-  assert.equal(all.cls.max, 0.527);
-  assert.ok(all.insights.some((i) => /synthetic\/automation/i.test(i.title)));
-
-  const humanOnly = splunk.analyzeSplunk(parsed, { ...splunk.EMPTY_SPLUNK_FILTERS, excludeBots: true });
+  const humanOnly = splunk.analyzeSplunk(parsed);
+  assert.equal(humanOnly.botCount, 1);
   assert.equal(humanOnly.matchedEvents, 1);
   assert.equal(humanOnly.cls.max, 0.002);
+
+  const withBots = splunk.analyzeSplunk(parsed, { ...splunk.EMPTY_SPLUNK_FILTERS, excludeBots: false });
+  assert.equal(withBots.matchedEvents, 2);
+  assert.equal(withBots.cls.max, 0.527);
+  assert.ok(withBots.insights.some((i) => /synthetic\/automation/i.test(i.title)));
 });
 
 test('parseSplunkCsv parses extracted pp_* columns and aggregated stats tables', () => {
@@ -88,4 +89,18 @@ test('parseSplunkCsv parses extracted pp_* columns and aggregated stats tables',
 
 test('parseSplunkCsv rejects unrecognized CSV schemas clearly', () => {
   assert.throws(() => splunk.parseSplunkCsv('foo,bar\n1,2\n', 'other.csv'), /Unrecognized Splunk CSV columns/);
+});
+
+test('buildSplunkUrl builds valid Splunk search URLs for time ranges and locale toggles', () => {
+  const url = splunk.buildSplunkUrl('https://www.adobe.com/acrobat/plans.html?foo=1', splunk.SPLUNK_TIME_RANGES[0]);
+  const u = new URL(url);
+  assert.equal(u.origin, 'https://splunk-us.corp.adobe.com');
+  assert.equal(u.searchParams.get('earliest'), '-60m@m');
+  assert.equal(u.searchParams.get('latest'), 'now');
+  assert.match(u.searchParams.get('q'), /"client=pageperf" "url=www\.adobe\.com\/acrobat\/plans\.html"/);
+  assert.match(u.searchParams.get('q'), /\| table _time, _raw$/);
+
+  const allLocalesUrl = new URL(splunk.buildSplunkUrl('www.adobe.com/products/photoshop.html', splunk.SPLUNK_TIME_RANGES[3], { allLocales: true }));
+  assert.equal(allLocalesUrl.searchParams.get('earliest'), '-7d@h');
+  assert.match(allLocalesUrl.searchParams.get('q'), /"url=www\.adobe\.com\/\*\/products\/photoshop\.html"/);
 });
