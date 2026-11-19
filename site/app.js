@@ -1,6 +1,8 @@
 // Read-only perf-ab history dashboard. Reads the sanitized static JSON published next to this page
 // (data/index.json and data/runs/<id>.json) and renders it with DOM APIs only: no HTML strings, no writes.
+// Also supports client-side Splunk pageperf CSV analysis via drag-and-drop or file picker.
 import * as core from './dashboard-core.mjs';
+import * as splunk from './splunk-core.mjs';
 
 const { METRICS, METRIC_KEYS, STATUS, VERDICT_LABEL, CHANGE_KINDS } = core;
 const FETCH_TIMEOUT_MS = 15000;
@@ -16,9 +18,13 @@ const els = {
   from: document.getElementById('filter-from'),
   to: document.getElementById('filter-to'),
   clear: document.getElementById('filter-clear'),
+  splunkList: document.getElementById('splunk-list'),
   body: document.getElementById('history-body'),
   detail: document.getElementById('detail'),
   layout: document.getElementById('layout'),
+  splunkUploadBtn: document.getElementById('splunk-upload-btn'),
+  splunkFile: document.getElementById('splunk-file'),
+  dropOverlay: document.getElementById('drop-overlay'),
 };
 
 const state = {
@@ -27,21 +33,39 @@ const state = {
   filters: { ...core.EMPTY_FILTERS },
   run: '', // explicitly selected run id (deep link or click)
   details: new Map(), // id -> { status: 'loading' | 'ready' | 'error', data, error }
+  splunkReports: [], // [{ id, fileName, uploadedAt, parsed, filters, activeTab }]
+  activeSplunkId: '',
+  splunkError: null, // { fileName, message }
 };
 let sectionIds = new Map();
+let splunkSeq = 0;
 
 // ---------------------------------------------------------------- DOM helpers (text only)
 
 const ATTRS = new Set([
   'id', 'role', 'title', 'colspan', 'rowspan', 'scope', 'type', 'datetime', 'tabindex', 'hidden', 'value', 'lang',
-  'aria-label', 'aria-live', 'aria-busy', 'aria-current', 'aria-describedby', 'aria-labelledby', 'aria-hidden', 'aria-sort',
-  'data-label', 'data-tone', 'data-run', 'data-state', 'data-verdict', 'data-dir', 'data-kind',
+  'aria-label', 'aria-live', 'aria-busy', 'aria-current', 'aria-describedby', 'aria-labelledby', 'aria-hidden', 'aria-sort', 'aria-selected',
+  'data-label', 'data-tone', 'data-run', 'data-state', 'data-verdict', 'data-dir', 'data-kind', 'data-zone', 'data-bot',
   'placeholder', 'autocomplete', 'spellcheck', 'name',
 ]);
 
 function h(tag, opts, ...children) {
   const el = document.createElement(tag);
   if (opts) setOpts(el, opts);
+  add(el, children);
+  if (opts && tag === 'select' && opts.value != null) el.value = String(opts.value);
+  return el;
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs, ...children) {
+  const el = document.createElementNS(SVG_NS, tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      el.setAttribute(k, String(v));
+    }
+  }
   add(el, children);
   return el;
 }
@@ -51,6 +75,7 @@ function setOpts(el, opts) {
     if (v == null || v === false) continue;
     if (k === 'class') el.setAttribute('class', Array.isArray(v) ? v.filter(Boolean).join(' ') : v);
     else if (k === 'text') el.textContent = String(v);
+    else if (k === 'checked') el.checked = Boolean(v);
     else if (k === 'on') for (const [ev, fn] of Object.entries(v)) el.addEventListener(ev, fn);
     else if (ATTRS.has(k)) el.setAttribute(k, v === true ? '' : String(v));
     else throw new Error(`attribute ${k} is not allowed`);
@@ -247,6 +272,8 @@ function clearFilters() {
 }
 
 function selectRun(id) {
+  state.activeSplunkId = '';
+  state.splunkError = null;
   state.run = id;
   window.history.pushState(null, '', core.serializeState({ ...state.filters, run: id }) || window.location.pathname);
   render();
@@ -255,7 +282,30 @@ function selectRun(id) {
   (heading ?? els.detail).focus({ preventScroll: wide.matches });
 }
 
+function selectSplunkReport(id) {
+  state.activeSplunkId = id;
+  state.splunkError = null;
+  render();
+  if (!wide.matches) window.scrollTo({ top: 0 });
+  const heading = els.detail.querySelector('h2');
+  (heading ?? els.detail).focus({ preventScroll: wide.matches });
+}
+
+function removeSplunkReport(id) {
+  state.splunkReports = state.splunkReports.filter((r) => r.id !== id);
+  if (state.activeSplunkId === id) {
+    state.activeSplunkId = state.splunkReports[0]?.id ?? '';
+  }
+  render();
+}
+
 function backToList() {
+  if (state.activeSplunkId || state.splunkError) {
+    state.activeSplunkId = '';
+    state.splunkError = null;
+    render();
+    return;
+  }
   const id = state.run;
   state.run = '';
   window.history.pushState(null, '', core.serializeState(state.filters) || window.location.pathname);
@@ -269,6 +319,7 @@ function filteredRuns() {
 }
 
 function selectedId() {
+  if (state.activeSplunkId || state.splunkError) return '';
   if (state.run) return state.run;
   return wide.matches ? filteredRuns()[0]?.id ?? '' : '';
 }
@@ -284,10 +335,47 @@ function fillProfileOptions() {
 // ---------------------------------------------------------------- rendering
 
 function render() {
-  els.layout.dataset.view = state.run ? 'detail' : 'list';
+  els.layout.dataset.view = state.run || state.activeSplunkId || state.splunkError ? 'detail' : 'list';
   renderMeta();
+  renderSplunkList();
   renderHistory();
   renderDetail();
+}
+
+function renderSplunkList() {
+  if (!state.splunkReports.length) {
+    els.splunkList.hidden = true;
+    els.splunkList.replaceChildren();
+    return;
+  }
+  els.splunkList.hidden = false;
+  const items = state.splunkReports.map((rep) => {
+    const selected = rep.id === state.activeSplunkId;
+    const summaryText = rep.parsed.kind === 'stats'
+      ? `${rep.parsed.rowCount} element group${rep.parsed.rowCount === 1 ? '' : 's'} · stats`
+      : `${rep.parsed.events.length} events · P75 ${splunk.formatMsOrSec(rep.summaryLcpP75)}`;
+    return h('div', { class: ['splunk-item', selected && 'is-selected'] },
+      h('button', {
+        type: 'button',
+        class: 'splunk-item-btn',
+        'aria-current': selected ? 'true' : null,
+        on: { click: () => selectSplunkReport(rep.id) },
+      },
+      h('span', { class: 'splunk-item-name', text: rep.summaryTitle || rep.fileName }),
+      h('span', { class: 'sub', text: rep.summaryWindow ? `${rep.summaryWindow} · ${summaryText}` : summaryText })),
+      h('button', {
+        type: 'button',
+        class: 'splunk-item-remove',
+        'aria-label': `Remove ${rep.fileName}`,
+        title: 'Remove export',
+        on: { click: () => removeSplunkReport(rep.id) },
+      }, '×'));
+  });
+  els.splunkList.replaceChildren(
+    h('div', { class: 'splunk-list-head' },
+      h('span', { text: 'Splunk exports (local)' }),
+      h('span', { text: String(state.splunkReports.length) })),
+    ...items);
 }
 
 function renderMeta() {
@@ -432,11 +520,31 @@ function onRunKey(e) {
 function renderDetail() {
   sectionIds = new Map();
   const d = els.detail;
+  if (state.splunkError) {
+    d.removeAttribute('aria-busy');
+    document.title = 'Splunk CSV error · perf-ab history';
+    d.replaceChildren(h('div', { class: 'detail-inner' },
+      backButton(),
+      callout('bad', `Could not open ${state.splunkError.fileName || 'file'}`,
+        h('p', { text: state.splunkError.message }),
+        h('button', { type: 'button', class: 'btn', text: 'Choose another CSV', on: { click: () => els.splunkFile.click() } }))));
+    return;
+  }
+  if (state.activeSplunkId) {
+    const rep = state.splunkReports.find((r) => r.id === state.activeSplunkId);
+    if (rep) {
+      d.removeAttribute('aria-busy');
+      document.title = `${rep.fileName} · Splunk analysis`;
+      renderSplunkDetail(rep);
+      return;
+    }
+    state.activeSplunkId = '';
+  }
   const id = selectedId();
   document.title = id ? `Run ${id} · perf-ab history` : 'perf-ab history · adobecom/perf-tools';
   d.removeAttribute('aria-busy');
   if (state.loadError) {
-    d.replaceChildren(h('div', { class: 'detail-empty' }, h('p', { text: 'Run details appear once the history loads.' })));
+    d.replaceChildren(h('div', { class: 'detail-empty' }, h('p', { text: 'Run details appear once the history loads. You can still drag and drop any Splunk CSV export here.' })));
     return;
   }
   if (!state.history) {
@@ -914,6 +1022,643 @@ function artifactSection(run) {
     disclosure('Artifact policy', h('p', { class: 'note', text: 'Raw reports are not published; they remain in GitHub Actions for a limited time.' })));
 }
 
+// ---------------------------------------------------------------- splunk csv analysis
+
+const CWV_BADGE_TONE = { good: 'ok', ni: 'warn', poor: 'bad', none: 'neutral' };
+
+function cwvBadge(status) {
+  return badge(splunk.CWV_LABELS[status] ?? '—', CWV_BADGE_TONE[status] ?? 'neutral');
+}
+
+function renderSplunkDetail(rep) {
+  const analysis = splunk.analyzeSplunk(rep.parsed, rep.filters);
+  if (analysis.kind === 'stats') {
+    renderSplunkStatsDetail(rep, analysis);
+    return;
+  }
+  const lcp = analysis.lcp;
+  const cls = analysis.cls;
+  const mob = analysis.breakdowns.device.find((d) => d.key === 'mobile')?.count ?? 0;
+  const desk = analysis.breakdowns.device.find((d) => d.key === 'desktop')?.count ?? 0;
+  const timeText = analysis.timeRange
+    ? splunk.formatFriendlyRange(analysis.timeRange.min, analysis.timeRange.max)
+    : null;
+  const pageTitle = analysis.options.urls.length === 1
+    ? analysis.options.urls[0]
+    : `${analysis.options.urls.length} pages (${analysis.options.urls[0]}, …)`;
+  const pageHref = analysis.options.urls.length === 1
+    ? core.safeExternalUrl(analysis.options.urls[0].startsWith('https://') ? analysis.options.urls[0] : `https://${analysis.options.urls[0]}`)
+    : null;
+  document.title = `${pageTitle} · Splunk analysis`;
+
+  const header = h('header', { class: 'detail-head' },
+    h('h2', { tabindex: '-1', text: pageTitle }),
+    timeText ? h('p', { class: 'splunk-window', text: timeText }) : null,
+    h('p', { class: 'detail-sub' },
+      h('span', {}, 'File ', mono(rep.fileName)),
+      analysis.sampleRates.length ? h('span', { text: `Sample ${analysis.sampleRates.join(', ')}%` }) : null,
+      pageHref ? extLink(pageHref, 'Open page') : null),
+    h('div', { class: 'badges' },
+      lcp ? badge(`P75 LCP ${splunk.formatMsOrSec(lcp.p75)} · ${splunk.CWV_LABELS[lcp.status]}`, CWV_BADGE_TONE[lcp.status]) : null,
+      badge(`${analysis.matchedEvents} of ${analysis.totalEvents} events`),
+      badge('Local browser analysis', 'neutral'),
+      analysis.botCount ? badge(`${analysis.botCount} synthetic`, 'warn') : null,
+      analysis.skippedRows ? badge(`${analysis.skippedRows} non-pageperf skipped`, 'neutral') : null,
+      h('button', { type: 'button', class: 'btn btn-quiet', text: 'Upload another CSV', on: { click: () => els.splunkFile.click() } })));
+
+  const coverageBanner = callout(analysis.coverage.tone, analysis.coverage.title,
+    h('p', { text: analysis.coverage.detail }));
+
+  const kpis = h('div', { class: 'splunk-kpis' },
+    h('div', { class: 'kpi-card' },
+      h('span', { class: 'kpi-label', text: 'P75 LCP (CWV target ≤ 2.5 s)' }),
+      h('div', { class: 'kpi-value' }, h('span', { text: lcp ? splunk.formatMsOrSec(lcp.p75) : '—' }), lcp ? cwvBadge(lcp.status) : null),
+      h('span', { class: 'kpi-sub', text: lcp ? `P50 ${splunk.formatMsOrSec(lcp.p50)} · P95 ${splunk.formatMsOrSec(lcp.p95)} · max ${splunk.formatMsOrSec(lcp.max)}` : 'No LCP values' })),
+    h('div', { class: 'kpi-card' },
+      h('span', { class: 'kpi-label', text: 'Good LCP rate (≤ 2.5 s)' }),
+      h('div', { class: 'kpi-value' }, h('span', { text: lcp ? `${lcp.goodPct.toFixed(1)}%` : '—' })),
+      h('span', { class: 'kpi-sub', text: lcp ? `${lcp.good} good · ${lcp.ni} needs imp. · ${lcp.poor} poor` : '—' })),
+    h('div', { class: 'kpi-card' },
+      h('span', { class: 'kpi-label', text: 'P75 CLS (CWV target ≤ 0.10)' }),
+      h('div', { class: 'kpi-value' }, h('span', { text: cls ? cls.p75.toFixed(3) : '—' }), cls ? cwvBadge(cls.status) : null),
+      h('span', { class: 'kpi-sub', text: cls ? `P50 ${cls.p50.toFixed(3)} · P95 ${cls.p95.toFixed(3)} · max ${cls.max.toFixed(3)}` : 'No CLS values' })),
+    h('div', { class: 'kpi-card' },
+      h('span', { class: 'kpi-label', text: 'Traffic mix' }),
+      h('div', { class: 'kpi-value' }, h('span', { text: `${analysis.matchedEvents}` })),
+      h('span', { class: 'kpi-sub', text: `${desk} desktop · ${mob} mobile${analysis.botCount ? ` · ${analysis.botCount} synthetic` : ''}` })));
+
+  const filterBar = splunkFilterBar(rep, analysis);
+  const insightsSec = analysis.insights.length
+    ? section('Diagnostic analysis',
+      h('div', { class: 'splunk-insights' }, analysis.insights.map((ins) => callout(
+        ins.tone,
+        ins.title,
+        h('p', { text: ins.detail }),
+        ins.action === 'human-only' ? h('button', {
+          type: 'button',
+          class: 'btn',
+          text: 'Show human-only traffic',
+          on: { click: () => { rep.filters = { ...rep.filters, excludeBots: true }; renderSplunkDetail(rep); } },
+        }) : null,
+      ))),
+      disclosure('Milo logWebVitals.js caveats',
+        h('p', { class: 'note', text: 'pageperf logs Chrome-only, consent-gated (C0002), sampled beacons once 1,000 ms after the first LCP candidate. If hero media paints later, an earlier text element or "(Element Was Replaced / Missing)" may be recorded instead.' })))
+    : null;
+
+  const inner = h('div', { class: 'detail-inner' },
+    backButton(),
+    header,
+    coverageBanner,
+    filterBar,
+    kpis,
+    analysis.matchedEvents ? [
+      lcpHistogramSection(analysis),
+      lcpTimelineSection(analysis),
+      elementsChartSection(analysis.breakdowns.element, 'Top LCP elements (P75 & share)'),
+      insightsSec,
+      breakdownsSection(rep, analysis),
+      slowestEventsSection(analysis),
+    ] : callout('warn', 'No events match the current filters',
+      h('p', { text: `All ${analysis.totalEvents} events are hidden by the filters above.` }),
+      h('button', { type: 'button', class: 'btn', text: 'Reset filters', on: { click: () => { rep.filters = { ...splunk.EMPTY_SPLUNK_FILTERS }; renderSplunkDetail(rep); } } })));
+
+  els.detail.replaceChildren(inner);
+}
+
+function renderSplunkStatsDetail(rep, analysis) {
+  const header = h('header', { class: 'detail-head' },
+    h('h2', { tabindex: '-1', text: rep.fileName }),
+    h('p', { class: 'detail-sub' },
+      h('span', { text: `${analysis.rowCount} element group${analysis.rowCount === 1 ? '' : 's'}` }),
+      analysis.totalCount != null ? h('span', { text: `${analysis.totalCount} total events` }) : null),
+    h('div', { class: 'badges' },
+      badge('Aggregated stats CSV', 'neutral'),
+      badge('Local browser analysis', 'neutral'),
+      analysis.approxP75 != null ? badge(`Weighted P75 ${splunk.formatMsOrSec(analysis.approxP75)}`, CWV_BADGE_TONE[splunk.cwvLcpStatus(analysis.approxP75)]) : null,
+      h('button', { type: 'button', class: 'btn btn-quiet', text: 'Upload another CSV', on: { click: () => els.splunkFile.click() } })));
+
+  const insightsSec = analysis.insights.length
+    ? section('Diagnostic analysis',
+      h('div', { class: 'splunk-insights' }, analysis.insights.map((ins) => callout(ins.tone, ins.title, h('p', { text: ins.detail })))))
+    : null;
+
+  const tableRows = analysis.rows.map((r) => h('tr', {},
+    h('th', { scope: 'row', class: 'splunk-el' }, mono(r.element)),
+    analysis.hasDevice ? h('td', { 'data-label': 'Device', text: r.device ?? '—' }) : null,
+    h('td', { class: 'num', 'data-label': 'Count', text: r.count != null ? String(r.count) : '—' }),
+    h('td', { class: 'num', 'data-label': 'Share', text: r.percent != null ? `${r.percent.toFixed(1)}%` : '—' }),
+    h('td', { class: 'num', 'data-label': 'P50', text: splunk.formatMsOrSec(r.p50) }),
+    h('td', { class: 'num', 'data-label': 'P75', text: splunk.formatMsOrSec(r.p75) }),
+    h('td', { class: 'num', 'data-label': 'P95', text: splunk.formatMsOrSec(r.p95) }),
+    h('td', { 'data-label': 'Status' }, cwvBadge(r.cwvStatus))));
+
+  const chartItems = analysis.rows.map((r) => ({
+    key: r.device ? `${r.element} (${r.device})` : r.element,
+    count: r.count ?? 0,
+    percent: r.percent ?? 0,
+    p75: r.p75,
+    status: r.cwvStatus,
+  }));
+
+  els.detail.replaceChildren(h('div', { class: 'detail-inner' },
+    backButton(),
+    header,
+    elementsChartSection(chartItems, 'LCP elements (P75 & share)'),
+    insightsSec,
+    section('LCP element distribution',
+      h('div', { class: 'table-scroll' }, h('table', { class: 'data' },
+        h('thead', {}, h('tr', {},
+          h('th', { scope: 'col', text: 'LCP Element' }),
+          analysis.hasDevice ? h('th', { scope: 'col', text: 'Device' }) : null,
+          h('th', { scope: 'col', class: 'num', text: 'Count' }),
+          h('th', { scope: 'col', class: 'num', text: 'Share %' }),
+          h('th', { scope: 'col', class: 'num', text: 'P50 LCP' }),
+          h('th', { scope: 'col', class: 'num', text: 'P75 LCP' }),
+          h('th', { scope: 'col', class: 'num', text: 'P95 LCP' }),
+          h('th', { scope: 'col', text: 'Status (P75)' }))),
+        h('tbody', {}, tableRows))))));
+}
+
+function splunkFilterBar(rep, analysis) {
+  const f = rep.filters;
+  const update = (patch) => {
+    rep.filters = { ...rep.filters, ...patch };
+    renderSplunkDetail(rep);
+  };
+  const hasAny = f.excludeBots || f.device || f.country || f.manifest || f.url;
+  return h('div', { class: 'splunk-filters', role: 'region', 'aria-label': 'Filter Splunk events' },
+    analysis.botCount ? h('label', { class: 'splunk-check' },
+      h('input', {
+        type: 'checkbox',
+        checked: f.excludeBots,
+        on: { change: (e) => update({ excludeBots: e.target.checked }) },
+      }),
+      `Human-only traffic (excludes ${analysis.botCount} synthetic)`) : null,
+    h('select', { 'aria-label': 'Filter by device', value: f.device, on: { change: (e) => update({ device: e.target.value }) } },
+      h('option', { value: '', text: 'All devices' }),
+      h('option', { value: 'desktop', text: 'Desktop (≥ 768 px)' }),
+      h('option', { value: 'mobile', text: 'Mobile (< 768 px)' })),
+    analysis.options.countries.length > 1 ? h('select', {
+      'aria-label': 'Filter by country',
+      value: f.country,
+      on: { change: (e) => update({ country: e.target.value }) },
+    },
+    h('option', { value: '', text: 'All countries' }),
+    analysis.options.countries.map((c) => h('option', { value: c, text: c.toUpperCase() }))) : null,
+    analysis.options.manifests.length > 1 ? h('select', {
+      'aria-label': 'Filter by MEP manifest',
+      value: f.manifest,
+      on: { change: (e) => update({ manifest: e.target.value }) },
+    },
+    h('option', { value: '', text: 'All MEP manifests' }),
+    analysis.options.manifests.map((m) => h('option', { value: m, text: m === 'none' ? 'No MEP manifest' : m }))) : null,
+    analysis.options.urls.length > 1 ? h('select', {
+      'aria-label': 'Filter by URL',
+      value: f.url,
+      on: { change: (e) => update({ url: e.target.value }) },
+    },
+    h('option', { value: '', text: 'All URLs' }),
+    analysis.options.urls.map((u) => h('option', { value: u, text: u }))) : null,
+    hasAny ? h('button', {
+      type: 'button',
+      class: 'btn btn-quiet',
+      text: 'Reset filters',
+      on: { click: () => { rep.filters = { ...splunk.EMPTY_SPLUNK_FILTERS }; renderSplunkDetail(rep); } },
+    }) : null,
+    h('span', { class: 'note', text: `${analysis.matchedEvents} of ${analysis.totalEvents} shown` }));
+}
+
+function lcpHistogramSection(analysis) {
+  const lcp = analysis.lcp;
+  if (!lcp) return null;
+  const W = 680;
+  const H = 220;
+  const pad = { top: 24, right: 16, bottom: 34, left: 36 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+  const maxCount = Math.max(1, ...analysis.histogram.map((b) => b.count));
+  const stepW = plotW / analysis.histogram.length;
+  const barW = Math.max(12, stepW - 8);
+
+  const svg = svgEl('svg', { class: 'splunk-chart-svg', viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'LCP latency distribution histogram' });
+  // Horizontal gridlines
+  for (const frac of [0.25, 0.5, 0.75, 1]) {
+    const y = pad.top + plotH * (1 - frac);
+    const val = Math.round(maxCount * frac);
+    svg.append(
+      svgEl('line', { class: 'chart-grid', x1: pad.left, y1: y, x2: W - pad.right, y2: y }),
+      svgEl('text', { class: 'chart-label', x: pad.left - 6, y: y + 3, 'text-anchor': 'end' }, String(val)),
+    );
+  }
+  svg.append(svgEl('line', { class: 'chart-axis', x1: pad.left, y1: pad.top + plotH, x2: W - pad.right, y2: pad.top + plotH }));
+
+  // Bars
+  analysis.histogram.forEach((b, i) => {
+    const bh = (b.count / maxCount) * plotH;
+    const x = pad.left + i * stepW + (stepW - barW) / 2;
+    const y = pad.top + plotH - bh;
+    const rect = svgEl('rect', {
+      class: 'chart-bar',
+      'data-zone': b.zone,
+      x: x.toFixed(1),
+      y: y.toFixed(1),
+      width: barW.toFixed(1),
+      height: Math.max(b.count ? 2 : 0, bh).toFixed(1),
+      rx: 3,
+    }, svgEl('title', {}, `${b.label}: ${b.count} event${b.count === 1 ? '' : 's'} (${b.pct.toFixed(1)}%)`));
+    svg.append(rect);
+    if (b.count > 0) {
+      svg.append(svgEl('text', {
+        class: 'chart-label-val',
+        x: (x + barW / 2).toFixed(1),
+        y: Math.max(12, y - 5).toFixed(1),
+        'text-anchor': 'middle',
+      }, String(b.count)));
+    }
+    svg.append(svgEl('text', {
+      class: 'chart-label',
+      x: (x + barW / 2).toFixed(1),
+      y: pad.top + plotH + 16,
+      'text-anchor': 'middle',
+    }, b.label));
+  });
+
+  // CWV threshold markers between buckets 4/5 (2.5s) and 6/7 (4.0s)
+  const goodX = pad.left + 5 * stepW;
+  const poorX = pad.left + 7 * stepW;
+  svg.append(
+    svgEl('line', { class: 'chart-ref', 'data-zone': 'good', x1: goodX, y1: pad.top - 6, x2: goodX, y2: pad.top + plotH }),
+    svgEl('text', { class: 'chart-label-ref', x: goodX, y: pad.top - 10, 'text-anchor': 'middle' }, '2.5s Good'),
+    svgEl('line', { class: 'chart-ref', 'data-zone': 'poor', x1: poorX, y1: pad.top - 6, x2: poorX, y2: pad.top + plotH }),
+    svgEl('text', { class: 'chart-label-ref', x: poorX, y: pad.top - 10, 'text-anchor': 'middle' }, '4.0s Poor'),
+  );
+
+  // Stacked CWV split bar
+  const splitW = 680;
+  const splitSvg = svgEl('svg', { class: 'splunk-chart-svg', viewBox: `0 0 ${splitW} 18`, role: 'img', 'aria-label': 'Core Web Vitals LCP pass-rate split' });
+  const goodW = (lcp.goodPct / 100) * splitW;
+  const niW = (lcp.niPct / 100) * splitW;
+  const poorW = Math.max(0, splitW - goodW - niW);
+  if (goodW > 0) splitSvg.append(svgEl('rect', { class: 'chart-bar', 'data-zone': 'good', x: 0, y: 2, width: goodW.toFixed(1), height: 12, rx: 2 }, svgEl('title', {}, `Good (≤ 2.5s): ${lcp.good} (${lcp.goodPct.toFixed(1)}%)`)));
+  if (niW > 0) splitSvg.append(svgEl('rect', { class: 'chart-bar', 'data-zone': 'ni', x: goodW.toFixed(1), y: 2, width: niW.toFixed(1), height: 12 }, svgEl('title', {}, `Needs Improvement (2.5–4.0s): ${lcp.ni} (${lcp.niPct.toFixed(1)}%)`)));
+  if (poorW > 0) splitSvg.append(svgEl('rect', { class: 'chart-bar', 'data-zone': 'poor', x: (goodW + niW).toFixed(1), y: 2, width: poorW.toFixed(1), height: 12, rx: 2 }, svgEl('title', {}, `Poor (> 4.0s): ${lcp.poor} (${lcp.poorPct.toFixed(1)}%)`)));
+
+  return section('LCP distribution',
+    h('div', { class: 'splunk-chart-wrap' },
+      splitSvg,
+      h('div', { class: 'chart-legend' },
+        h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'good' }), `Good ≤ 2.5 s (${lcp.goodPct.toFixed(1)}%)`),
+        h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'ni' }), `Needs Improvement (${lcp.niPct.toFixed(1)}%)`),
+        h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'poor' }), `Poor > 4.0 s (${lcp.poorPct.toFixed(1)}%)`)),
+      svg));
+}
+
+function lcpTimelineSection(analysis) {
+  const pts = analysis.timeline;
+  if (pts.length < 2 || !analysis.timeRange || analysis.timeRange.max <= analysis.timeRange.min) return null;
+  const W = 680;
+  const H = 220;
+  const pad = { top: 20, right: 20, bottom: 30, left: 48 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  const minT = analysis.timeRange.min;
+  const spanT = analysis.timeRange.max - minT;
+  const maxVal = Math.max(4500, analysis.lcp?.max ?? 4500);
+  // Square-root scale keeps 0-4s readable while still showing extreme tail outliers.
+  const yMaxSqrt = Math.sqrt(maxVal);
+  const yOf = (ms) => pad.top + plotH - (Math.sqrt(Math.max(0, ms)) / yMaxSqrt) * plotH;
+  const xOf = (t) => pad.left + ((t - minT) / spanT) * plotW;
+
+  const svg = svgEl('svg', { class: 'splunk-chart-svg', viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'LCP over time scatter plot' });
+  const ticks = [0, 1000, 2500, 4000, 10000, 20000, 40000].filter((v) => v <= maxVal * 1.05);
+  for (const ms of ticks) {
+    const y = yOf(ms);
+    const isGood = ms === 2500;
+    const isPoor = ms === 4000;
+    svg.append(
+      svgEl('line', {
+        class: isGood || isPoor ? 'chart-ref' : 'chart-grid',
+        'data-zone': isGood ? 'good' : isPoor ? 'poor' : null,
+        x1: pad.left,
+        y1: y.toFixed(1),
+        x2: W - pad.right,
+        y2: y.toFixed(1),
+      }),
+      svgEl('text', { class: 'chart-label', x: pad.left - 6, y: (y + 3).toFixed(1), 'text-anchor': 'end' }, ms === 0 ? '0' : `${(ms / 1000).toFixed(ms === 2500 ? 1 : 0)}s`),
+    );
+  }
+  if (analysis.lcp?.p75 != null) {
+    const p75Y = yOf(analysis.lcp.p75);
+    svg.append(
+      svgEl('line', { class: 'chart-ref', 'data-zone': 'p75', x1: pad.left, y1: p75Y.toFixed(1), x2: W - pad.right, y2: p75Y.toFixed(1) }),
+      svgEl('text', { class: 'chart-label-ref', x: W - pad.right, y: Math.max(12, p75Y - 4).toFixed(1), 'text-anchor': 'end' }, `P75 ${splunk.formatMsOrSec(analysis.lcp.p75)}`),
+    );
+  }
+  svg.append(svgEl('line', { class: 'chart-axis', x1: pad.left, y1: pad.top + plotH, x2: W - pad.right, y2: pad.top + plotH }));
+  const sameDay = core.formatLocalDay(minT) === core.formatLocalDay(analysis.timeRange.max);
+  svg.append(
+    svgEl('text', { class: 'chart-label', x: pad.left, y: pad.top + plotH + 18, 'text-anchor': 'start' },
+      sameDay ? splunk.formatFriendlyTime(minT) : `${core.formatLocalDay(minT)} ${splunk.formatFriendlyTime(minT)}`),
+    svgEl('text', { class: 'chart-label', x: W - pad.right, y: pad.top + plotH + 18, 'text-anchor': 'end' },
+      sameDay ? splunk.formatFriendlyTime(analysis.timeRange.max, { withTz: true }) : `${core.formatLocalDay(analysis.timeRange.max)} ${splunk.formatFriendlyTime(analysis.timeRange.max, { withTz: true })}`),
+  );
+
+  let pinnedIndex = null;
+  const inspector = h('div', { class: 'event-inspector', 'aria-live': 'polite' });
+  const dots = [];
+
+  const renderInspector = (pt, pinned) => {
+    for (const d of dots) {
+      const idx = Number(d.getAttribute('data-index'));
+      if (pinned && idx === pinnedIndex) d.setAttribute('data-selected', 'true');
+      else d.removeAttribute('data-selected');
+    }
+    if (!pt) {
+      inspector.replaceChildren(h('p', { class: 'note', text: 'Hover or click any dot on the timeline to inspect why that load was fast or slow (referer, downlink, viewport, LCP element, MEP manifests, and user agent).' }));
+      return;
+    }
+    const vp = pt.windowWidth && pt.windowHeight ? `${pt.windowWidth}×${pt.windowHeight}` : null;
+    const refererHref = pt.referer ? core.safeExternalUrl(pt.referer) : null;
+    const foldText = pt.lcpSectionOne === true ? 'Section 1 (above fold)' : pt.lcpSectionOne === false ? 'Below Section 1 (off-fold)' : 'Unknown';
+    const loggedInText = pt.loggedIn === true ? 'Signed in' : pt.loggedIn === false ? 'Signed out' : 'Unknown';
+    const manifestText = pt.manifests?.length ? pt.manifests.map((m) => m.label).join(' · ') : 'None';
+
+    inspector.replaceChildren(
+      h('div', { class: 'event-inspector-head' },
+        h('div', { class: 'event-inspector-title' },
+          h('span', { text: `LCP ${splunk.formatMsOrSec(pt.lcp)}` }),
+          cwvBadge(pt.status),
+          pt.cls != null ? badge(`CLS ${pt.cls.toFixed(3)}`, CWV_BADGE_TONE[splunk.cwvClsStatus(pt.cls)]) : null,
+          pt.bot ? badge(pt.bot, 'warn') : null,
+          h('span', { class: 'sub', text: `${core.formatDateTime(pt.timestamp)} (${splunk.formatFriendlyTime(pt.timestamp, { withTz: true })})` })),
+        pinned ? h('button', {
+          type: 'button',
+          class: 'btn btn-quiet',
+          text: 'Clear selection',
+          on: { click: () => { pinnedIndex = null; renderInspector(null, false); } },
+        }) : h('span', { class: 'note', text: 'Click dot to pin' })),
+      pt.clues?.length ? h('div', { class: 'badges' }, pt.clues.map((c) => badge(c, pt.status === 'poor' ? 'warn' : 'neutral'))) : null,
+      h('dl', { class: 'kv' },
+        kv('LCP Element', mono(pt.lcpEl)),
+        kv('Element Type & Fold', `${pt.lcpElType ?? '—'} · ${foldText}`),
+        kv('Device & OS', [pt.device, vp, pt.os !== 'unknown' ? pt.os : null, pt.chromeVer ? `Chrome ${pt.chromeVer}` : null].filter(Boolean).join(' · ')),
+        kv('Network & Country', [pt.country ? pt.country.toUpperCase() : null, pt.downlink != null ? `${pt.downlink} Mbps downlink` : 'Downlink unknown', loggedInText].filter(Boolean).join(' · ')),
+        kv('MEP Manifests', manifestText),
+        pt.referer ? kv('Referer', refererHref ? extLink(refererHref, pt.referer, 'break') : h('span', { class: 'break', text: pt.referer })) : null,
+        pt.userAgent ? kv('User-Agent', h('span', { class: 'mono break', text: pt.userAgent })) : null));
+  };
+
+  for (const p of pts) {
+    const cx = xOf(p.timestamp).toFixed(1);
+    const cy = yOf(p.lcp).toFixed(1);
+    const tip = `${splunk.formatFriendlyTime(p.timestamp, { withTz: true })} · LCP ${splunk.formatMsOrSec(p.lcp)}${p.cls != null ? ` · CLS ${p.cls.toFixed(3)}` : ''} · ${p.device} · ${p.country.toUpperCase()}${p.bot ? ` · ${p.bot}` : ''}`;
+    const dot = svgEl('circle', {
+      class: 'chart-dot',
+      'data-zone': p.status,
+      'data-bot': p.bot ? 'true' : null,
+      'data-index': p.index,
+      tabindex: '0',
+      role: 'button',
+      'aria-label': `Inspect event: ${tip}`,
+      cx,
+      cy,
+      r: p.bot ? 4.5 : 4,
+    }, svgEl('title', {}, tip));
+    dot.addEventListener('mouseenter', () => {
+      if (pinnedIndex == null) renderInspector(p, false);
+    });
+    dot.addEventListener('focus', () => {
+      if (pinnedIndex == null) renderInspector(p, false);
+    });
+    dot.addEventListener('click', () => {
+      pinnedIndex = pinnedIndex === p.index ? null : p.index;
+      renderInspector(pinnedIndex == null ? null : p, pinnedIndex != null);
+    });
+    dot.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        pinnedIndex = pinnedIndex === p.index ? null : p.index;
+        renderInspector(pinnedIndex == null ? null : p, pinnedIndex != null);
+      }
+    });
+    dots.push(dot);
+    svg.append(dot);
+  }
+  svg.addEventListener('mouseleave', () => {
+    if (pinnedIndex == null) renderInspector(null, false);
+  });
+  renderInspector(null, false);
+
+  return section('LCP timeline',
+    h('div', { class: 'splunk-chart-wrap' },
+      svg,
+      h('div', { class: 'chart-legend' },
+        h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'good' }), 'Good (≤ 2.5 s)'),
+        h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'ni' }), 'Needs Imp. (2.5–4.0 s)'),
+        h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'poor' }), 'Poor (> 4.0 s)'),
+        analysis.botCount ? h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'bot' }), 'Synthetic / bot UA') : null,
+        h('span', { class: 'note', text: 'Square-root vertical scale so both typical loads and tail spikes stay visible.' })),
+      inspector));
+}
+
+function elementsChartSection(rows, title) {
+  const shown = rows.filter((r) => r.p75 != null).slice(0, 8);
+  if (!shown.length) return null;
+  const W = 680;
+  const rowH = 28;
+  const pad = { top: 22, right: 86, bottom: 22, left: 210 };
+  const H = pad.top + pad.bottom + shown.length * rowH;
+  const plotW = W - pad.left - pad.right;
+  const maxP75 = Math.max(4500, ...shown.map((r) => r.p75));
+  const xOf = (ms) => pad.left + (ms / maxP75) * plotW;
+
+  const svg = svgEl('svg', { class: 'splunk-chart-svg', viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': title });
+  const goodX = xOf(splunk.LCP_GOOD_MS);
+  const poorX = xOf(splunk.LCP_POOR_MS);
+  svg.append(
+    svgEl('line', { class: 'chart-ref', 'data-zone': 'good', x1: goodX.toFixed(1), y1: pad.top - 4, x2: goodX.toFixed(1), y2: H - pad.bottom }),
+    svgEl('text', { class: 'chart-label-ref', x: goodX.toFixed(1), y: pad.top - 8, 'text-anchor': 'middle' }, '2.5s'),
+    svgEl('line', { class: 'chart-ref', 'data-zone': 'poor', x1: poorX.toFixed(1), y1: pad.top - 4, x2: poorX.toFixed(1), y2: H - pad.bottom }),
+    svgEl('text', { class: 'chart-label-ref', x: poorX.toFixed(1), y: pad.top - 8, 'text-anchor': 'middle' }, '4.0s'),
+  );
+
+  shown.forEach((r, idx) => {
+    const y = pad.top + idx * rowH;
+    const bw = Math.max(3, (r.p75 / maxP75) * plotW);
+    const shortLabel = r.key.length > 30 ? `${r.key.slice(0, 29)}…` : r.key;
+    svg.append(
+      svgEl('text', { class: 'chart-label', x: pad.left - 8, y: y + 16, 'text-anchor': 'end' }, shortLabel, svgEl('title', {}, r.key)),
+      svgEl('rect', {
+        class: 'chart-bar',
+        'data-zone': r.status,
+        x: pad.left,
+        y: y + 5,
+        width: bw.toFixed(1),
+        height: 14,
+        rx: 3,
+      }, svgEl('title', {}, `${r.key}: P75 ${splunk.formatMsOrSec(r.p75)} · ${r.count} events (${r.percent.toFixed(1)}%)`)),
+      svgEl('text', {
+        class: 'chart-label-val',
+        x: (pad.left + bw + 6).toFixed(1),
+        y: y + 16,
+      }, `${splunk.formatMsOrSec(r.p75)} (${r.percent.toFixed(0)}%)`),
+    );
+  });
+
+  return section(title, svg);
+}
+
+function breakdownTable(rows, firstColLabel, { showElementMeta = false, limit = 30 } = {}) {
+  if (!rows.length) return h('p', { class: 'note', text: 'No data in this breakdown.' });
+  return h('div', { class: 'table-scroll' }, h('table', { class: 'data' },
+    h('thead', {}, h('tr', {},
+      h('th', { scope: 'col', text: firstColLabel }),
+      showElementMeta ? h('th', { scope: 'col', text: 'Type' }) : null,
+      h('th', { scope: 'col', class: 'num', text: 'Count' }),
+      h('th', { scope: 'col', class: 'num', text: 'Share %' }),
+      h('th', { scope: 'col', class: 'num', text: 'P50 LCP' }),
+      h('th', { scope: 'col', class: 'num', text: 'P75 LCP' }),
+      h('th', { scope: 'col', class: 'num', text: 'P95 LCP' }),
+      h('th', { scope: 'col', class: 'num', text: 'Good %' }),
+      h('th', { scope: 'col', text: 'Status' }))),
+    h('tbody', {}, rows.slice(0, limit).map((r) => h('tr', {},
+      h('th', { scope: 'row', class: showElementMeta ? 'splunk-el' : null }, showElementMeta ? mono(r.key) : r.key),
+      showElementMeta ? h('td', { text: `${r.extra?.type ?? '—'}${r.extra?.sectionOne === false ? ' (below fold)' : ''}` }) : null,
+      h('td', { class: 'num', text: String(r.count) }),
+      h('td', { class: 'num', text: `${r.percent.toFixed(1)}%` }),
+      h('td', { class: 'num', text: splunk.formatMsOrSec(r.p50) }),
+      h('td', { class: 'num', text: splunk.formatMsOrSec(r.p75) }),
+      h('td', { class: 'num', text: splunk.formatMsOrSec(r.p95) }),
+      h('td', { class: 'num', text: r.goodPct != null ? `${r.goodPct.toFixed(0)}%` : '—' }),
+      h('td', {}, cwvBadge(r.status)))))));
+}
+
+function breakdownsSection(rep, analysis) {
+  const tabs = [
+    ['element', 'LCP Elements', () => breakdownTable(analysis.breakdowns.element, 'LCP Element', { showElementMeta: true })],
+    ['device', 'Device', () => breakdownTable(analysis.breakdowns.device, 'Device')],
+    ['country', 'Country', () => breakdownTable(analysis.breakdowns.country.map((r) => ({ ...r, key: r.key.toUpperCase() })), 'Country')],
+    ['network', 'Network', () => breakdownTable(analysis.breakdowns.network, 'Downlink')],
+    ['manifest', 'MEP Manifests', () => breakdownTable(analysis.breakdowns.manifest, 'Manifest & Selected')],
+    ['os', 'OS & Auth', () => h('div', { class: 'splunk-chart-wrap' },
+      breakdownTable(analysis.breakdowns.os, 'OS'),
+      breakdownTable(analysis.breakdowns.loggedIn, 'Auth state'))],
+    ...(analysis.breakdowns.url.length > 1 ? [['url', 'URLs', () => breakdownTable(analysis.breakdowns.url, 'URL')]] : []),
+  ];
+  const current = tabs.some(([k]) => k === rep.activeTab) ? rep.activeTab : 'element';
+  const panel = h('div', {});
+  const renderTab = (key) => {
+    rep.activeTab = key;
+    for (const btn of tabBar.querySelectorAll('.tab-btn')) {
+      btn.setAttribute('aria-selected', btn.dataset.kind === key ? 'true' : 'false');
+    }
+    const found = tabs.find(([k]) => k === key) ?? tabs[0];
+    panel.replaceChildren(found[2]());
+  };
+  const tabBar = h('div', { class: 'splunk-tabs', role: 'tablist', 'aria-label': 'Splunk breakdown dimensions' },
+    tabs.map(([key, label]) => h('button', {
+      type: 'button',
+      class: 'tab-btn',
+      role: 'tab',
+      'data-kind': key,
+      'aria-selected': key === current ? 'true' : 'false',
+      on: { click: () => renderTab(key) },
+    }, label)));
+  renderTab(current);
+  return section('Breakdowns', tabBar, panel);
+}
+
+function slowestEventsSection(analysis) {
+  if (!analysis.slowest.length) return null;
+  return section('Slowest events (tail inspection)',
+    h('p', { class: 'note', text: `Top ${analysis.slowest.length} slowest loads in the filtered dataset.` }),
+    h('div', { class: 'table-scroll' }, h('table', { class: 'data compact' },
+      h('thead', {}, h('tr', {},
+        h('th', { scope: 'col', text: 'Time (local)' }),
+        h('th', { scope: 'col', class: 'num', text: 'LCP' }),
+        h('th', { scope: 'col', class: 'num', text: 'CLS' }),
+        h('th', { scope: 'col', text: 'Device' }),
+        h('th', { scope: 'col', text: 'Country' }),
+        h('th', { scope: 'col', class: 'num', text: 'Downlink' }),
+        h('th', { scope: 'col', text: 'LCP Element' }),
+        h('th', { scope: 'col', text: 'Flags / Manifest' }))),
+      h('tbody', {}, analysis.slowest.map((ev) => {
+        const flags = [];
+        if (ev.bot) flags.push(badge(ev.bot, 'warn'));
+        if (ev.lcpSectionOne === false) flags.push(badge('below fold', 'neutral'));
+        for (const m of ev.manifests) flags.push(badge(m.label, 'neutral'));
+        return h('tr', {},
+          h('td', { text: ev.timestamp != null ? core.formatDateTime(ev.timestamp) : '—' }),
+          h('td', { class: 'num', text: splunk.formatMsOrSec(ev.lcp) }),
+          h('td', { class: 'num', text: ev.cls != null ? ev.cls.toFixed(3) : '—' }),
+          h('td', { text: ev.windowWidth && ev.windowHeight ? `${ev.device} (${ev.windowWidth}×${ev.windowHeight})` : ev.device }),
+          h('td', { text: ev.country.toUpperCase() }),
+          h('td', { class: 'num', text: ev.downlink != null ? `${ev.downlink} Mbps` : '—' }),
+          h('td', { class: 'splunk-el' }, mono(ev.lcpEl)),
+          h('td', {}, flags.length ? h('div', { class: 'badges' }, flags) : '—'));
+      })))));
+}
+
+// ---------------------------------------------------------------- file upload & drag-drop
+
+async function handleSplunkFiles(fileList) {
+  const files = [...(fileList ?? [])];
+  if (!files.length) return;
+  let lastValid = null;
+  let lastErr = null;
+  for (const file of files) {
+    if (!splunk.isCsvFile(file)) {
+      lastErr = {
+        fileName: file.name || 'Dropped file',
+        message: `"${file.name || 'This file'}" is not a CSV file. Please upload or drop a Splunk CSV export (.csv).`,
+      };
+      continue;
+    }
+    try {
+      const text = await file.text();
+      const parsed = splunk.parseSplunkCsv(text, file.name || 'splunk-export.csv');
+      const analysis = splunk.analyzeSplunk(parsed);
+      const summaryTitle = analysis.kind === 'stats'
+        ? (file.name || 'splunk-stats.csv')
+        : analysis.options.urls.length === 1
+          ? analysis.options.urls[0]
+          : `${analysis.options.urls.length} pages (${analysis.options.urls[0]})`;
+      const summaryWindow = analysis.kind === 'events' && analysis.timeRange
+        ? splunk.formatFriendlyRange(analysis.timeRange.min, analysis.timeRange.max)
+        : '';
+      const rep = {
+        id: `splunk-${++splunkSeq}`,
+        fileName: file.name || 'splunk-export.csv',
+        summaryTitle,
+        summaryWindow,
+        uploadedAt: Date.now(),
+        parsed,
+        filters: { ...splunk.EMPTY_SPLUNK_FILTERS },
+        activeTab: 'element',
+        summaryLcpP75: analysis.kind === 'stats' ? analysis.approxP75 : analysis.lcp?.p75 ?? null,
+      };
+      state.splunkReports.unshift(rep);
+      lastValid = rep;
+    } catch (e) {
+      lastErr = {
+        fileName: file.name || 'splunk-export.csv',
+        message: e?.message ?? String(e),
+      };
+    }
+  }
+  if (lastValid) {
+    state.splunkError = null;
+    state.activeSplunkId = lastValid.id;
+  } else if (lastErr) {
+    state.splunkError = lastErr;
+  }
+  render();
+  if (!wide.matches) window.scrollTo({ top: 0 });
+  const heading = els.detail.querySelector('h2');
+  (heading ?? els.detail).focus({ preventScroll: wide.matches });
+}
+
 // ---------------------------------------------------------------- wiring
 
 let qTimer;
@@ -929,6 +1674,43 @@ window.addEventListener('popstate', () => {
   render();
 });
 wide.addEventListener('change', render);
+
+els.splunkUploadBtn.addEventListener('click', () => els.splunkFile.click());
+els.splunkFile.addEventListener('change', (e) => {
+  handleSplunkFiles(e.target.files);
+  e.target.value = '';
+});
+
+let dragDepth = 0;
+const hasDraggedFiles = (e) => [...(e.dataTransfer?.types ?? [])].includes('Files');
+const hideDropOverlay = () => {
+  dragDepth = 0;
+  els.dropOverlay.hidden = true;
+};
+
+document.addEventListener('dragenter', (e) => {
+  if (!hasDraggedFiles(e)) return;
+  e.preventDefault();
+  dragDepth += 1;
+  els.dropOverlay.hidden = false;
+});
+document.addEventListener('dragover', (e) => {
+  if (!hasDraggedFiles(e)) return;
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+});
+document.addEventListener('dragleave', (e) => {
+  if (!hasDraggedFiles(e)) return;
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) els.dropOverlay.hidden = true;
+});
+document.addEventListener('drop', (e) => {
+  if (!hasDraggedFiles(e)) return;
+  e.preventDefault();
+  hideDropOverlay();
+  handleSplunkFiles(e.dataTransfer?.files);
+});
+window.addEventListener('blur', hideDropOverlay);
 
 readLocation();
 loadHistory();

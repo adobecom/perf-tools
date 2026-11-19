@@ -135,6 +135,7 @@ a:hover { text-decoration-color: currentColor; }
 .brand h1 { font-size: 16px; font-weight: 650; letter-spacing: -0.025em; white-space: nowrap; }
 .brand-repo { color: var(--ink-3); font-size: 13px; white-space: nowrap; }
 .topbar-meta { margin-left: auto; color: var(--ink-2); font-size: 13px; white-space: nowrap; }
+.topbar-nav { display: flex; align-items: center; gap: 10px; }
 .topbar-nav a { font-size: 13px; white-space: nowrap; }
 
 /* ------------------------------------------------------------------ layout */
@@ -340,6 +341,7 @@ table.compact th, table.compact td { padding: 6px 10px; }
 
 .detail-head { display: grid; gap: 12px; padding: 0 2px 4px; }
 .detail-head h2 { font-size: 24px; font-weight: 640; letter-spacing: -0.035em; line-height: 1.3; overflow-wrap: anywhere; outline: none; }
+.splunk-window { font-size: 15px; font-weight: 560; color: var(--ink); letter-spacing: -0.01em; }
 .detail-sub { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--ink-2); font-size: 13px; }
 
 .callout {
@@ -538,3 +540,225 @@ table.compact th, table.compact td { padding: 6px 10px; }
   .kv dt { border-bottom: 0; padding-bottom: 0; background: transparent; font-size: 12px; }
   .stats { grid-template-columns: repeat(2, minmax(0, auto)); }
 }
+
+/* ------------------------------------------------------------------ splunk csv analyzer */
+
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: color-mix(in oklch, var(--bg) 82%, transparent);
+  backdrop-filter: blur(4px);
+}
+.drop-overlay[hidden] { display: none; }
+.drop-card {
+  pointer-events: none;
+  display: grid;
+  gap: 8px;
+  max-width: 460px;
+  width: 100%;
+  padding: 36px 28px;
+  text-align: center;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 12px 32px color-mix(in oklch, var(--ink) 12%, transparent);
+}
+.drop-title { font-size: 18px; font-weight: 650; letter-spacing: -0.02em; }
+.drop-sub { color: var(--ink-2); font-size: 13px; }
+
+.splunk-list {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.splunk-list[hidden] { display: none; }
+.splunk-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 20px 6px;
+  font-size: 11px;
+  font-weight: 620;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.splunk-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 10px 20px;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+  transition: background-color 150ms var(--ease);
+}
+.splunk-item:hover { background: var(--surface); }
+.splunk-item.is-selected {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 var(--accent);
+}
+.splunk-item-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.splunk-item-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 560;
+}
+.splunk-item-remove {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.splunk-item-remove:hover { color: var(--bad); background: var(--bad-soft); }
+
+.splunk-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.kpi-card {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.kpi-label { font-size: 12px; color: var(--ink-2); }
+.kpi-value { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 22px; font-weight: 650; letter-spacing: -0.025em; }
+.kpi-sub { font-size: 12px; color: var(--ink-3); }
+
+.splunk-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.splunk-filters select { width: auto; max-width: 260px; }
+.splunk-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.splunk-filters .note { margin-left: auto; }
+
+.splunk-insights { display: grid; gap: 10px; }
+.splunk-insights .callout + .callout { margin-top: 0; }
+
+.splunk-chart-wrap { display: grid; gap: 12px; }
+.splunk-chart-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-axis { stroke: var(--line-strong); stroke-width: 1; }
+.chart-grid { stroke: var(--line); stroke-width: 1; }
+.chart-ref { stroke: var(--ink-3); stroke-width: 1.25; stroke-dasharray: 4 3; }
+.chart-ref[data-zone="good"] { stroke: var(--ok); }
+.chart-ref[data-zone="poor"] { stroke: var(--bad); }
+.chart-ref[data-zone="p75"] { stroke: var(--accent); stroke-dasharray: none; stroke-width: 1.5; }
+.chart-label { fill: var(--ink-3); font-size: 11px; font-family: var(--font); }
+.chart-label-val { fill: var(--ink-2); font-size: 10px; font-family: var(--mono); }
+.chart-label-ref { fill: var(--ink-2); font-size: 10px; font-weight: 600; font-family: var(--font); }
+.chart-bar[data-zone="good"] { fill: var(--ok); }
+.chart-bar[data-zone="ni"] { fill: var(--warn); }
+.chart-bar[data-zone="poor"] { fill: var(--bad); }
+.chart-dot { fill-opacity: 0.78; stroke-width: 1.2; cursor: pointer; transition: r 120ms var(--ease); }
+.chart-dot:hover, .chart-dot:focus-visible { fill-opacity: 1; stroke: var(--ink); stroke-width: 2; outline: none; }
+.chart-dot[data-selected="true"] { fill-opacity: 1; stroke: var(--accent); stroke-width: 2.5; }
+.chart-dot[data-zone="good"] { fill: var(--ok); stroke: var(--ok); }
+.chart-dot[data-zone="ni"] { fill: var(--warn); stroke: var(--warn); }
+.chart-dot[data-zone="poor"] { fill: var(--bad); stroke: var(--bad); }
+.chart-dot[data-bot="true"] { fill: transparent; stroke-width: 1.8; }
+
+.event-inspector {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.event-inspector-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.event-inspector-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-weight: 600; }
+.event-inspector .kv { font-size: 12px; }
+.event-inspector .kv dt, .event-inspector .kv dd { padding: 5px 10px; }
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.legend-swatch[data-zone="good"] { background: var(--ok); }
+.legend-swatch[data-zone="ni"] { background: var(--warn); }
+.legend-swatch[data-zone="poor"] { background: var(--bad); }
+.legend-swatch[data-zone="bot"] { border: 2px solid var(--ink-2); border-radius: 999px; background: transparent; }
+
+.splunk-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tab-btn {
+  height: 30px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 540;
+  cursor: pointer;
+}
+.tab-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+.tab-btn[aria-selected="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.splunk-el { max-width: 420px; overflow-wrap: anywhere; }
+
+@media (max-width: 767.98px) {
+  .splunk-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .splunk-filters select { width: 100%; max-width: none; }
+}
+@media (max-width: 639.98px) {
+  .topbar-nav a { display: none; }
+}
+
+

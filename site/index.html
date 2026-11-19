@@ -22,6 +22,8 @@
     </div>
     <p class="topbar-meta" id="data-meta" aria-live="polite">Loading history…</p>
     <nav class="topbar-nav" aria-label="Project">
+      <button type="button" class="btn btn-quiet" id="splunk-upload-btn">Analyze Splunk CSV</button>
+      <input type="file" id="splunk-file" accept=".csv,text/csv" hidden>
       <a href="https://github.com/adobecom/perf-tools/actions/workflows/perf-ab.yml" rel="noopener noreferrer">Workflow on GitHub Actions</a>
     </nav>
   </header>
@@ -32,6 +34,7 @@
         <h2 id="history-title">Runs</h2>
         <p class="history-count" id="history-count" aria-live="polite"></p>
       </div>
+      <div class="splunk-list" id="splunk-list" hidden></div>
       <form class="filters" id="filters" role="search" aria-label="Filter runs" novalidate>
         <label class="field field-q">
           <span class="field-label">Page URL or name</span>
@@ -73,5 +76,12 @@
   <noscript>
     <p class="noscript">This read-only dashboard needs JavaScript to read the published history. The raw data is at <a href="data/index.json">data/index.json</a>.</p>
   </noscript>
+
+  <div class="drop-overlay" id="drop-overlay" hidden aria-hidden="true">
+    <div class="drop-card">
+      <p class="drop-title">Drop Splunk CSV to analyze</p>
+      <p class="drop-sub">Processed 100% locally in your browser — raw events or stats tables.</p>
+    </div>
+  </div>
 </body>
 </html>
