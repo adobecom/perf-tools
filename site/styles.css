@@ -650,6 +650,37 @@ table.compact th, table.compact td { padding: 6px 10px; }
 .kpi-label { font-size: 12px; color: var(--ink-2); }
 .kpi-value { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 22px; font-weight: 650; letter-spacing: -0.025em; }
 .kpi-sub { font-size: 12px; color: var(--ink-3); }
+.ratio-bar-svg { display: block; width: 100%; height: 8px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.ratio-seg-desktop { fill: var(--accent); }
+.ratio-seg-mobile { fill: var(--warn); }
+
+.device-radio-group {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.device-radio-btn {
+  height: 34px;
+  padding: 0 11px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 540;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.device-radio-btn:last-child { border-right: 0; }
+.device-radio-btn:hover { color: var(--ink); background: var(--surface); }
+.device-radio-btn[aria-checked="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 620;
+}
 
 .splunk-filters {
   display: flex;
@@ -808,6 +839,16 @@ table.compact th, table.compact td { padding: 6px 10px; }
 .legend-swatch[data-zone="ni"] { background: var(--warn); }
 .legend-swatch[data-zone="poor"] { background: var(--bad); }
 .legend-swatch[data-zone="bot"] { border: 2px solid var(--ink-2); border-radius: 999px; background: transparent; }
+.legend-line { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid var(--accent); }
+.legend-line[data-series="p50"] { border-top: 2px dashed var(--ink-3); }
+
+.trend-line-p75 { fill: none; stroke: var(--accent); stroke-width: 2.25; stroke-linejoin: round; stroke-linecap: round; }
+.trend-line-p50 { fill: none; stroke: var(--ink-3); stroke-width: 1.5; stroke-dasharray: 4 3; stroke-linejoin: round; }
+.trend-dot { stroke: var(--surface); stroke-width: 1.5; cursor: pointer; }
+.trend-dot[data-zone="good"] { fill: var(--ok); }
+.trend-dot[data-zone="ni"] { fill: var(--warn); }
+.trend-dot[data-zone="poor"] { fill: var(--bad); }
+.trend-dot:hover, .trend-dot:focus-visible { stroke: var(--ink); stroke-width: 2; outline: none; }
 
 .splunk-tabs {
   display: flex;

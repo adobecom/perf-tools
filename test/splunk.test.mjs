@@ -104,3 +104,21 @@ test('buildSplunkUrl builds valid Splunk search URLs for time ranges and locale 
   assert.equal(allLocalesUrl.searchParams.get('earliest'), '-7d@h');
   assert.match(allLocalesUrl.searchParams.get('q'), /"url=www\.adobe\.com\/\*\/products\/photoshop\.html"/);
 });
+
+test('buildTrendBuckets aggregates timeline points into ordered P50/P75/P95 buckets', () => {
+  const t0 = Date.parse('2026-11-19T12:00:00Z');
+  const pts = [
+    { timestamp: t0, lcp: 800 },
+    { timestamp: t0 + 60_000, lcp: 1200 },
+    { timestamp: t0 + 1800_000, lcp: 3200 },
+    { timestamp: t0 + 1860_000, lcp: 4200 },
+  ];
+  const { bucketMs, buckets } = splunk.buildTrendBuckets(pts, { min: t0, max: t0 + 1860_000 });
+  assert.ok(bucketMs >= 60_000);
+  assert.equal(buckets.length, 2);
+  assert.equal(buckets[0].count, 2);
+  assert.equal(buckets[0].status, 'good');
+  assert.equal(buckets[1].count, 2);
+  assert.equal(buckets[1].status, 'ni');
+  assert.ok(buckets[1].p75 > buckets[0].p75);
+});

@@ -47,8 +47,8 @@ let splunkSeq = 0;
 
 const ATTRS = new Set([
   'id', 'role', 'title', 'colspan', 'rowspan', 'scope', 'type', 'datetime', 'tabindex', 'hidden', 'value', 'lang', 'target',
-  'aria-label', 'aria-live', 'aria-busy', 'aria-current', 'aria-describedby', 'aria-labelledby', 'aria-hidden', 'aria-sort', 'aria-selected',
-  'data-label', 'data-tone', 'data-run', 'data-state', 'data-verdict', 'data-dir', 'data-kind', 'data-zone', 'data-bot', 'aria-pressed', 'disabled',
+  'aria-label', 'aria-live', 'aria-busy', 'aria-current', 'aria-describedby', 'aria-labelledby', 'aria-hidden', 'aria-sort', 'aria-selected', 'aria-checked',
+  'data-label', 'data-tone', 'data-run', 'data-state', 'data-verdict', 'data-dir', 'data-kind', 'data-zone', 'data-bot', 'data-series', 'aria-pressed', 'disabled',
   'placeholder', 'autocomplete', 'spellcheck', 'name',
 ]);
 
@@ -1155,6 +1155,7 @@ function cwvBadge(status) {
 }
 
 function renderSplunkDetail(rep) {
+  sectionIds = new Map();
   const analysis = splunk.analyzeSplunk(rep.parsed, rep.filters);
   if (analysis.kind === 'stats') {
     renderSplunkStatsDetail(rep, analysis);
@@ -1162,8 +1163,18 @@ function renderSplunkDetail(rep) {
   }
   const lcp = analysis.lcp;
   const cls = analysis.cls;
-  const mob = analysis.breakdowns.device.find((d) => d.key === 'mobile')?.count ?? 0;
-  const desk = analysis.breakdowns.device.find((d) => d.key === 'desktop')?.count ?? 0;
+  const mobEntry = analysis.breakdowns.device.find((d) => d.key === 'mobile');
+  const deskEntry = analysis.breakdowns.device.find((d) => d.key === 'desktop');
+  const mob = mobEntry?.count ?? 0;
+  const desk = deskEntry?.count ?? 0;
+  const devTotal = desk + mob;
+  const deskPct = devTotal ? Math.round((desk / devTotal) * 100) : 0;
+  const mobPct = devTotal ? 100 - deskPct : 0;
+  const ratioBar = devTotal
+    ? svgEl('svg', { class: 'ratio-bar-svg', viewBox: '0 0 100 8', role: 'img', 'aria-label': `${deskPct}% desktop, ${mobPct}% mobile` },
+      desk > 0 ? svgEl('rect', { class: 'ratio-seg-desktop', x: 0, y: 0, width: deskPct, height: 8, rx: mob === 0 ? 4 : 2 }) : null,
+      mob > 0 ? svgEl('rect', { class: 'ratio-seg-mobile', x: deskPct, y: 0, width: mobPct, height: 8, rx: desk === 0 ? 4 : 2 }) : null)
+    : null;
   const timeText = analysis.timeRange
     ? splunk.formatFriendlyRange(analysis.timeRange.min, analysis.timeRange.max)
     : null;
@@ -1208,9 +1219,11 @@ function renderSplunkDetail(rep) {
       h('div', { class: 'kpi-value' }, h('span', { text: cls ? cls.p75.toFixed(3) : '—' }), cls ? cwvBadge(cls.status) : null),
       h('span', { class: 'kpi-sub', text: cls ? `P50 ${cls.p50.toFixed(3)} · P95 ${cls.p95.toFixed(3)} · max ${cls.max.toFixed(3)}` : 'No CLS values' })),
     h('div', { class: 'kpi-card' },
-      h('span', { class: 'kpi-label', text: 'Traffic mix' }),
-      h('div', { class: 'kpi-value' }, h('span', { text: `${analysis.matchedEvents}` })),
-      h('span', { class: 'kpi-sub', text: `${desk} desktop · ${mob} mobile${analysis.botCount ? ` · ${analysis.botCount} synthetic` : ''}` })));
+      h('span', { class: 'kpi-label', text: 'Desktop / Mobile ratio' }),
+      h('div', { class: 'kpi-value' },
+        h('span', { text: devTotal ? `${deskPct}% / ${mobPct}%` : `${analysis.matchedEvents}` })),
+      ratioBar,
+      h('span', { class: 'kpi-sub', text: `${desk} desktop${deskEntry?.p75 != null ? ` (${splunk.formatMsOrSec(deskEntry.p75)})` : ''} · ${mob} mobile${mobEntry?.p75 != null ? ` (${splunk.formatMsOrSec(mobEntry.p75)})` : ''}` })));
 
   const filterBar = splunkFilterBar(rep, analysis);
   const insightsSec = analysis.insights.length
@@ -1238,6 +1251,7 @@ function renderSplunkDetail(rep) {
     kpis,
     analysis.matchedEvents ? [
       lcpHistogramSection(analysis),
+    lcpTrendSection(analysis),
     lcpTimelineSection(rep, analysis),
       elementsChartSection(analysis.breakdowns.element, 'Top LCP elements (P75 & share)'),
       insightsSec,
@@ -1251,6 +1265,7 @@ function renderSplunkDetail(rep) {
 }
 
 function renderSplunkStatsDetail(rep, analysis) {
+  sectionIds = new Map();
   const header = h('header', { class: 'detail-head' },
     h('h2', { tabindex: '-1', text: rep.fileName }),
     h('p', { class: 'detail-sub' },
@@ -1312,6 +1327,20 @@ function splunkFilterBar(rep, analysis) {
     renderSplunkDetail(rep);
   };
   const hasAny = !f.excludeBots || f.device || f.country || f.manifest || f.url;
+  const counts = analysis.deviceScopeCounts ?? { all: analysis.totalEvents, desktop: 0, mobile: 0 };
+  const deviceRadios = h('div', { class: 'device-radio-group', role: 'radiogroup', 'aria-label': 'Filter by device' },
+    [
+      ['', `All (${counts.all})`],
+      ['desktop', `Desktop (${counts.desktop})`],
+      ['mobile', `Mobile (${counts.mobile})`],
+    ].map(([val, label]) => h('button', {
+      type: 'button',
+      role: 'radio',
+      class: 'device-radio-btn',
+      'aria-checked': f.device === val ? 'true' : 'false',
+      text: label,
+      on: { click: () => update({ device: val }) },
+    })));
   return h('div', { class: 'splunk-filters', role: 'region', 'aria-label': 'Filter Splunk events' },
     analysis.botCount ? h('label', { class: 'splunk-check' },
       h('input', {
@@ -1320,10 +1349,7 @@ function splunkFilterBar(rep, analysis) {
         on: { change: (e) => update({ excludeBots: e.target.checked }) },
       }),
       `Human-only traffic (excludes ${analysis.botCount} synthetic)`) : null,
-    h('select', { 'aria-label': 'Filter by device', value: f.device, on: { change: (e) => update({ device: e.target.value }) } },
-      h('option', { value: '', text: 'All devices' }),
-      h('option', { value: 'desktop', text: 'Desktop (≥ 768 px)' }),
-      h('option', { value: 'mobile', text: 'Mobile (< 768 px)' })),
+    deviceRadios,
     analysis.options.countries.length > 1 ? h('select', {
       'aria-label': 'Filter by country',
       value: f.country,
@@ -1437,6 +1463,95 @@ function lcpHistogramSection(analysis) {
         h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'ni' }), `Needs Improvement (${lcp.niPct.toFixed(1)}%)`),
         h('span', { class: 'legend-item' }, h('span', { class: 'legend-swatch', 'data-zone': 'poor' }), `Poor > 4.0 s (${lcp.poorPct.toFixed(1)}%)`)),
       svg));
+}
+
+function lcpTrendSection(analysis) {
+  const { bucketMs, buckets } = analysis.trend ?? {};
+  if (!buckets || buckets.length < 2) return null;
+
+  const W = 680;
+  const H = 200;
+  const pad = { top: 20, right: 20, bottom: 30, left: 52 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  const minT = buckets[0].mid;
+  const maxT = buckets[buckets.length - 1].mid;
+  const spanT = Math.max(1, maxT - minT);
+  const maxP75 = Math.max(4500, ...buckets.map((b) => b.p75 ?? 0));
+  const yMax = Math.ceil((maxP75 * 1.12) / 500) * 500;
+  const xOf = (t) => pad.left + ((t - minT) / spanT) * plotW;
+  const yOf = (ms) => pad.top + plotH - (ms / yMax) * plotH;
+
+  const formatTick = (ms) => (ms === 0 ? '0' : ms >= 10000 ? `${Math.round(ms / 1000)}s` : `${(ms / 1000).toFixed(ms % 1000 === 0 ? 0 : 1)}s`);
+  const step = yMax <= 6000 ? 1500 : yMax <= 10000 ? 2500 : Math.ceil(yMax / 4 / 1000) * 1000;
+
+  const svg = svgEl('svg', { class: 'splunk-chart-svg', viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'LCP P75 and P50 trend line chart' });
+  for (let ms = 0; ms <= yMax + 1; ms += step) {
+    const y = yOf(ms);
+    svg.append(
+      svgEl('line', { class: 'chart-grid', x1: pad.left, y1: y.toFixed(1), x2: W - pad.right, y2: y.toFixed(1) }),
+      svgEl('text', { class: 'chart-label', x: pad.left - 6, y: (y + 3).toFixed(1), 'text-anchor': 'end' }, formatTick(ms)),
+    );
+  }
+  for (const [ms, zone, lbl] of [[splunk.LCP_GOOD_MS, 'good', '2.5s'], [splunk.LCP_POOR_MS, 'poor', '4.0s']]) {
+    if (ms <= yMax) {
+      const y = yOf(ms);
+      svg.append(
+        svgEl('line', { class: 'chart-ref', 'data-zone': zone, x1: pad.left, y1: y.toFixed(1), x2: W - pad.right, y2: y.toFixed(1) }),
+        svgEl('text', { class: 'chart-label-ref', x: pad.left + 4, y: Math.max(pad.top + 10, y - 3).toFixed(1), 'text-anchor': 'start' }, lbl),
+      );
+    }
+  }
+
+  const p50Points = buckets.filter((b) => b.p50 != null).map((b) => `${xOf(b.mid).toFixed(1)},${yOf(b.p50).toFixed(1)}`).join(' ');
+  const p75Points = buckets.filter((b) => b.p75 != null).map((b) => `${xOf(b.mid).toFixed(1)},${yOf(b.p75).toFixed(1)}`).join(' ');
+  if (p50Points) svg.append(svgEl('polyline', { class: 'trend-line-p50', points: p50Points }));
+  if (p75Points) svg.append(svgEl('polyline', { class: 'trend-line-p75', points: p75Points }));
+
+  const hoverStrip = h('p', { class: 'note chart-hover-strip', 'aria-live': 'polite' });
+  const bucketMins = Math.round(bucketMs / 60000);
+  const bucketLabel = bucketMins >= 60 ? `${(bucketMins / 60).toFixed(1).replace(/\.0$/, '')} hr` : `${bucketMins} min`;
+  const defaultPreview = `Hover a point to inspect the ${bucketLabel} bucket · ${buckets.length} time buckets shown.`;
+  hoverStrip.textContent = defaultPreview;
+
+  buckets.forEach((b) => {
+    const cx = xOf(b.mid).toFixed(1);
+    const cy = yOf(b.p75).toFixed(1);
+    const rangeTxt = `${splunk.formatFriendlyTime(b.start)} – ${splunk.formatFriendlyTime(b.end, { withTz: true })}`;
+    const summaryTxt = `${rangeTxt} · ${b.count} event${b.count === 1 ? '' : 's'} · P75 ${splunk.formatMsOrSec(b.p75)} · P50 ${splunk.formatMsOrSec(b.p50)} · P95 ${splunk.formatMsOrSec(b.p95)} · ${b.goodPct.toFixed(0)}% Good`;
+    const dot = svgEl('circle', {
+      class: 'trend-dot',
+      'data-zone': b.status,
+      tabindex: '0',
+      cx,
+      cy,
+      r: 4.5,
+      'aria-label': summaryTxt,
+    }, svgEl('title', {}, summaryTxt));
+    dot.addEventListener('mouseenter', () => { hoverStrip.textContent = summaryTxt; });
+    dot.addEventListener('focus', () => { hoverStrip.textContent = summaryTxt; });
+    svg.append(dot);
+  });
+  svg.addEventListener('mouseleave', () => { hoverStrip.textContent = defaultPreview; });
+
+  svg.append(svgEl('line', { class: 'chart-axis', x1: pad.left, y1: pad.top + plotH, x2: W - pad.right, y2: pad.top + plotH }));
+  const sameDay = core.formatLocalDay(minT) === core.formatLocalDay(maxT);
+  svg.append(
+    svgEl('text', { class: 'chart-label', x: pad.left, y: pad.top + plotH + 18, 'text-anchor': 'start' },
+      sameDay ? splunk.formatFriendlyTime(minT) : `${core.formatLocalDay(minT)} ${splunk.formatFriendlyTime(minT)}`),
+    svgEl('text', { class: 'chart-label', x: W - pad.right, y: pad.top + plotH + 18, 'text-anchor': 'end' },
+      sameDay ? splunk.formatFriendlyTime(maxT, { withTz: true }) : `${core.formatLocalDay(maxT)} ${splunk.formatFriendlyTime(maxT, { withTz: true })}`),
+  );
+
+  return section('LCP trend',
+    h('div', { class: 'splunk-chart-wrap' },
+      svg,
+      h('div', { class: 'chart-legend' },
+        h('span', { class: 'legend-item' }, h('span', { class: 'legend-line', 'data-series': 'p75' }), 'P75 LCP'),
+        h('span', { class: 'legend-item' }, h('span', { class: 'legend-line', 'data-series': 'p50' }), 'P50 LCP (median)'),
+        h('span', { class: 'note', text: `${bucketLabel} buckets across all ${analysis.matchedEvents} filtered events.` })),
+      hoverStrip));
 }
 
 function lcpTimelineSection(rep, analysis) {

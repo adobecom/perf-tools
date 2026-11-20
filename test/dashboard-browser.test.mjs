@@ -744,7 +744,13 @@ describe('history dashboard in a real browser', { skip }, () => {
     // Uncheck "Human-only traffic" to include synthetic events and inspect the slow dot.
     await page.uncheck('.splunk-check input[type="checkbox"]');
     assert.match(await text(page, '#detail .splunk-filters'), /2 of 2 shown/);
-    assert.equal(await page.locator('#detail svg').count(), 4);
+    assert.equal(await page.locator('#detail svg').count(), 6);
+    assert.equal(await page.locator('#detail svg[aria-label="LCP P75 and P50 trend line chart"] polyline').count(), 2);
+    assert.match(await text(page, '#detail .splunk-kpis'), /50% \/ 50%/);
+    await page.click('.device-radio-btn:has-text("Mobile")');
+    assert.equal(await page.getAttribute('.device-radio-btn:has-text("Mobile")', 'aria-checked'), 'true');
+    assert.match(await text(page, '#detail .splunk-filters'), /1 of 2 shown/);
+    await page.click('.device-radio-btn:has-text("All")');
     assert.match(await text(page, '#detail'), /1 synthetic\/automation event included/);
 
     // Click the slow timeline dot and verify the event inspector shows root-cause details.
@@ -756,7 +762,7 @@ describe('history dashboard in a real browser', { skip }, () => {
     assert.match(await text(page, '.event-inspector'), /Tokowaka/);
     await page.click('.event-inspector button:has-text("Clear selection")');
     assert.equal(await page.isVisible('.event-inspector'), false);
-    assert.match(await text(page, '.chart-hover-strip'), /Hover a dot to preview/);
+    assert.match(await text(page, 'section[aria-labelledby="sec-lcp-timeline"] .chart-hover-strip'), /Hover a dot to preview/);
 
     // Re-enable Human-only traffic via the diagnostic callout button and test MEP filter.
     await page.click('#detail button:has-text("Show human-only traffic")');

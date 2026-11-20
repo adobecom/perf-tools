@@ -578,6 +578,63 @@ const LCP_BUCKETS = [
   { label: '10s+', min: 10000, max: Infinity, zone: 'poor' },
 ];
 
+const TREND_BUCKET_MS = [
+  60 * 1000,
+  5 * 60 * 1000,
+  10 * 60 * 1000,
+  15 * 60 * 1000,
+  30 * 60 * 1000,
+  60 * 60 * 1000,
+  2 * 60 * 60 * 1000,
+  6 * 60 * 60 * 1000,
+  12 * 60 * 60 * 1000,
+  24 * 60 * 60 * 1000,
+];
+
+export function buildTrendBuckets(timeline, timeRange, targetBuckets = 16) {
+  if (!Array.isArray(timeline) || timeline.length < 2 || !timeRange || timeRange.max <= timeRange.min) {
+    return { bucketMs: 0, buckets: [] };
+  }
+  const span = timeRange.max - timeRange.min;
+  const minStep = span / Math.max(2, targetBuckets);
+  const bucketMs = TREND_BUCKET_MS.find((s) => s >= minStep) ?? Math.ceil(span / targetBuckets);
+  const startBase = Math.floor(timeRange.min / bucketMs) * bucketMs;
+  const groups = new Map();
+  for (const pt of timeline) {
+    if (pt.timestamp == null || pt.lcp == null) continue;
+    const key = Math.floor((pt.timestamp - startBase) / bucketMs);
+    let arr = groups.get(key);
+    if (!arr) {
+      arr = [];
+      groups.set(key, arr);
+    }
+    arr.push(pt.lcp);
+  }
+  const buckets = [...groups.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([key, vals]) => {
+      vals.sort((a, b) => a - b);
+      const start = startBase + key * bucketMs;
+      const end = start + bucketMs;
+      const p50 = percentile(vals, 50);
+      const p75 = percentile(vals, 75);
+      const p95 = percentile(vals, 95);
+      const good = vals.filter((v) => v <= LCP_GOOD_MS).length;
+      return {
+        start,
+        end,
+        mid: start + bucketMs / 2,
+        count: vals.length,
+        p50,
+        p75,
+        p95,
+        goodPct: (good / vals.length) * 100,
+        status: cwvLcpStatus(p75),
+      };
+    });
+  return { bucketMs, buckets };
+}
+
 function buildHistogram(lcpValues) {
   const counts = LCP_BUCKETS.map((b) => ({ ...b, count: 0, pct: 0 }));
   const total = lcpValues.length;
@@ -829,9 +886,8 @@ export function analyzeSplunk(parsed, filters = EMPTY_SPLUNK_FILTERS) {
   }
   const manifests = [...manifestSet].sort((a, b) => (a === 'none' ? -1 : b === 'none' ? 1 : a.localeCompare(b)));
 
-  const events = all.filter((e) => {
+  const eventsNoDevice = all.filter((e) => {
     if (f.excludeBots && e.bot) return false;
-    if (f.device && e.device !== f.device) return false;
     if (f.country && e.country !== f.country) return false;
     if (f.url && e.url !== f.url) return false;
     if (f.manifest) {
@@ -843,6 +899,13 @@ export function analyzeSplunk(parsed, filters = EMPTY_SPLUNK_FILTERS) {
     }
     return true;
   });
+  const events = f.device ? eventsNoDevice.filter((e) => e.device === f.device) : eventsNoDevice;
+
+  const deviceScopeCounts = {
+    all: eventsNoDevice.length,
+    desktop: eventsNoDevice.filter((e) => e.device === 'desktop').length,
+    mobile: eventsNoDevice.filter((e) => e.device === 'mobile').length,
+  };
 
   const lcpSummary = summarizeValues(events.map((e) => e.lcp), cwvLcpStatus, LCP_GOOD_MS, LCP_POOR_MS);
   const clsSummary = summarizeValues(events.map((e) => e.cls), cwvClsStatus, CLS_GOOD, CLS_POOR);
@@ -938,6 +1001,7 @@ export function analyzeSplunk(parsed, filters = EMPTY_SPLUNK_FILTERS) {
     matchedEvents: events.length,
     botCount,
     sampleRates,
+    deviceScopeCounts,
     coverage,
     timeRange,
     options: { urls, countries, manifests },
@@ -945,6 +1009,7 @@ export function analyzeSplunk(parsed, filters = EMPTY_SPLUNK_FILTERS) {
     cls: clsSummary,
     inp: inpSummary,
     histogram,
+    trend: buildTrendBuckets(timeline, timeRange),
     timeline,
     breakdowns: {
       element: byElement,
