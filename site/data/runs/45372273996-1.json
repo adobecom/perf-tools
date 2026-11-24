@@ -1,0 +1,7747 @@
+{
+  "schema": "perf-ab/run-v1",
+  "id": "45372273996-1",
+  "name": null,
+  "config": null,
+  "createdAt": "2026-11-24T10:10:47.000Z",
+  "finishedAt": "2026-11-24T10:14:19.000Z",
+  "status": "ok",
+  "conclusion": "success",
+  "url": "https://www.adobe.com/creativecloud/pro/plans.html",
+  "profileKey": "lh13.6.0-mobile-devtools-rtt150-tput1638.4-lat562.5-down1474.56-up675-cpu4-412x823@1.75-mobile",
+  "profile": {
+    "name": "Lighthouse mobile, DevTools throttling (Slow 4G, Moto G Power)",
+    "lighthouseVersion": "13.6.0",
+    "chromeVersion": null,
+    "formFactor": "mobile",
+    "throttlingMethod": "devtools",
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.56,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4,
+    "maxWaitForLoad": null,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75
+  },
+  "egress": {
+    "country": "US",
+    "verified": true,
+    "documentGeo": "US"
+  },
+  "samples": {
+    "requested": 5,
+    "before": 5,
+    "after": 5,
+    "pairs": 5,
+    "rejected": 0
+  },
+  "medians": {
+    "before": {
+      "FCP": 6892.262,
+      "LCP": 6892.262,
+      "SI": 9705,
+      "CLS": 0.30915240422986706,
+      "performance": null,
+      "TBT": null
+    },
+    "after": {
+      "FCP": 6671.38,
+      "LCP": 6671.38,
+      "SI": 8313,
+      "CLS": 0.2329444036797479,
+      "performance": 19,
+      "TBT": 2290.368999999995
+    },
+    "delta": {
+      "FCP": -323.8679999999995,
+      "LCP": -323.8679999999995,
+      "SI": -1420,
+      "CLS": -0.07620800055011917,
+      "performance": null,
+      "TBT": null
+    }
+  },
+  "github": {
+    "runUrl": "https://github.com/adobecom/perf-tools/actions/runs/45372273996/attempts/1",
+    "sha": "d2a84178774720faaec3f15007bb3c05234e4895"
+  },
+  "detailPath": "data/runs/45372273996-1.json",
+  "pairs": [
+    {
+      "index": 1,
+      "before": {
+        "FCP": 6996.477,
+        "LCP": 6996.477,
+        "SI": 9766,
+        "CLS": 0.30915240422986706
+      },
+      "after": {
+        "performance": 19,
+        "FCP": 6671.38,
+        "LCP": 6671.38,
+        "SI": 8313,
+        "TBT": 2661.4989999999907,
+        "CLS": 0.2329444036797479
+      },
+      "delta": {
+        "FCP": -325.09699999999975,
+        "LCP": -325.09699999999975,
+        "SI": -1453,
+        "CLS": -0.07620800055011917
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.78",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1995.5,
+          "after": 2477.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 2,
+      "before": {
+        "FCP": 6377.5,
+        "LCP": 6377.5,
+        "SI": 9122,
+        "CLS": 0.30915240422986706
+      },
+      "after": {
+        "performance": 18,
+        "FCP": 7368.896,
+        "LCP": 7368.896,
+        "SI": 8989,
+        "TBT": 2254.964999999993,
+        "CLS": 0.2329444036797479
+      },
+      "delta": {
+        "FCP": 991.3959999999997,
+        "LCP": 991.3959999999997,
+        "SI": -133,
+        "CLS": -0.07620800055011917
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.78",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2990.5,
+          "after": 2323
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 3,
+      "before": {
+        "FCP": 6892.262,
+        "LCP": 6892.262,
+        "SI": 9607,
+        "CLS": 0.30915240422986706
+      },
+      "after": {
+        "performance": 21,
+        "FCP": 6568.394,
+        "LCP": 6568.394,
+        "SI": 8187,
+        "TBT": 1549.3219999999856,
+        "CLS": 0.2329444036797479
+      },
+      "delta": {
+        "FCP": -323.8679999999995,
+        "LCP": -323.8679999999995,
+        "SI": -1420,
+        "CLS": -0.07620800055011917
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.78",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 3100.5,
+          "after": 3802.5
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 4,
+      "before": {
+        "FCP": 6626.939,
+        "LCP": 6626.939,
+        "SI": 9705,
+        "CLS": 0.30915240422986706
+      },
+      "after": {
+        "performance": 16,
+        "FCP": 7412.99,
+        "LCP": 7412.99,
+        "SI": 9124,
+        "TBT": 4293.770999999999,
+        "CLS": 0.2329444036797479
+      },
+      "delta": {
+        "FCP": 786.0509999999995,
+        "LCP": 786.0509999999995,
+        "SI": -581,
+        "CLS": -0.07620800055011917
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "after",
+          "before"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.78",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 2271.5,
+          "after": 1866
+        },
+        "benchmarkIndex": null
+      }
+    },
+    {
+      "index": 5,
+      "before": {
+        "FCP": 7977.956,
+        "LCP": 7977.956,
+        "SI": 10659,
+        "CLS": 0.30915240422986706
+      },
+      "after": {
+        "performance": 19,
+        "FCP": 6629.933,
+        "LCP": 6629.933,
+        "SI": 8269,
+        "TBT": 2290.368999999995,
+        "CLS": 0.2329444036797479
+      },
+      "delta": {
+        "FCP": -1348.0230000000001,
+        "LCP": -1348.0230000000001,
+        "SI": -2390,
+        "CLS": -0.07620800055011917
+      },
+      "job": {
+        "runAttempt": 1,
+        "order": [
+          "before",
+          "after"
+        ],
+        "orderPolicy": "counterbalanced",
+        "chromeVersion": "Chrome/157.0.8103.78",
+        "egressCountry": "US",
+        "benchmarkIndexes": {
+          "before": 1202.5,
+          "after": 2763.5
+        },
+        "benchmarkIndex": null
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "navigationStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 0,
+        "n": 5
+      },
+      "after": {
+        "ms": 0,
+        "n": 5
+      },
+      "delta": {
+        "ms": 0
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 0,
+            "n": 1
+          },
+          "after": {
+            "ms": 0,
+            "n": 1
+          },
+          "delta": {
+            "ms": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "fetchStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 5,
+        "n": 5
+      },
+      "after": {
+        "ms": 1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -4.1
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 5,
+            "n": 1
+          },
+          "after": {
+            "ms": 0.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -4.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 0.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 4.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": 3.8
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 5.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 0.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -4.5
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 1.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 5.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": 4.3
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -13.3
+          }
+        }
+      ]
+    },
+    {
+      "name": "commitNavigationEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 670.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 610.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -59.5
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 698.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 596.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -102.4
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 589.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 676.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": 86.7
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 670.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 610.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -59.5
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 594.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 712.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": 117.9
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 862.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 592.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -269.9
+          }
+        }
+      ]
+    },
+    {
+      "name": "domLoading",
+      "kind": "navigation",
+      "before": {
+        "ms": 671,
+        "n": 5
+      },
+      "after": {
+        "ms": 611.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -59.7
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 699.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 597.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -102.3
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 590.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 676.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 86.6
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 671,
+            "n": 1
+          },
+          "after": {
+            "ms": 611.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -59.7
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 596.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 714.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": 117.5
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 863.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 593.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -270.2
+          }
+        }
+      ]
+    },
+    {
+      "name": "responseEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 652.9,
+        "n": 5
+      },
+      "after": {
+        "ms": 623.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -31
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 657.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 622.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -35.2
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 620.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 652.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": 31.6
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 652.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 621.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -31
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 624.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 652.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": 28
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 712.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 623.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -89.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "domInteractive",
+      "kind": "navigation",
+      "before": {
+        "ms": 842.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 642.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -199.5
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 873.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 637,
+            "n": 1
+          },
+          "delta": {
+            "ms": -236.3
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 634.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 845,
+            "n": 1
+          },
+          "delta": {
+            "ms": 210.6
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 842.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 642.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -199.5
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 657.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 897.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": 240.6
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1250.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 632.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -617.8
+          }
+        }
+      ]
+    },
+    {
+      "name": "domContentLoadedEventStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 1505.6,
+        "n": 5
+      },
+      "after": {
+        "ms": 1276.8,
+        "n": 5
+      },
+      "delta": {
+        "ms": -228.8
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 1534.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 1268.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -265.8
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1259.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 1614.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 355.1
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 1505.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 1276.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -228.8
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 1290.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 1539.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 249.7
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1967.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 1262.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -704.7
+          }
+        }
+      ]
+    },
+    {
+      "name": "domContentLoadedEventEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 1506,
+        "n": 5
+      },
+      "after": {
+        "ms": 1277.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -228.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 1534.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 1269.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -264.8
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1260.7,
+            "n": 1
+          },
+          "after": {
+            "ms": 1615,
+            "n": 1
+          },
+          "delta": {
+            "ms": 354.3
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 1506,
+            "n": 1
+          },
+          "after": {
+            "ms": 1277.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -228.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 1290.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 1540.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": 250.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1967.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 1263,
+            "n": 1
+          },
+          "delta": {
+            "ms": -704.9
+          }
+        }
+      ]
+    },
+    {
+      "name": "domComplete",
+      "kind": "navigation",
+      "before": {
+        "ms": 1506.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 1277.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -229
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 1534.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 1270.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": -264.2
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1261.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 1615.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": 354.4
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 1506.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 1277.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": -229
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 1290.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 1541.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": 250.8
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1968.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 1263.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -704.9
+          }
+        }
+      ]
+    },
+    {
+      "name": "loadEventEnd",
+      "kind": "navigation",
+      "before": {
+        "ms": 1506.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 1277.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -228.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 1535.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 1270.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -265.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1261.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 1615.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 354.5
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 1506.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 1277.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -228.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 1290.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 1541.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": 250.9
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1968.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 1263.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -705
+          }
+        }
+      ]
+    },
+    {
+      "name": "loadEventStart",
+      "kind": "navigation",
+      "before": {
+        "ms": 1506.2,
+        "n": 5
+      },
+      "after": {
+        "ms": 1277.3,
+        "n": 5
+      },
+      "delta": {
+        "ms": -228.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 1535.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 1270.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -265
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 1261.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 1615.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 354.5
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 1506.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 1277.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -228.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 1290.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 1541.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": 250.8
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 1968.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 1263.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -705
+          }
+        }
+      ]
+    },
+    {
+      "name": "mas-commerce-service:ready",
+      "kind": "measure",
+      "before": {
+        "ms": 5570.4,
+        "dur": 11.8,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 5596.1,
+            "dur": 11.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5210.4,
+            "dur": 9.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 5570.4,
+            "dur": 9.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5241.2,
+            "dur": 15.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 6360.3,
+            "dur": 13.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "mas-commerce-service:start",
+      "kind": "mark",
+      "before": {
+        "ms": 5570.4,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 5596.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5210.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 5570.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5241.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 6360.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "mas-commerce-service:ready",
+      "kind": "mark",
+      "before": {
+        "ms": 5579.6,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 5607.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 5220.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 5579.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 5256.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 6373,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "Gnav-Start",
+      "kind": "mark",
+      "before": {
+        "ms": 10694.1,
+        "n": 5
+      },
+      "after": {
+        "ms": 6608.1,
+        "n": 5
+      },
+      "delta": {
+        "ms": -4176.5
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 10821.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 6608.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -4213.7
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 10252.6,
+            "n": 1
+          },
+          "after": {
+            "ms": 7231.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -3021
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 10694.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 6517.6,
+            "n": 1
+          },
+          "delta": {
+            "ms": -4176.5
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 10685.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 7267.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -3418.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 11589.2,
+            "n": 1
+          },
+          "after": {
+            "ms": 6568.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -5020.7
+          }
+        }
+      ]
+    },
+    {
+      "name": "firstContentfulPaint",
+      "kind": "paint",
+      "before": {
+        "ms": 6892.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 6671.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -323.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6996.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 6671.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -325.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 6377.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 7368.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 991.4
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6892.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 6568.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -323.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 6626.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 7413,
+            "n": 1
+          },
+          "delta": {
+            "ms": 786.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7978,
+            "n": 1
+          },
+          "after": {
+            "ms": 6629.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1348.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "firstImagePaint",
+      "kind": "paint",
+      "before": {
+        "ms": 6892.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 6671.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -323.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6996.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 6671.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -325.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 6377.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 7368.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 991.4
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6892.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 6568.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -323.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 6626.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 7413,
+            "n": 1
+          },
+          "delta": {
+            "ms": 786.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7978,
+            "n": 1
+          },
+          "after": {
+            "ms": 6629.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1348.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "firstMeaningfulPaintCandidate",
+      "kind": "paint",
+      "before": {
+        "ms": 6892.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 6671.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -323.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6996.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 6671.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -325.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 6377.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 7368.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 991.4
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6892.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 6568.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -323.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 6626.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 7413,
+            "n": 1
+          },
+          "delta": {
+            "ms": 786.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7978,
+            "n": 1
+          },
+          "after": {
+            "ms": 6629.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1348.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "firstPaint",
+      "kind": "paint",
+      "before": {
+        "ms": 6892.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 6671.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -323.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6996.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 6671.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -325.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 6377.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 7368.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 991.4
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6892.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 6568.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -323.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 6626.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 7413,
+            "n": 1
+          },
+          "delta": {
+            "ms": 786.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7978,
+            "n": 1
+          },
+          "after": {
+            "ms": 6629.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1348.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "largestContentfulPaint::Candidate",
+      "kind": "paint",
+      "before": {
+        "ms": 6892.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 6671.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -323.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6996.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 6671.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -325.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 6377.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 7368.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 991.4
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6892.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 6568.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -323.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 6626.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 7413,
+            "n": 1
+          },
+          "delta": {
+            "ms": 786.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7978,
+            "n": 1
+          },
+          "after": {
+            "ms": 6629.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1348.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "LargestImagePaint::Candidate",
+      "kind": "paint",
+      "before": {
+        "ms": 6892.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 6671.4,
+        "n": 5
+      },
+      "delta": {
+        "ms": -323.9
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 6996.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 6671.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -325.1
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 6377.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 7368.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 991.4
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 6892.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 6568.4,
+            "n": 1
+          },
+          "delta": {
+            "ms": -323.9
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 6626.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 7413,
+            "n": 1
+          },
+          "delta": {
+            "ms": 786.1
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 7978,
+            "n": 1
+          },
+          "after": {
+            "ms": 6629.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1348.1
+          }
+        }
+      ]
+    },
+    {
+      "name": "LargestTextPaint::Candidate",
+      "kind": "paint",
+      "before": {
+        "ms": 7083.3,
+        "n": 5
+      },
+      "after": {
+        "ms": 6752.7,
+        "n": 5
+      },
+      "delta": {
+        "ms": -427.2
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 7179.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 6752.7,
+            "n": 1
+          },
+          "delta": {
+            "ms": -427.2
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 6489.5,
+            "n": 1
+          },
+          "after": {
+            "ms": 7428.9,
+            "n": 1
+          },
+          "delta": {
+            "ms": 939.4
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 7083.3,
+            "n": 1
+          },
+          "after": {
+            "ms": 6653.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -429.5
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 6744.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 7475.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": 730.9
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 8285.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 6710.5,
+            "n": 1
+          },
+          "delta": {
+            "ms": -1574.9
+          }
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:df2bab5b-7b48-4643-b005-e8447e58d9a3:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 9217.8,
+        "dur": 574.5,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9323.7,
+            "dur": 570.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 8791.1,
+            "dur": 574.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9217.8,
+            "dur": 577.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9083.1,
+            "dur": 572.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10106.7,
+            "dur": 574.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:df2bab5b-7b48-4643-b005-e8447e58d9a3:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 9217.8,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9323.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 8791.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9217.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9083.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10106.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:1795515156074ioehn:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 9624,
+        "dur": 584.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 9624,
+            "dur": 584.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:1795515156074ioehn:start",
+      "kind": "mark",
+      "before": {
+        "ms": 9624,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 9624,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:1795515156084ikt1c:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 9634,
+        "dur": 589.7,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 9634,
+            "dur": 589.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:1795515156084ikt1c:start",
+      "kind": "mark",
+      "before": {
+        "ms": 9634,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 9634,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:1795515156087644ts:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 9637.1,
+        "dur": 598.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 9637.1,
+            "dur": 598.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:1795515156087644ts:start",
+      "kind": "mark",
+      "before": {
+        "ms": 9637.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 9637.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:73bd746d-67a9-4cbb-8c79-1c2bd1146c17:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 9852.2,
+        "dur": 293.4,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9944.9,
+            "dur": 313.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 9409.3,
+            "dur": 273.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9852.2,
+            "dur": 246.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9702.8,
+            "dur": 411.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10733.3,
+            "dur": 293.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:73bd746d-67a9-4cbb-8c79-1c2bd1146c17:start",
+      "kind": "mark",
+      "before": {
+        "ms": 9852.2,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9944.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 9409.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9852.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9702.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10733.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:0ac67ffe-a611-4a62-88b5-9e55811c8f20:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 9854.3,
+        "dur": 309.9,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9946.8,
+            "dur": 331.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 9411.3,
+            "dur": 289.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9854.3,
+            "dur": 261.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9705.3,
+            "dur": 436.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10735.3,
+            "dur": 309.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:0ac67ffe-a611-4a62-88b5-9e55811c8f20:start",
+      "kind": "mark",
+      "before": {
+        "ms": 9854.3,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9946.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 9411.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9854.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9705.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10735.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:9653982d-385f-4a78-96f2-edfca4cf3e95:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 9855.4,
+        "dur": 318.9,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9947.6,
+            "dur": 342.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 9412.1,
+            "dur": 297.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9855.4,
+            "dur": 269.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9706.9,
+            "dur": 481.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10736.1,
+            "dur": 318.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:9653982d-385f-4a78-96f2-edfca4cf3e95:start",
+      "kind": "mark",
+      "before": {
+        "ms": 9855.4,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9947.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 9412.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9855.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9706.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10736.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:5ed9a6e7-b76a-4881-94d2-762a9ec91f57:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 9856,
+        "dur": 836.3,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9949,
+            "dur": 858.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 9412.9,
+            "dur": 826.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9856,
+            "dur": 817,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9708,
+            "dur": 954.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10737.2,
+            "dur": 836.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:5ed9a6e7-b76a-4881-94d2-762a9ec91f57:start",
+      "kind": "mark",
+      "before": {
+        "ms": 9856,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 9949,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 9412.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 9856,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 9708,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 10737.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:1795515159213c7vos:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10037.6,
+        "dur": 611.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 10037.6,
+            "dur": 611.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:1795515159213c7vos:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10037.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 10037.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:1795515159217ho0bi:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10040.8,
+        "dur": 585.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 10040.8,
+            "dur": 585.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:1795515159217ho0bi:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10040.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 10040.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:17955151592185sdgs:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10041.8,
+        "dur": 604.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 10041.8,
+            "dur": 604.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:17955151592185sdgs:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10041.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 10041.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:1795515097656c9kpl:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10042.8,
+        "dur": 579.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 10042.8,
+            "dur": 579.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:1795515097656c9kpl:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10042.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 10042.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:17955150976591h8uw:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10046.1,
+        "dur": 596.7,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 10046.1,
+            "dur": 596.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:17955150976591h8uw:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10046.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 10046.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:1795515097661d01jw:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10049,
+        "dur": 603.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 10049,
+            "dur": 603.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:1795515097661d01jw:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10049,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 10049,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:1795515094022h0hms:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10193.5,
+        "dur": 583.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 10193.5,
+            "dur": 583.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:1795515094022h0hms:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10193.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 10193.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:1795515094033ttis1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10204.3,
+        "dur": 587.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 10204.3,
+            "dur": 587.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:1795515094033ttis1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10204.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 10204.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:1795515094035l397t:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10206.6,
+        "dur": 597.7,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 10206.6,
+            "dur": 597.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:1795515094035l397t:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10206.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 10206.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:17955151186428oulw:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10965.1,
+        "dur": 582.9,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 10965.1,
+            "dur": 582.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:maxKgu9uo6gFx1nMWwlRdGEnSwdj6OVBOH-AILZSFec:17955151186428oulw:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10965.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 10965.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:1795515118646f41xe:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10968.3,
+        "dur": 591.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 10968.3,
+            "dur": 591.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:PexRdnQXvCj4CWLuGruCNrCc--cRKzqZYar8zJ4fhD8:1795515118646f41xe:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10968.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 10968.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:17955151186484un2g:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 10970.6,
+        "dur": 599.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 10970.6,
+            "dur": 599.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:ZkxNMea1zS_aiGDHqV9wHTsaC4ViqeWpbtIw22mq4_s:17955151186484un2g:start",
+      "kind": "mark",
+      "before": {
+        "ms": 10970.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 10970.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:5198c7df-5ea3-45a6-8cad-09aa7de9f1fe:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 11332.6,
+        "dur": 1230.7,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 11457,
+            "dur": 1235,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 10888.7,
+            "dur": 1230.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 11332.6,
+            "dur": 1223.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 11329.8,
+            "dur": 1253.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 12234.4,
+            "dur": 1226.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:5198c7df-5ea3-45a6-8cad-09aa7de9f1fe:start",
+      "kind": "mark",
+      "before": {
+        "ms": 11332.6,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 11457,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 10888.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 11332.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 11329.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 12234.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:5198c7df-5ea3-45a6-8cad-09aa7de9f1fe:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 11333.5,
+        "dur": 573.9,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 11457.7,
+            "dur": 573.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 10888.9,
+            "dur": 574,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 11333.5,
+            "dur": 574.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 11330.8,
+            "dur": 571.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 12235.2,
+            "dur": 573.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:5198c7df-5ea3-45a6-8cad-09aa7de9f1fe:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 11333.5,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 11457.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 10888.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 11333.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 11330.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 12235.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:17955151579723g394:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 11521.5,
+        "dur": 579,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 11521.5,
+            "dur": 579,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:17955151579723g394:start",
+      "kind": "mark",
+      "before": {
+        "ms": 11521.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 11521.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:1795515099579ivysj:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 11965.8,
+        "dur": 571,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 11965.8,
+            "dur": 571,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:1795515099579ivysj:start",
+      "kind": "mark",
+      "before": {
+        "ms": 11965.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 11965.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:1795515161161hf83p:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 11984.9,
+        "dur": 573.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 11984.9,
+            "dur": 573.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:1795515161161hf83p:start",
+      "kind": "mark",
+      "before": {
+        "ms": 11984.9,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 11984.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:1795515095923p89ky:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 12094.2,
+        "dur": 574.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 12094.2,
+            "dur": 574.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:1795515095923p89ky:start",
+      "kind": "mark",
+      "before": {
+        "ms": 12094.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 12094.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:d7e3f455-9623-4312-bd5f-d72030d0ab50:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 12654.5,
+        "dur": 584.3,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 12746,
+            "dur": 584.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 12175.3,
+            "dur": 578.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 12605.5,
+            "dur": 589.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 12654.5,
+            "dur": 591.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 13512.8,
+            "dur": 578.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:d7e3f455-9623-4312-bd5f-d72030d0ab50:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 12654.5,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 12746,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 12175.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 12605.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 12654.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 13512.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:179551512054607i7l:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 12868.3,
+        "dur": 572.9,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 12868.3,
+            "dur": 572.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "wcs:r_JXAnlFI7xD6FxWKl2ODvZriLYBoSL701Kd1hRyhe8:179551512054607i7l:start",
+      "kind": "mark",
+      "before": {
+        "ms": 12868.3,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 12868.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:0a390e20-9404-4c24-b248-09d3bef4b84b:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 13260,
+        "dur": 190.5,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 13353.8,
+            "dur": 191.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 12785.2,
+            "dur": 165.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13215.2,
+            "dur": 150,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 13260,
+            "dur": 286.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14124.5,
+            "dur": 190.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:0a390e20-9404-4c24-b248-09d3bef4b84b:start",
+      "kind": "mark",
+      "before": {
+        "ms": 13260,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 13353.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 12785.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13215.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 13260,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14124.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:11b621bd-503a-4506-b1a9-4731959fc757:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 13262.1,
+        "dur": 198,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 13354.8,
+            "dur": 202.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 12786.1,
+            "dur": 180.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13216.7,
+            "dur": 155.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 13262.1,
+            "dur": 303.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14126.3,
+            "dur": 198,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:11b621bd-503a-4506-b1a9-4731959fc757:start",
+      "kind": "mark",
+      "before": {
+        "ms": 13262.1,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 13354.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 12786.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13216.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 13262.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14126.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:8c25fc65-8e6a-41e3-914d-04597934518e:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 13263.4,
+        "dur": 204.5,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 13356,
+            "dur": 210.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 12786.6,
+            "dur": 188.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13217.5,
+            "dur": 163.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 13263.4,
+            "dur": 316.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14127.1,
+            "dur": 204.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:8c25fc65-8e6a-41e3-914d-04597934518e:start",
+      "kind": "mark",
+      "before": {
+        "ms": 13263.4,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 13356,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 12786.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13217.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 13263.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14127.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:ffb7a48f-04f2-4b69-9508-77732d99a694:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 13966,
+        "dur": 575,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 13966,
+            "dur": 568.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 13327.1,
+            "dur": 575.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13717.2,
+            "dur": 575,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 14227.3,
+            "dur": 575.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14696.7,
+            "dur": 568.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:ffb7a48f-04f2-4b69-9508-77732d99a694:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 13966,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 13966,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 13327.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13717.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 14227.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14696.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:201bf3df-6655-4dcc-b83e-ce309c326030:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 14142.2,
+        "dur": 688.3,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 14142.2,
+            "dur": 652.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 13503.7,
+            "dur": 688.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13844.7,
+            "dur": 717.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 14441.9,
+            "dur": 750.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14932.1,
+            "dur": 625.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:201bf3df-6655-4dcc-b83e-ce309c326030:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 14142.2,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 14142.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 13503.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 13844.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 14441.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 14932.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:3f5f0521-bf05-473b-985b-ca08ef1b6541:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 14580.2,
+        "dur": 388.7,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 14580.2,
+            "dur": 362.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 13948.7,
+            "dur": 388.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 14342.6,
+            "dur": 412,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 14850.4,
+            "dur": 523.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 15312,
+            "dur": 312.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:3f5f0521-bf05-473b-985b-ca08ef1b6541:start",
+      "kind": "mark",
+      "before": {
+        "ms": 14580.2,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 14580.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 13948.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 14342.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 14850.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 15312,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:4398e4b6-b3f1-4e51-90f8-b4ba183bce31:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 14581,
+        "dur": 423.5,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 14581,
+            "dur": 423.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 13949.4,
+            "dur": 401.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 14345.6,
+            "dur": 423.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 14851,
+            "dur": 539.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 15313,
+            "dur": 321.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:4398e4b6-b3f1-4e51-90f8-b4ba183bce31:start",
+      "kind": "mark",
+      "before": {
+        "ms": 14581,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 14581,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 13949.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 14345.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 14851,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 15313,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:904fa5eb-6e3f-474e-a8f2-186ee6eff30c:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 15292.1,
+        "dur": 580.1,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 15292.1,
+            "dur": 578.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 14616,
+            "dur": 583,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 15047,
+            "dur": 580.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 15900.2,
+            "dur": 571.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 15990.2,
+            "dur": 605,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:904fa5eb-6e3f-474e-a8f2-186ee6eff30c:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 15292.1,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 15292.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 14616,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 15047,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 15900.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 15990.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:31b4555d-db9f-47f3-a970-43beff432a33:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 15922.7,
+        "dur": 242.2,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 15922.7,
+            "dur": 249.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 15250.2,
+            "dur": 210,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 15680.6,
+            "dur": 242.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 16502.3,
+            "dur": 392.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 16630.9,
+            "dur": 234.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:31b4555d-db9f-47f3-a970-43beff432a33:start",
+      "kind": "mark",
+      "before": {
+        "ms": 15922.7,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 15922.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 15250.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 15680.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 16502.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 16630.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:72999b0d-811f-419d-9724-8aa1cf265829:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 15923.8,
+        "dur": 249.8,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 15923.8,
+            "dur": 293.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 15251.4,
+            "dur": 243.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 15681.8,
+            "dur": 249.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 16503.5,
+            "dur": 404.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 16631.8,
+            "dur": 241.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:72999b0d-811f-419d-9724-8aa1cf265829:start",
+      "kind": "mark",
+      "before": {
+        "ms": 15923.8,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 15923.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 15251.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 15681.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 16503.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 16631.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:cb699d5c-be91-44ab-b09c-d23454841d09:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16353.4,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 16353.4,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:cb699d5c-be91-44ab-b09c-d23454841d09:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16353.4,
+        "dur": 1022.9,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 16353.4,
+            "dur": 1022.9,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:cb699d5c-be91-44ab-b09c-d23454841d09:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16357.7,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 16357.7,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:cb699d5c-be91-44ab-b09c-d23454841d09:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16357.7,
+        "dur": 1019.6,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 16357.7,
+            "dur": 1019.6,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:cb699d5c-be91-44ab-b09c-d23454841d09:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16378.5,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 16378.5,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:cb699d5c-be91-44ab-b09c-d23454841d09:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16378.5,
+        "dur": 2867,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": null,
+          "after": {
+            "ms": 16378.5,
+            "dur": 2867,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ea5c5611-9c76-4318-8143-68daef7acbc5:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16387.5,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 16387.5,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ea5c5611-9c76-4318-8143-68daef7acbc5:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16387.5,
+        "dur": 1017,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 16387.5,
+            "dur": 1017,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ea5c5611-9c76-4318-8143-68daef7acbc5:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16389.1,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 16389.1,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ea5c5611-9c76-4318-8143-68daef7acbc5:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16389.1,
+        "dur": 1016.5,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 16389.1,
+            "dur": 1016.5,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ea5c5611-9c76-4318-8143-68daef7acbc5:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16408.1,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 16408.1,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:ea5c5611-9c76-4318-8143-68daef7acbc5:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16408.1,
+        "dur": 2798.8,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": null,
+          "after": {
+            "ms": 16408.1,
+            "dur": 2798.8,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b3a0b6b5-78ec-4e8e-84ea-04f09411ea15:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16482.2,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 16482.2,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b3a0b6b5-78ec-4e8e-84ea-04f09411ea15:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16482.2,
+        "dur": 1016.8,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 16482.2,
+            "dur": 1016.8,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b3a0b6b5-78ec-4e8e-84ea-04f09411ea15:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16483.9,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 16483.9,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b3a0b6b5-78ec-4e8e-84ea-04f09411ea15:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16483.9,
+        "dur": 1015.9,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 16483.9,
+            "dur": 1015.9,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b3a0b6b5-78ec-4e8e-84ea-04f09411ea15:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 16504.6,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 16504.6,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b3a0b6b5-78ec-4e8e-84ea-04f09411ea15:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 16504.6,
+        "dur": 2789.4,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": null,
+          "after": {
+            "ms": 16504.6,
+            "dur": 2789.4,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:3606b713-7cb7-4b49-a033-a6d158437490:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 16987.2,
+        "dur": 588.5,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 16987.2,
+            "dur": 575.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 16072.5,
+            "dur": 578.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 16542.7,
+            "dur": 590.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 18123.8,
+            "dur": 589.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 17571.8,
+            "dur": 588.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:3606b713-7cb7-4b49-a033-a6d158437490:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 16987.2,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 16987.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 16072.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 16542.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 18123.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 17571.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:aff03691-5610-4782-9e65-431ecf918ab5:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 17227.7,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 17227.7,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:aff03691-5610-4782-9e65-431ecf918ab5:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 17227.7,
+        "dur": 1018.1,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 17227.7,
+            "dur": 1018.1,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:aff03691-5610-4782-9e65-431ecf918ab5:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 17229.8,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 17229.8,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:aff03691-5610-4782-9e65-431ecf918ab5:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 17229.8,
+        "dur": 1017.1,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 17229.8,
+            "dur": 1017.1,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:aff03691-5610-4782-9e65-431ecf918ab5:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 17248.6,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 17248.6,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:aff03691-5610-4782-9e65-431ecf918ab5:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 17248.6,
+        "dur": 3010.1,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": null,
+          "after": {
+            "ms": 17248.6,
+            "dur": 3010.1,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:406ebc70-41cc-4912-a8c0-e1662651050e:init:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 17381.2,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 17381.2,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:406ebc70-41cc-4912-a8c0-e1662651050e:init:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 17381.2,
+        "dur": 1025,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 17381.2,
+            "dur": 1025,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:406ebc70-41cc-4912-a8c0-e1662651050e:forter:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 17383.5,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 17383.5,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:406ebc70-41cc-4912-a8c0-e1662651050e:forter:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 17383.5,
+        "dur": 1024,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 17383.5,
+            "dur": 1024,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:406ebc70-41cc-4912-a8c0-e1662651050e:bfp:start",
+      "kind": "mark",
+      "before": null,
+      "after": {
+        "ms": 17411.4,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 17411.4,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:406ebc70-41cc-4912-a8c0-e1662651050e:bfp:start:duration",
+      "kind": "measure",
+      "before": null,
+      "after": {
+        "ms": 17411.4,
+        "dur": 3096.9,
+        "n": 1
+      },
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": null,
+          "after": {
+            "ms": 17411.4,
+            "dur": 3096.9,
+            "n": 1
+          },
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:87736334-083e-456c-994f-3940fef94b39:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 17605.6,
+        "dur": 193,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 17605.6,
+            "dur": 221.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 16706.1,
+            "dur": 184.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 17158.7,
+            "dur": 193,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 18771.7,
+            "dur": 341.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 18186.2,
+            "dur": 192.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:87736334-083e-456c-994f-3940fef94b39:start",
+      "kind": "mark",
+      "before": {
+        "ms": 17605.6,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 17605.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 16706.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 17158.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 18771.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 18186.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:d6164ef8-1896-44fe-933c-43dc18afcbe7:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 17606.9,
+        "dur": 201.7,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 17606.9,
+            "dur": 232.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 16707.2,
+            "dur": 194,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 17160.8,
+            "dur": 201.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 18772.5,
+            "dur": 360.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 18187.6,
+            "dur": 201.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:d6164ef8-1896-44fe-933c-43dc18afcbe7:start",
+      "kind": "mark",
+      "before": {
+        "ms": 17606.9,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 17606.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 16707.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 17160.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 18772.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 18187.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:e9d8eac0-7f16-4e72-ac85-7f87eb6c2c64:1:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 18071.8,
+        "dur": 572.1,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 18071.8,
+            "dur": 572.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 17114,
+            "dur": 571.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 17590.2,
+            "dur": 571.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 19586.7,
+            "dur": 615.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 18615.9,
+            "dur": 575.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "aem-fragment:e9d8eac0-7f16-4e72-ac85-7f87eb6c2c64:1:start",
+      "kind": "mark",
+      "before": {
+        "ms": 18071.8,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 18071.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 17114,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 17590.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 19586.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 18615.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:07e2c9c4-a24d-437e-963e-d3faa1c11ea8:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 18671,
+        "dur": 223.2,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 18671,
+            "dur": 223.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 17714.1,
+            "dur": 217,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 18189.7,
+            "dur": 198.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 20261.3,
+            "dur": 367.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 19219.2,
+            "dur": 234,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:07e2c9c4-a24d-437e-963e-d3faa1c11ea8:start",
+      "kind": "mark",
+      "before": {
+        "ms": 18671,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 18671,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 17714.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 18189.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 20261.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 19219.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:296eac7b-c8f3-4e5e-9963-0566c727b740:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 18672,
+        "dur": 242.2,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 18672,
+            "dur": 267.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 17715,
+            "dur": 224.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 18191.2,
+            "dur": 209.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 20263.6,
+            "dur": 378.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 19220.2,
+            "dur": 242.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "merch-card:296eac7b-c8f3-4e5e-9963-0566c727b740:start",
+      "kind": "mark",
+      "before": {
+        "ms": 18672,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 18672,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 17715,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 18191.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 20263.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 19220.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:563c4910-6fd9-41d7-86e7-f708d28ac4da:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20254.7,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20254.7,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:563c4910-6fd9-41d7-86e7-f708d28ac4da:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20254.7,
+        "dur": 1061.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20254.7,
+            "dur": 1061.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:563c4910-6fd9-41d7-86e7-f708d28ac4da:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20255.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20255.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:563c4910-6fd9-41d7-86e7-f708d28ac4da:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20255.5,
+        "dur": 1060.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20255.5,
+            "dur": 1060.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:563c4910-6fd9-41d7-86e7-f708d28ac4da:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20274.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20274.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:563c4910-6fd9-41d7-86e7-f708d28ac4da:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20274.1,
+        "dur": 3046.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 2,
+          "before": {
+            "ms": 20274.1,
+            "dur": 3046.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:d877ed58-2049-4262-88b1-76fbddea14a5:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20777,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 20777,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:d877ed58-2049-4262-88b1-76fbddea14a5:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20777,
+        "dur": 1013.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 20777,
+            "dur": 1013.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:d877ed58-2049-4262-88b1-76fbddea14a5:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20778.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 20778.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:d877ed58-2049-4262-88b1-76fbddea14a5:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20778.4,
+        "dur": 1012.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 20778.4,
+            "dur": 1012.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:d877ed58-2049-4262-88b1-76fbddea14a5:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 20793.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 20793.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:d877ed58-2049-4262-88b1-76fbddea14a5:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 20793.6,
+        "dur": 3065.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 3,
+          "before": {
+            "ms": 20793.6,
+            "dur": 3065.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:81bf4428-37dd-4226-a3bf-3314a0a761aa:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21204.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21204.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:81bf4428-37dd-4226-a3bf-3314a0a761aa:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21204.1,
+        "dur": 1017.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21204.1,
+            "dur": 1017.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:81bf4428-37dd-4226-a3bf-3314a0a761aa:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21206.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21206.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:81bf4428-37dd-4226-a3bf-3314a0a761aa:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21206.1,
+        "dur": 1016.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21206.1,
+            "dur": 1016.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:81bf4428-37dd-4226-a3bf-3314a0a761aa:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21223.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21223.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:81bf4428-37dd-4226-a3bf-3314a0a761aa:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21223.4,
+        "dur": 3133.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 21223.4,
+            "dur": 3133.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:62b5c75a-9589-46d1-9ab8-9a91b3202d65:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21786.1,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 21786.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:62b5c75a-9589-46d1-9ab8-9a91b3202d65:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21786.1,
+        "dur": 1135.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 21786.1,
+            "dur": 1135.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:62b5c75a-9589-46d1-9ab8-9a91b3202d65:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21788.8,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 21788.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:62b5c75a-9589-46d1-9ab8-9a91b3202d65:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21788.8,
+        "dur": 1132.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 21788.8,
+            "dur": 1132.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:62b5c75a-9589-46d1-9ab8-9a91b3202d65:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21813.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 21813.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:62b5c75a-9589-46d1-9ab8-9a91b3202d65:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21813.5,
+        "dur": 4463,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 4,
+          "before": {
+            "ms": 21813.5,
+            "dur": 4463,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b5960476-e9bd-4d07-9cb2-6a507881c478:init:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21872.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 21872.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b5960476-e9bd-4d07-9cb2-6a507881c478:init:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21872.6,
+        "dur": 1056.6,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 21872.6,
+            "dur": 1056.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b5960476-e9bd-4d07-9cb2-6a507881c478:forter:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21873.9,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 21873.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b5960476-e9bd-4d07-9cb2-6a507881c478:forter:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21873.9,
+        "dur": 1056.4,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 21873.9,
+            "dur": 1056.4,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b5960476-e9bd-4d07-9cb2-6a507881c478:bfp:start",
+      "kind": "mark",
+      "before": {
+        "ms": 21893.5,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 21893.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "sherlock:b5960476-e9bd-4d07-9cb2-6a507881c478:bfp:start:duration",
+      "kind": "measure",
+      "before": {
+        "ms": 21893.5,
+        "dur": 3055.2,
+        "n": 1
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 5,
+          "before": {
+            "ms": 21893.5,
+            "dur": 3055.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "snaptr",
+      "kind": "mark",
+      "before": {
+        "ms": 35101.4,
+        "n": 5
+      },
+      "after": {
+        "ms": 23352.2,
+        "n": 5
+      },
+      "delta": {
+        "ms": -11749.2
+      },
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 35101.4,
+            "n": 1
+          },
+          "after": {
+            "ms": 23352.2,
+            "n": 1
+          },
+          "delta": {
+            "ms": -11749.2
+          }
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 34048.8,
+            "n": 1
+          },
+          "after": {
+            "ms": 23703.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -10345.7
+          }
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 34517,
+            "n": 1
+          },
+          "after": {
+            "ms": 23131.3,
+            "n": 1
+          },
+          "delta": {
+            "ms": -11385.7
+          }
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 37793.1,
+            "n": 1
+          },
+          "after": {
+            "ms": 24722.8,
+            "n": 1
+          },
+          "delta": {
+            "ms": -13070.3
+          }
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 35673.9,
+            "n": 1
+          },
+          "after": {
+            "ms": 23352.1,
+            "n": 1
+          },
+          "delta": {
+            "ms": -12321.8
+          }
+        }
+      ]
+    },
+    {
+      "name": "TypeKitCss:load",
+      "kind": "measure",
+      "before": {
+        "ms": 25196.5,
+        "dur": 0.6,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 25196.5,
+            "dur": 1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 24152.5,
+            "dur": 0.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 24611.3,
+            "dur": 0.6,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 27749.9,
+            "dur": 0.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 25810,
+            "dur": 0.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "TypeKitCss:start",
+      "kind": "mark",
+      "before": {
+        "ms": 25196.5,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 25196.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 24152.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 24611.3,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 27749.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 25810,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "TypeKitCss:load",
+      "kind": "mark",
+      "before": {
+        "ms": 25197.5,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 25197.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 24153,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 24612,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 27750.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 25810.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "TypeKitCss:wf-inactive",
+      "kind": "measure",
+      "before": {
+        "ms": 25197.5,
+        "dur": 3005.8,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 25197.5,
+            "dur": 3004.5,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 24153,
+            "dur": 3004.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 24612,
+            "dur": 3006.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 27750.8,
+            "dur": 3006.2,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 25810.1,
+            "dur": 3005.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    },
+    {
+      "name": "TypeKitCss:wf-inactive",
+      "kind": "mark",
+      "before": {
+        "ms": 28202,
+        "n": 5
+      },
+      "after": null,
+      "delta": null,
+      "pairs": [
+        {
+          "index": 1,
+          "before": {
+            "ms": 28202,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 2,
+          "before": {
+            "ms": 27157.1,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 3,
+          "before": {
+            "ms": 27618.8,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 4,
+          "before": {
+            "ms": 30757,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        },
+        {
+          "index": 5,
+          "before": {
+            "ms": 28815.9,
+            "n": 1
+          },
+          "after": null,
+          "delta": null
+        }
+      ]
+    }
+  ],
+  "preloads": {
+    "before": {
+      "total": 12,
+      "unused": 0
+    },
+    "after": {
+      "total": 11,
+      "unused": 0
+    },
+    "rows": []
+  },
+  "rejectedAttempts": [],
+  "changes": {
+    "kinds": [
+      "sources"
+    ],
+    "hints": null,
+    "patchPaths": [],
+    "sourcePaths": [
+      "/libs/utils/utils.js"
+    ],
+    "prSources": [
+      {
+        "repo": "adobecom/milo",
+        "number": 7161,
+        "baseRef": "stage",
+        "headRef": "vhargrave/parallel-sections-lcp-first",
+        "baseSha": "91bed40aed049fe73caaa868fd7cf94f6c4bff68",
+        "headSha": "316b5f9d321e88d4c4ab0d90971328ba238a2e7b",
+        "mergeBaseSha": "91bed40aed049fe73caaa868fd7cf94f6c4bff68",
+        "files": [
+          {
+            "status": "modified",
+            "path": "/libs/utils/utils.js",
+            "previousPath": null,
+            "blobSha": "eaea94c657c651d0544e776379199cd7991700ee"
+          }
+        ]
+      }
+    ],
+    "sourceDrift": [
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7161,
+        "pair": 1,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7161,
+        "pair": 2,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7161,
+        "pair": 3,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7161,
+        "pair": 4,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86",
+        "productionStatus": 200,
+        "status": "drift"
+      },
+      {
+        "path": "/libs/utils/utils.js",
+        "repo": "adobecom/milo",
+        "number": 7161,
+        "pair": 5,
+        "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+        "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86",
+        "productionStatus": 200,
+        "status": "drift"
+      }
+    ]
+  },
+  "warnings": [
+    {
+      "kind": "environment-variability",
+      "benchmark": {
+        "min": 1202.5,
+        "max": 3802.5,
+        "ratio": 3.162,
+        "threshold": 1.2
+      },
+      "pairs": [
+        {
+          "pair": 1,
+          "before": 1995.5,
+          "after": 2477.5,
+          "ratio": 1.242
+        },
+        {
+          "pair": 2,
+          "before": 2990.5,
+          "after": 2323,
+          "ratio": 1.287
+        },
+        {
+          "pair": 3,
+          "before": 3100.5,
+          "after": 3802.5,
+          "ratio": 1.226
+        },
+        {
+          "pair": 4,
+          "before": 2271.5,
+          "after": 1866,
+          "ratio": 1.217
+        },
+        {
+          "pair": 5,
+          "before": 1202.5,
+          "after": 2763.5,
+          "ratio": 2.298
+        }
+      ]
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7161,
+      "pair": 1,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7161,
+      "pair": 2,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7161,
+      "pair": 3,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7161,
+      "pair": 4,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86"
+    },
+    {
+      "kind": "production-source-drift",
+      "path": "/libs/utils/utils.js",
+      "repo": "adobecom/milo",
+      "number": 7161,
+      "pair": 5,
+      "expectedMergeBaseSha256": "e57dfd45595e3768fb26e1c8241a27eb8bed8476a0739c6b7c222416f11c4f93",
+      "productionSha256": "e4602d37fefda5ee1a0639b6aad083ecfcbc95cb1249f7755532450aaca80d86"
+    }
+  ],
+  "artifact": {
+    "name": "perf-ab-mwujarap-m0anqdgn",
+    "url": "https://github.com/adobecom/perf-tools/actions/runs/45372273996/artifacts/14910266307",
+    "expiresAt": "2027-02-22T10:10:48.000Z",
+    "expired": false
+  }
+}
